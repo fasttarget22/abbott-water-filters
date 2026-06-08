@@ -377,10 +377,9 @@ tbody tr:hover{background:#f8fafb}
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Login Time</th>
-                <th>Logout Time</th>
-                <th>Duration</th>
-                <th>Page</th>
+                <th>Time</th>
+                <th>Action</th>
+                <th>Role</th>
               </tr>
             </thead>
             <tbody id="sessions-tbody"></tbody>
@@ -531,20 +530,12 @@ async function loadSession() {
 
 async function logSessionActivity() {
   try {
-    var log = await db.from('activity_log').select();
-    var loginTime = currentSession.loginTime || new Date().toISOString();
-    var exists = log.some(function(e){ return e.sessionId === loginTime && e.empId === currentEmpId; });
-    if (!exists) {
-      await db.from('activity_log').insert({
-        sessionId: loginTime,
-        empId: currentEmpId,
-        empName: currentTechName,
-        role: currentSession.role,
-        loginTime: loginTime,
-        logoutTime: null,
-        page: 'Technician'
-      });
-    }
+    await db.from('activity_log').insert({
+      emp_id:   currentEmpId,
+      emp_name: currentTechName,
+      role:     currentSession.role,
+      action:   'Login'
+    });
   } catch(e) {
     console.error('Failed to log session activity:', e);
   }
@@ -560,17 +551,13 @@ function updateTimer() {
 
 // ── Logout ──
 async function logout() {
-  var logoutTime = new Date().toISOString();
   try {
-    var loginTime = currentSession ? (currentSession.loginTime || '') : '';
-    // Find the matching activity log entry and update its logoutTime
-    var log = await db.from('activity_log').select();
-    for (var i = 0; i < log.length; i++) {
-      if (log[i].sessionId === loginTime && log[i].empId === currentEmpId) {
-        await db.from('activity_log').update({ logoutTime: logoutTime }, 'id', log[i].id);
-        break;
-      }
-    }
+    await db.from('activity_log').insert({
+      emp_id:   currentEmpId,
+      emp_name: currentTechName,
+      role:     currentSession ? currentSession.role : '',
+      action:   'Logout'
+    });
   } catch(e) {
     console.error('Failed to update activity log on logout:', e);
   }
@@ -670,10 +657,10 @@ function filterJobsByPeriod(jobs, filter) {
   var tomorrow = tomorrowStr();
   var weekEnd = weekEndStr();
   return jobs.filter(function(j) {
-    if (!j.date) return filter === 'all';
-    if (filter === 'today') return j.date === today;
-    if (filter === 'tomorrow') return j.date === tomorrow;
-    if (filter === 'week') return j.date >= today && j.date <= weekEnd;
+    if (!j.scheduled_date) return filter === 'all';
+    if (filter === 'today') return j.scheduled_date === today;
+    if (filter === 'tomorrow') return j.scheduled_date === tomorrow;
+    if (filter === 'week') return j.scheduled_date >= today && j.scheduled_date <= weekEnd;
     return true;
   });
 }
@@ -705,15 +692,15 @@ async function renderJobs() {
       var j = filtered[i];
       var phone = await getJobPhone(j);
       var address = await getJobAddress(j);
-      var timeLabel = j.time ? formatTime12(j.time) : '—';
-      var dateLabel = j.date ? formatDate(j.date) : '';
+      var timeLabel = j.scheduled_time ? formatTime12(j.scheduled_time) : '—';
+      var dateLabel = j.scheduled_date ? formatDate(j.scheduled_date) : '';
       var statusClass = 'status-' + (j.status || 'scheduled').toLowerCase().replace(/ /g, '-');
 
       html += '<div class="job-card ' + statusClass + '">';
       html += '<div class="jc-time">' + esc(timeLabel) + '</div>';
       html += '<div class="jc-date-label">' + esc(dateLabel) + '</div>';
-      html += '<div class="jc-badges">' + typeBadge(j.type) + statusBadge(j.status) + '</div>';
-      html += '<div class="jc-customer">' + esc(j.customerName || j.customer || 'Unknown Customer') + '</div>';
+      html += '<div class="jc-badges">' + typeBadge(j.job_type) + statusBadge(j.status) + '</div>';
+      html += '<div class="jc-customer">' + esc(j.customer_name || j.customer || 'Unknown Customer') + '</div>';
 
       if (phone) {
         var cleanPhone = phone.replace(/[^0-9]/g,'');
@@ -755,7 +742,7 @@ async function renderJobs() {
 // ── Start Job ──
 async function startJob(jobId) {
   try {
-    await db.from('jobs').update({ status: 'In Progress', startedAt: new Date().toISOString() }, 'id', jobId);
+    await db.from('jobs').update({ status: 'In Progress' }, 'id', jobId);
     await renderJobs();
   } catch(e) {
     console.error('Failed to start job:', e);
@@ -778,7 +765,7 @@ async function openCompleteModal(jobId) {
     var phone = await getJobPhone(job);
     var address = await getJobAddress(job);
     var summaryHtml = '<div class="job-summary-row">';
-    summaryHtml += '<strong>Customer:</strong> ' + esc(job.customerName || job.customer || '—') + '<br>';
+    summaryHtml += '<strong>Customer:</strong> ' + esc(job.customer_name || job.customer || '—') + '<br>';
     summaryHtml += '<strong>Type:</strong> ' + esc(job.type || '—') + '<br>';
     if (address) summaryHtml += '<strong>Address:</strong> ' + esc(address) + '<br>';
     if (job.time) summaryHtml += '<strong>Time:</strong> ' + esc(formatTime12(job.time));
@@ -871,10 +858,9 @@ async function submitComplete() {
 
     // Update job
     await db.from('jobs').update({
-      status: 'Completed',
-      partsUsed: partsUsed,
-      completionNotes: completionNotes,
-      completedAt: new Date().toISOString()
+      status:         'Completed',
+      notes:          completionNotes,
+      completed_date: new Date().toISOString().split('T')[0]
     }, 'id', jobId);
 
     // Deduct from inventory for each part used
@@ -912,14 +898,14 @@ async function renderParts() {
   for (var i = 0; i < myJobs.length; i++) {
     var j = myJobs[i];
     if (!j.partsUsed || j.partsUsed.length === 0) continue;
-    var dateStr = j.completedAt ? formatDateOnly(j.completedAt) : (j.date || '—');
+    var dateStr = j.completed_date ? formatDateOnly(j.completed_date) : (j.scheduled_date || '—');
     for (var p = 0; p < j.partsUsed.length; p++) {
       var part = j.partsUsed[p];
       hasRows = true;
       rows += '<tr>';
       rows += '<td>' + esc(dateStr) + '</td>';
       rows += '<td><code style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px">' + esc(j.id || '') + '</code></td>';
-      rows += '<td>' + esc(j.customerName || j.customer || '—') + '</td>';
+      rows += '<td>' + esc(j.customer_name || j.customer || '—') + '</td>';
       rows += '<td>' + esc(part.itemName || '') + '</td>';
       rows += '<td style="text-align:center;font-weight:700">' + esc(String(part.qty)) + '</td>';
       rows += '<td>' + statusBadge(j.status) + '</td>';
@@ -953,7 +939,7 @@ function cleanPhoneForLink(phone) {
 async function renderLocations() {
   var myJobs = await getMyJobs();
   var today = todayStr();
-  var todayJobs = myJobs.filter(function(j){ return j.date === today; });
+  var todayJobs = myJobs.filter(function(j){ return j.scheduled_date === today; });
   todayJobs.sort(function(a, b){ return (a.time || '').localeCompare(b.time || ''); });
 
   var grid = document.getElementById('loc-grid');
@@ -973,7 +959,7 @@ async function renderLocations() {
     var address = await getJobAddress(j);
     var phoneLink = cleanPhoneForLink(phone);
     var mapsQuery = encodeURIComponent((address ? address + ', ' : '') + 'Abbottabad, Pakistan');
-    var timeLabel = j.time ? formatTime12(j.time) : '';
+    var timeLabel = j.scheduled_time ? formatTime12(j.scheduled_time) : '';
 
     html += '<div class="loc-card">';
     html += '<div class="loc-num">' + (i + 1) + '</div>';
@@ -982,8 +968,8 @@ async function renderLocations() {
     if (timeLabel) html += '<span class="loc-time">' + esc(timeLabel) + '</span>';
     html += statusBadge(j.status);
     html += '</div>';
-    html += '<div class="loc-name">' + esc(j.customerName || j.customer || 'Unknown') + '</div>';
-    html += '<div class="loc-type">' + esc(j.type || '') + '</div>';
+    html += '<div class="loc-name">' + esc(j.customer_name || j.customer || 'Unknown') + '</div>';
+    html += '<div class="loc-type">' + esc(j.job_type || '') + '</div>';
     if (address) html += '<div class="loc-address">📍 ' + esc(address) + '</div>';
     html += '<div class="loc-actions">';
     if (phone) {
@@ -1007,11 +993,11 @@ async function renderSessions() {
     console.error('Failed to load session history:', e);
   }
   var mySessions = log.filter(function(e){
-    return e.empId === currentEmpId;
+    return e.emp_id === currentEmpId;
   });
-  // Sort newest first
+  // Sort newest first by created_at
   mySessions.sort(function(a, b){
-    return (b.loginTime || '').localeCompare(a.loginTime || '');
+    return (b.created_at || '').localeCompare(a.created_at || '');
   });
 
   var tbody = document.getElementById('sessions-tbody');
@@ -1029,12 +1015,12 @@ async function renderSessions() {
   var html = '';
   for (var i = 0; i < mySessions.length; i++) {
     var s = mySessions[i];
+    var dt = s.created_at ? new Date(s.created_at) : null;
     html += '<tr>';
-    html += '<td>' + esc(formatDateOnly(s.loginTime)) + '</td>';
-    html += '<td>' + esc(formatTimeOnly(s.loginTime)) + '</td>';
-    html += '<td>' + (s.logoutTime ? esc(formatTimeOnly(s.logoutTime)) : '<span style="color:var(--green);font-weight:600">Active</span>') + '</td>';
-    html += '<td>' + esc(durationMins(s.loginTime, s.logoutTime)) + '</td>';
-    html += '<td>' + esc(s.page || 'Technician') + '</td>';
+    html += '<td>' + (dt ? dt.toLocaleDateString('en-PK') : '—') + '</td>';
+    html += '<td>' + (dt ? dt.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : '—') + '</td>';
+    html += '<td>' + esc(s.action || '—') + '</td>';
+    html += '<td>' + esc(s.role || 'Technician') + '</td>';
     html += '</tr>';
   }
   tbody.innerHTML = html;

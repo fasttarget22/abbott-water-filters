@@ -856,11 +856,10 @@ async function submit() {
     addLog('success', 'Login OK: ' + employeeCache.name + ' (' + empId + ')');
     try {
       await db.from('activity_log').insert({
-        emp_id: empId,
-        name: employeeCache.name,
-        action: 'Login',
-        detail: 'Successful login from staff portal',
-        timestamp: new Date().toISOString()
+        emp_id:   empId,
+        emp_name: employeeCache.name,
+        role:     employeeCache.role,
+        action:   'Login'
       });
     } catch(e) { /* non-critical — proceed with login */ }
     showSuccess(employeeCache);

@@ -1075,11 +1075,11 @@ function waLink(phone, msg){
   return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 }
 function fillTemplate(tpl, customer){
-  var days = daysRemaining(customer.dueDate);
+  var days = daysRemaining(customer.due_date);
   return tpl
     .replace(/{customer_name}/g, customer.name)
     .replace(/{days}/g, Math.abs(days))
-    .replace(/{date}/g, fmtDate(customer.dueDate))
+    .replace(/{date}/g, fmtDate(customer.due_date))
     .replace(/{time}/g, '10:00 AM')
     .replace(/{technician_name}/g, customer.technician || 'our technician');
 }
@@ -1130,9 +1130,9 @@ async function renderDashboard(){
   }
 
   var thisMonth = new Date().toISOString().slice(0,7);
-  var overdue   = customers.filter(c => daysRemaining(c.dueDate) < 0);
-  var dueMonth  = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0 && d<=30; });
-  var jobsDone  = jobs.filter(j => j.status==='Completed' && j.date.startsWith(thisMonth));
+  var overdue   = customers.filter(c => daysRemaining(c.due_date) < 0);
+  var dueMonth  = customers.filter(c => { var d=daysRemaining(c.due_date); return d>=0 && d<=30; });
+  var jobsDone  = jobs.filter(j => j.status==='Completed' && j.scheduled_date.startsWith(thisMonth));
   var lowStock  = inventory.filter(i => i.stock <= i.reorder_level);
 
   document.getElementById('stat-row').innerHTML = `
@@ -1163,15 +1163,15 @@ async function renderDashboard(){
     </div>`;
 
   // Urgent widget — top 5 overdue sorted by most overdue
-  var urgSorted = [...overdue].sort((a,b)=>daysRemaining(a.dueDate)-daysRemaining(b.dueDate));
+  var urgSorted = [...overdue].sort((a,b)=>daysRemaining(a.due_date)-daysRemaining(b.due_date));
   document.getElementById('w-urgent').innerHTML = urgSorted.slice(0,5).map(c=>{
-    var d = daysRemaining(c.dueDate);
+    var d = daysRemaining(c.due_date);
     var si = statusInfo(d);
     return `<div class="urg-item">
       <div class="urg-days" style="background:${si.bg};color:${si.color}">${Math.abs(d)}d</div>
       <div class="urg-info">
         <div class="urg-name">${c.name}</div>
-        <div class="urg-meta">${c.filterModel} &middot; ${c.area}</div>
+        <div class="urg-meta">${c.model} &middot; ${c.area}</div>
       </div>
       <a href="${waLink(c.phone, fillTemplate(TEMPLATES[3].msg, c))}" target="_blank">
         <button class="btn btn-ghost btn-sm">💬</button>
@@ -1180,11 +1180,11 @@ async function renderDashboard(){
   }).join('') || '<div class="widget-empty">No overdue customers 🎉</div>';
 
   // Today's jobs
-  var todayJobs = jobs.filter(j => j.date === todayStr());
+  var todayJobs = jobs.filter(j => j.scheduled_date === todayStr());
   document.getElementById('w-today').innerHTML = todayJobs.map(j=>`
     <div class="job-item">
-      <div class="job-name">${j.customerName}</div>
-      <div class="job-meta">⏰ ${j.time} &middot; ${j.type} &middot; 👨‍🔧 ${j.technician}</div>
+      <div class="job-name">${j.customer_name}</div>
+      <div class="job-meta">⏰ ${j.scheduled_time} &middot; ${j.job_type} &middot; 👨‍🔧 ${j.technician}</div>
       <div class="job-meta" style="margin-top:2px">
         <span class="badge badge-${j.status==='Completed'?'active':'upcoming'}">${j.status}</span>
       </div>
@@ -1205,7 +1205,7 @@ async function renderDashboard(){
   document.getElementById('w-feedback').innerHTML = latestFB.map(f=>`
     <div class="fb-item">
       <div class="fb-top">
-        <div class="fb-name">${f.customerName}</div>
+        <div class="fb-name">${f.customer_name}</div>
         <div class="stars">${stars(f.rating)}</div>
       </div>
       <div class="fb-comment">${f.comment}</div>
@@ -1233,22 +1233,22 @@ async function renderCustomers(filter){
     c.name.toLowerCase().includes(q) ||
     c.phone.includes(q) ||
     c.area.toLowerCase().includes(q) ||
-    c.filterModel.toLowerCase().includes(q)
+    c.model.toLowerCase().includes(q)
   ) : customers;
 
   document.getElementById('cust-count').textContent = `${filtered.length} of ${customers.length} customers`;
 
   document.getElementById('cust-tbody').innerHTML = filtered.map(c=>{
-    var d = daysRemaining(c.dueDate);
+    var d = daysRemaining(c.due_date);
     var si = statusInfo(d);
     var daysLabel = d < 0 ? `${Math.abs(d)}d overdue` : `${d}d left`;
     return `<tr>
       <td><span style="font-size:11px;color:var(--dim)">${c.id}</span></td>
       <td><strong>${c.name}</strong></td>
       <td><a href="tel:+${c.phone}" style="color:var(--teal);text-decoration:none">${c.phone}</a></td>
-      <td>${c.filterModel}</td>
-      <td>${fmtDate(c.installDate)}</td>
-      <td>${fmtDate(c.dueDate)}<br><span style="font-size:10px;color:${si.color}">${daysLabel}</span></td>
+      <td>${c.model}</td>
+      <td>${fmtDate(c.install_date)}</td>
+      <td>${fmtDate(c.due_date)}<br><span style="font-size:10px;color:${si.color}">${daysLabel}</span></td>
       <td><span class="badge badge-${si.cls}">${si.label}</span></td>
       <td>${c.technician}</td>
       <td><div class="td-actions">
@@ -1291,10 +1291,10 @@ async function submitCustomer(e){
     phone:        document.getElementById('f-phone').value.trim(),
     address:      document.getElementById('f-address').value.trim(),
     area:         document.getElementById('f-area').value.trim(),
-    filterModel:  document.getElementById('f-model').value,
-    lifespanMonths,
-    installDate,
-    dueDate:      calcDueDate(installDate, lifespanMonths),
+    model:        document.getElementById('f-model').value,
+    life:         lifespanMonths,
+    install_date: installDate,
+    due_date:     calcDueDate(installDate, lifespanMonths),
     technician:   document.getElementById('f-tech').value,
     notes:        document.getElementById('f-notes').value.trim(),
   };
@@ -1326,9 +1326,9 @@ async function renderExpiry(){
     return;
   }
 
-  var overdue   = customers.filter(c => daysRemaining(c.dueDate) < 0).length;
-  var thisWeek  = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0&&d<=7; }).length;
-  var thisMonth = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0&&d<=30; }).length;
+  var overdue   = customers.filter(c => daysRemaining(c.due_date) < 0).length;
+  var thisWeek  = customers.filter(c => { var d=daysRemaining(c.due_date); return d>=0&&d<=7; }).length;
+  var thisMonth = customers.filter(c => { var d=daysRemaining(c.due_date); return d>=0&&d<=30; }).length;
 
   document.getElementById('expiry-stat-row').innerHTML = `
     <div class="stat-card">
@@ -1347,10 +1347,10 @@ async function renderExpiry(){
       <div class="stat-val text-orange">${thisMonth}</div>
     </div>`;
 
-  var sorted = [...customers].sort((a,b) => daysRemaining(a.dueDate) - daysRemaining(b.dueDate));
+  var sorted = [...customers].sort((a,b) => daysRemaining(a.due_date) - daysRemaining(b.due_date));
 
   document.getElementById('expiry-grid').innerHTML = sorted.map(c=>{
-    var d = daysRemaining(c.dueDate);
+    var d = daysRemaining(c.due_date);
     var si = statusInfo(d);
     var daysDisplay = d < 0 ? `−${Math.abs(d)}` : `+${d}`;
     var label = d < 0 ? 'days overdue' : 'days remaining';
@@ -1362,8 +1362,8 @@ async function renderExpiry(){
       <div class="ec-meta">
         📞 ${c.phone}<br>
         📍 ${c.area}<br>
-        🔧 ${c.filterModel}<br>
-        📅 Due: ${fmtDate(c.dueDate)}<br>
+        🔧 ${c.model}<br>
+        📅 Due: ${fmtDate(c.due_date)}<br>
         👨‍🔧 ${c.technician}
       </div>
       <div class="ec-actions">
@@ -1385,7 +1385,7 @@ async function waAllOverdue(){
     alert('Failed to load customers:\n' + (e.message || e));
     return;
   }
-  var overdue = customers.filter(c => daysRemaining(c.dueDate) < 0);
+  var overdue = customers.filter(c => daysRemaining(c.due_date) < 0);
   if(!overdue.length){ alert('No overdue customers.'); return; }
   if(!confirm(`Send WhatsApp to ${overdue.length} overdue customers? Each will open in a new tab.`)) return;
   overdue.forEach((c, i) => {
@@ -1420,7 +1420,7 @@ async function renderWhatsApp(){
     return;
   }
   document.getElementById('wa-cust-list').innerHTML = customers.map(c=>{
-    var d = daysRemaining(c.dueDate);
+    var d = daysRemaining(c.due_date);
     var si = statusInfo(d);
     var checked = selectedCusts.has(c.id) ? 'checked' : '';
     return `<div class="wa-cust-item" onclick="toggleCust(event,'${c.id}')">
@@ -1510,9 +1510,14 @@ function logWA(e, name, phone, tplName){
   logWASilent(name, phone, tplName);
 }
 async function logWASilent(name, phone, tplName){
+  var now = new Date();
   var entry = {
-    customerName: name, phone: phone, template: tplName,
-    sentAt: new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+    customer_name: name,
+    phone: phone,
+    template: tplName,
+    sent_date: now.toISOString().split('T')[0],
+    sent_time: now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+    sent_by: (function(){ try{ return JSON.parse(localStorage.getItem('awf_session')||'{}').name||'Manager'; }catch(e){ return 'Manager'; } })()
   };
   try {
     await db.from('whatsapp_log').insert(entry);
@@ -1526,9 +1531,9 @@ async function renderWALog(){
   } catch(e) { log = []; }
   document.getElementById('wa-log-tbody').innerHTML = log.map(e=>`
     <tr>
-      <td>${e.sentAt}</td>
-      <td>${e.customerName}</td>
-      <td>${e.phone}</td>
+      <td>${e.sent_date||''} ${e.sent_time||''}</td>
+      <td>${e.customer_name||''}</td>
+      <td>${e.phone||''}</td>
       <td><span class="badge badge-active">${e.template}</span></td>
     </tr>`).join('') || '<tr><td colspan="4" class="no-data">No messages sent yet</td></tr>';
 }
@@ -1617,11 +1622,11 @@ async function renderFeedback(){
   var sorted = [...fb].sort((a,b)=>b.date.localeCompare(a.date));
   document.getElementById('fb-grid').innerHTML = sorted.map(f=>{
     var typeCls = {Compliment:'compliment',Suggestion:'suggestion',Complaint:'complaint'}[f.type]||'upcoming';
-    var waMsg = encodeURIComponent(`Assalam o Alaikum ${f.customerName}! Thank you for your valuable feedback. We appreciate your time. — Abbott Water Filters`);
+    var waMsg = encodeURIComponent(`Assalam o Alaikum ${f.customer_name}! Thank you for your valuable feedback. We appreciate your time. — Abbott Water Filters`);
     return `<div class="fb-card">
       <div class="fb-card-top">
         <div>
-          <div class="fb-card-name">${f.customerName}</div>
+          <div class="fb-card-name">${f.customer_name}</div>
           <div class="fb-card-phone">${f.phone ? '📞 '+f.phone : ''}</div>
         </div>
         <span class="badge badge-${typeCls}">${f.type||'General'}</span>
@@ -1647,7 +1652,7 @@ async function submitFeedback(e){
     return;
   }
   var entry = {
-    customerName: document.getElementById('fb-f-name').value.trim(),
+    customer_name: document.getElementById('fb-f-name').value.trim(),
     phone:        document.getElementById('fb-f-phone').value.trim(),
     rating:       parseInt(document.getElementById('fb-f-rating').value),
     type:         document.getElementById('fb-f-type').value,
@@ -1714,12 +1719,12 @@ async function renderSchedule(){
   var wkStr = wkEnd.toISOString().split('T')[0];
 
   var filtered;
-  if(schedActive==='today')    filtered = all.filter(j=>j.date===today);
-  else if(schedActive==='tomorrow') filtered = all.filter(j=>j.date===tmrwStr);
-  else if(schedActive==='week') filtered = all.filter(j=>j.date>=today && j.date<=wkStr);
-  else                          filtered = all.filter(j=>j.date>=today);
+  if(schedActive==='today')    filtered = all.filter(j=>j.scheduled_date===today);
+  else if(schedActive==='tomorrow') filtered = all.filter(j=>j.scheduled_date===tmrwStr);
+  else if(schedActive==='week') filtered = all.filter(j=>j.scheduled_date>=today && j.scheduled_date<=wkStr);
+  else                          filtered = all.filter(j=>j.scheduled_date>=today);
 
-  filtered = filtered.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  filtered = filtered.slice().sort((a,b)=>a.scheduled_date.localeCompare(b.scheduled_date)||a.scheduled_time.localeCompare(b.scheduled_time));
 
   var labels = {today:'Today',tomorrow:'Tomorrow',week:'This Week',all:'All Upcoming'};
   document.getElementById('sched-subtitle').textContent =
@@ -1731,32 +1736,32 @@ async function renderSchedule(){
         <div class="tl-item">
           <div class="tl-dot ${j.status.toLowerCase()}"></div>
           <div>
-            <div class="tl-time">${j.time||'–'}${j.date!==today?' · '+fmtDate(j.date):''}</div>
-            <div class="tl-name">${j.customerName}</div>
-            <div class="tl-meta">${j.type} · ${j.technician}</div>
+            <div class="tl-time">${j.scheduled_time||'–'}${j.scheduled_date!==today?' · '+fmtDate(j.scheduled_date):''}</div>
+            <div class="tl-name">${j.customer_name}</div>
+            <div class="tl-meta">${j.job_type} · ${j.technician}</div>
           </div>
         </div>`).join('')
     : '<div style="font-size:13px;color:var(--dim);text-align:center;padding:24px 0">No jobs</div>';
 
   // Table
   document.getElementById('sched-tbody').innerHTML = filtered.map(j=>{
-    var cost = (+j.labor||0)+(+j.parts||0);
+    var cost = (+j.labor||0)+(+j.parts_cost||0);
     var stCls = j.status==='Completed' ? 'active' : j.status==='Cancelled' ? 'overdue' : 'upcoming';
-    var waMsg = encodeURIComponent(fillTemplate(TEMPLATES[1].msg, {name:j.customerName, phone:j.phone||'', dueDate:j.date, technician:j.technician}));
+    var waMsg = encodeURIComponent(fillTemplate(TEMPLATES[1].msg, {name:j.customer_name, phone:j.phone||'', dueDate:j.scheduled_date, technician:j.technician}));
     return `<tr>
-      <td><strong>${j.time||'–'}</strong>${j.date!==today?'<br><span style="font-size:10px;color:var(--dim)">'+fmtDate(j.date)+'</span>':''}</td>
+      <td><strong>${j.scheduled_time||'–'}</strong>${j.scheduled_date!==today?'<br><span style="font-size:10px;color:var(--dim)">'+fmtDate(j.scheduled_date)+'</span>':''}</td>
       <td>
-        <div style="font-weight:600">${j.customerName}</div>
+        <div style="font-weight:600">${j.customer_name}</div>
         <div style="font-size:11px;color:var(--dim)">${j.phone||''}</div>
       </td>
-      <td>${j.type}</td>
+      <td>${j.job_type}</td>
       <td>${j.technician}</td>
       <td>${cost ? 'Rs '+cost.toLocaleString() : '—'}</td>
       <td><span class="badge badge-${stCls}">${j.status}</span></td>
       <td><div class="td-actions">
         ${j.status==='Scheduled' ? `<button class="btn btn-green btn-sm" onclick="markJobDone('${j.id}')">✓ Done</button>` : ''}
         ${j.phone ? `<a href="https://wa.me/${j.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm" title="Send confirmation">💬</button></a>` : ''}
-        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((j.area||j.customerName)+', Abbottabad')}" target="_blank" title="Open in Google Maps"><button class="btn btn-ghost btn-sm">🗺</button></a>
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((j.area||j.customer_name)+', Abbottabad')}" target="_blank" title="Open in Google Maps"><button class="btn btn-ghost btn-sm">🗺</button></a>
         ${j.status==='Scheduled' ? `<button class="btn btn-danger btn-sm" onclick="cancelJob('${j.id}')">✕</button>` : ''}
       </div></td>
     </tr>`;
@@ -1798,18 +1803,18 @@ async function submitJob(e){
     return;
   }
   var job = {
-    id:           nextId(jobs,'JOB-'),
-    customerName: document.getElementById('sj-name').value.trim(),
-    phone:        document.getElementById('sj-phone').value.trim(),
-    address:      document.getElementById('sj-address').value.trim(),
-    type:         document.getElementById('sj-type').value,
-    technician:   document.getElementById('sj-tech').value,
-    date:         document.getElementById('sj-date').value,
-    time:         document.getElementById('sj-time').value,
-    labor:        document.getElementById('sj-labor').value||0,
-    parts:        document.getElementById('sj-parts').value||0,
-    notes:        document.getElementById('sj-notes').value.trim(),
-    status:       'Scheduled'
+    id:             nextId(jobs,'JOB-'),
+    customer_name:  document.getElementById('sj-name').value.trim(),
+    phone:          document.getElementById('sj-phone').value.trim(),
+    address:        document.getElementById('sj-address').value.trim(),
+    job_type:       document.getElementById('sj-type').value,
+    technician:     document.getElementById('sj-tech').value,
+    scheduled_date: document.getElementById('sj-date').value,
+    scheduled_time: document.getElementById('sj-time').value,
+    labor:          document.getElementById('sj-labor').value||0,
+    parts_cost:     document.getElementById('sj-parts').value||0,
+    notes:          document.getElementById('sj-notes').value.trim(),
+    status:         'Scheduled'
   };
   try {
     await db.from('jobs').insert(job);
@@ -2001,7 +2006,7 @@ async function renderEmployees(){
     var initials = e.name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
     var avatarColor = roleColor[e.role]||'var(--dim)';
     var jobsMonth = jobs.filter(j=>
-      j.technician===e.name && j.status==='Completed' && j.date.startsWith(thisMonth)
+      j.technician===e.name && j.status==='Completed' && j.scheduled_date.startsWith(thisMonth)
     ).length;
     return `<tr style="${active?'':'opacity:.55'}">
       <td><span style="font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums">${e.id}</span></td>
@@ -2158,7 +2163,7 @@ async function checkNotifications() {
   // Customers whose filter is due today
   customers.forEach(function(c) {
     var key = 'due_' + (c.id||c.name) + '_' + today;
-    if ((c.dueDate || '').startsWith(today) && !notified[key]) {
+    if ((c.due_date || '').startsWith(today) && !notified[key]) {
       sendNotif('⏰ Filter due today: ' + c.name);
       notified[key] = true;
       newAlerts++;
@@ -2216,27 +2221,27 @@ async function shiftHandoff() {
     return;
   }
 
-  var todayJobs = jobs.filter(function(j){ return j.date === today; });
+  var todayJobs = jobs.filter(function(j){ return j.scheduled_date === today; });
   var done      = todayJobs.filter(function(j){ return j.status === 'Completed'; });
   var pending   = todayJobs.filter(function(j){ return j.status !== 'Completed' && j.status !== 'Cancelled'; });
   var newCusts  = customers.filter(function(c){
     var d = c.createdAt || c.addedDate || c.created_at || '';
     return d.startsWith(today);
   });
-  var overdue   = customers.filter(function(c){ return daysRemaining(c.dueDate) < 0; });
+  var overdue   = customers.filter(function(c){ return daysRemaining(c.due_date) < 0; });
   var lowStock  = inventory.filter(function(i){ return (i.stock||0) <= (i.reorder_level||0); });
   var dateStr   = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
 
   var msg = '📋 SHIFT HANDOFF — ' + dateStr + ' (' + shift + ')\n\n';
   msg += '✅ Jobs Done: ' + done.length + '\n';
-  done.forEach(function(j){ msg += '- ' + j.customerName + ' — ' + j.type + ' ✓\n'; });
+  done.forEach(function(j){ msg += '- ' + j.customer_name + ' — ' + j.job_type + ' ✓\n'; });
   if (!done.length) msg += '- None\n';
   msg += '\n';
 
   if (pending.length) {
     msg += '⏳ Pending: ' + pending.length + '\n';
     pending.forEach(function(j){
-      msg += '- ' + j.customerName + ' — ' + j.type + (j.time ? ' (' + j.time + ')' : '') + '\n';
+      msg += '- ' + j.customer_name + ' — ' + j.job_type + (j.scheduled_time ? ' (' + j.scheduled_time + ')' : '') + '\n';
     });
     msg += '\n';
   }
@@ -2262,14 +2267,14 @@ async function dailySummary() {
     return;
   }
 
-  var todayJobs  = jobs.filter(function(j){ return j.date === today; });
+  var todayJobs  = jobs.filter(function(j){ return j.scheduled_date === today; });
   var completed  = todayJobs.filter(function(j){ return j.status === 'Completed'; });
   var inProgress = todayJobs.filter(function(j){ return j.status === 'In Progress'; });
   var scheduled  = todayJobs.filter(function(j){ return j.status === 'Scheduled'; });
   var cancelled  = todayJobs.filter(function(j){ return j.status === 'Cancelled'; });
 
-  var totalLabor = completed.reduce(function(s,j){ return s+(parseFloat(j.labor)||parseFloat(j.labor_cost)||0); }, 0);
-  var totalParts = completed.reduce(function(s,j){ return s+(parseFloat(j.parts_cost)||parseFloat(j.partsCost)||0); }, 0);
+  var totalLabor = completed.reduce(function(s,j){ return s+(parseFloat(j.labor)||0); }, 0);
+  var totalParts = completed.reduce(function(s,j){ return s+(parseFloat(j.parts_cost)||0); }, 0);
   var totalRev   = totalLabor + totalParts;
 
   var techCount = {};
@@ -2282,8 +2287,8 @@ async function dailySummary() {
 
   var tmrw = new Date(); tmrw.setDate(tmrw.getDate()+1);
   var tmrwStr = tmrw.toISOString().split('T')[0];
-  var expTmrw = customers.filter(function(c){ return (c.dueDate||'').startsWith(tmrwStr); });
-  var overdue  = customers.filter(function(c){ return daysRemaining(c.dueDate) < 0; });
+  var expTmrw = customers.filter(function(c){ return (c.due_date||'').startsWith(tmrwStr); });
+  var overdue  = customers.filter(function(c){ return daysRemaining(c.due_date) < 0; });
 
   var dateStr = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
 
@@ -2369,13 +2374,13 @@ async function renderReports() {
   var completed = jobs.filter(function(j){
     if(j.status !== 'Completed') return false;
     if(!start) return true;
-    var d = new Date(j.completedAt || j.date || 0);
+    var d = new Date(j.completed_date || j.scheduled_date || 0);
     return d >= start;
   });
 
   // ── KPI cards ────────────────────────────────────
-  var totalLabor = completed.reduce(function(s,j){ return s+(parseFloat(j.labor)||parseFloat(j.labor_cost)||0); },0);
-  var totalParts = completed.reduce(function(s,j){ return s+(parseFloat(j.parts_cost)||parseFloat(j.partsCost)||0); },0);
+  var totalLabor = completed.reduce(function(s,j){ return s+(parseFloat(j.labor)||0); },0);
+  var totalParts = completed.reduce(function(s,j){ return s+(parseFloat(j.parts_cost)||0); },0);
   var totalRevenue = totalLabor + totalParts;
   var avgValue = completed.length ? Math.round(totalRevenue/completed.length) : 0;
 
@@ -2417,11 +2422,11 @@ async function renderReports() {
     months.push(md.toLocaleString('default',{month:'short'}) + ' ' + md.getFullYear().toString().slice(2));
     var mJobs = jobs.filter(function(j){
       if(j.status!=='Completed') return false;
-      var jd = j.completedAt || j.date || '';
+      var jd = j.completed_date || j.scheduled_date || '';
       return jd.startsWith(ym);
     });
-    laborData.push(mJobs.reduce(function(s,j){ return s+(parseFloat(j.labor)||parseFloat(j.labor_cost)||0); },0));
-    partsData.push(mJobs.reduce(function(s,j){ return s+(parseFloat(j.parts_cost)||parseFloat(j.partsCost)||0); },0));
+    laborData.push(mJobs.reduce(function(s,j){ return s+(parseFloat(j.labor)||0); },0));
+    partsData.push(mJobs.reduce(function(s,j){ return s+(parseFloat(j.parts_cost)||0); },0));
   }
 
   var ctxRev = document.getElementById('chart-revenue').getContext('2d');
@@ -2471,7 +2476,7 @@ async function renderReports() {
   // ── Customer status doughnut ──────────────────────
   var active=0, dueSoon=0, overdueC=0;
   customers.forEach(function(c){
-    var dr = daysRemaining(c.dueDate);
+    var dr = daysRemaining(c.due_date);
     if(dr < 0) overdueC++;
     else if(dr <= 30) dueSoon++;
     else active++;
@@ -2507,7 +2512,7 @@ async function renderReports() {
     var area = j.area||'Unknown';
     if(!areaMap[area]) areaMap[area]={customers:0,jobs:0,revenue:0};
     areaMap[area].jobs++;
-    areaMap[area].revenue += (parseFloat(j.labor)||parseFloat(j.labor_cost)||0)+(parseFloat(j.parts_cost)||parseFloat(j.partsCost)||0);
+    areaMap[area].revenue += (parseFloat(j.labor)||0)+(parseFloat(j.parts_cost)||0);
   });
 
   var areaList = Object.keys(areaMap).sort(function(a,b){ return areaMap[b].revenue-areaMap[a].revenue; });
