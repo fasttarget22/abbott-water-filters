@@ -186,36 +186,25 @@ tbody tr:hover{background:#f8fafc;}
     <div class="sb-brand">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="72" height="97" role="img" aria-label="Abbott Water Filters">
         <defs>
-          <linearGradient id="sb-teal" x1="0" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0B6F96"/>
-          </linearGradient>
-          <linearGradient id="sb-silver" x1="200" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#D8E8F0"/><stop offset="100%" stop-color="#8AABBC"/>
-          </linearGradient>
-          <linearGradient id="sb-chrome" x1="0" y1="0" x2="200" y2="195" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#F0F5F8"/><stop offset="42%" stop-color="#C6D4DC"/><stop offset="100%" stop-color="#7A9AAC"/>
-          </linearGradient>
-          <linearGradient id="sb-drop" x1="85" y1="42" x2="115" y2="145" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0A4A6E"/>
-          </linearGradient>
-          <clipPath id="sb-inner"><path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z"/></clipPath>
-          <clipPath id="sb-left"><rect x="0" y="0" width="100" height="300"/></clipPath>
-          <clipPath id="sb-dclip"><path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z"/></clipPath>
+          <linearGradient id="awf-lt" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38d8f0"/><stop offset="50%" stop-color="#1892b8"/><stop offset="100%" stop-color="#0b5c7a"/></linearGradient>
+          <linearGradient id="awf-rs" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0eef6"/><stop offset="50%" stop-color="#a8c6d4"/><stop offset="100%" stop-color="#6a8898"/></linearGradient>
+          <linearGradient id="awf-bg" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stop-color="#f0f8fc"/><stop offset="100%" stop-color="#d0e6f0"/></linearGradient>
+          <linearGradient id="awf-am" x1="0.1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#28d2ec"/><stop offset="100%" stop-color="#094860"/></linearGradient>
+          <linearGradient id="awf-dr" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#60def8"/><stop offset="100%" stop-color="#073050"/></linearGradient>
+          <clipPath id="awf-cl"><rect x="0" y="0" width="100" height="268"/></clipPath>
+          <clipPath id="awf-cr"><rect x="100" y="0" width="100" height="268"/></clipPath>
         </defs>
-        <path d="M100,5 L54,17 L24,33 L20,128 Q34,172 100,194 Q166,172 180,128 L176,33 L146,17 Z" fill="url(#sb-chrome)"/>
-        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-silver)"/>
-        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-teal)" clip-path="url(#sb-left)"/>
-        <path d="M100,18 L56,30 L33,45" fill="none" stroke="rgba(0,40,70,0.22)" stroke-width="3" stroke-linecap="round"/>
-        <path d="M100,18 L144,30 L167,45" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="3" stroke-linecap="round"/>
-        <rect x="29" y="80" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
-        <rect x="29" y="93" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
-        <rect x="29" y="106" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
-        <path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z" fill="url(#sb-drop)"/>
-        <ellipse cx="77" cy="69" rx="17" ry="23" fill="rgba(255,255,255,0.36)" transform="rotate(-20,77,69)" clip-path="url(#sb-dclip)"/>
-        <circle cx="79" cy="56" r="8.5" fill="rgba(255,255,255,0.58)" clip-path="url(#sb-dclip)"/>
-        <ellipse cx="124" cy="130" rx="23" ry="15" fill="rgba(0,22,45,0.24)" transform="rotate(25,124,130)" clip-path="url(#sb-dclip)"/>
-        <text x="100" y="222" text-anchor="middle" font-family="'Arial Black','Franklin Gothic Heavy',sans-serif" font-weight="900" font-size="37" fill="#0D2D5C">ABBOTT</text>
-        <text x="100" y="250" text-anchor="middle" font-family="'Arial Black',sans-serif" font-weight="700" font-size="15" fill="#0D2D5C" letter-spacing="3.5">WATER FILTERS</text>
+        <path clip-path="url(#awf-cl)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#awf-lt)"/>
+        <path clip-path="url(#awf-cr)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#awf-rs)"/>
+        <path d="M67,20 L133,20 L155,52 L151,124 L121,154 L100,165 L79,154 L49,124 L45,52 Z" fill="url(#awf-bg)"/>
+        <rect x="49" y="91" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.9"/>
+        <rect x="49" y="99" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.85"/>
+        <rect x="49" y="107" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.75"/>
+        <path d="M96,28 L104,28 L134,148 L117,148 L100,52 L83,148 L66,148 Z" fill="url(#awf-am)"/>
+        <path d="M100,108 C96,116 87,126 87,136 A13,13 0 0 0 113,136 C113,126 104,116 100,108 Z" fill="url(#awf-dr)"/>
+        <ellipse cx="93" cy="122" rx="4" ry="6.5" fill="rgba(255,255,255,0.42)" transform="rotate(-22,93,122)"/>
+        <text x="100" y="212" text-anchor="middle" font-family="'Arial Black','Franklin Gothic Heavy',sans-serif" font-weight="900" font-size="40" fill="#0D1E42">ABBOTT</text>
+        <text x="100" y="246" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="700" font-size="16" fill="#0D1E42" letter-spacing="2">WATER FILTERS</text>
       </svg>
       <div class="sb-title">Abbott Water Filters</div>
       <div class="sb-tagline">Sales Portal</div>
