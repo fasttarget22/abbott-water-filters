@@ -1133,7 +1133,7 @@ async function renderDashboard(){
   var overdue   = customers.filter(c => daysRemaining(c.dueDate) < 0);
   var dueMonth  = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0 && d<=30; });
   var jobsDone  = jobs.filter(j => j.status==='Completed' && j.date.startsWith(thisMonth));
-  var lowStock  = inventory.filter(i => i.quantity <= i.reorderLevel);
+  var lowStock  = inventory.filter(i => i.stock <= i.reorder_level);
 
   document.getElementById('stat-row').innerHTML = `
     <div class="stat-card">
@@ -1195,9 +1195,9 @@ async function renderDashboard(){
     <div class="inv-item">
       <div>
         <div class="inv-name">${i.name}</div>
-        <div style="font-size:11px;color:var(--dim)">${i.category} &middot; Reorder: ${i.reorderLevel}</div>
+        <div style="font-size:11px;color:var(--dim)">${i.category} &middot; Reorder: ${i.reorder_level}</div>
       </div>
-      <span class="inv-qty">Qty: ${i.quantity}</span>
+      <span class="inv-qty">Qty: ${i.stock}</span>
     </div>`).join('') || '<div class="widget-empty">All stock levels OK ✅</div>';
 
   // Latest feedback
@@ -1511,7 +1511,6 @@ function logWA(e, name, phone, tplName){
 }
 async function logWASilent(name, phone, tplName){
   var entry = {
-    id: 'WA-'+Date.now(),
     customerName: name, phone: phone, template: tplName,
     sentAt: new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
   };
@@ -1648,7 +1647,6 @@ async function submitFeedback(e){
     return;
   }
   var entry = {
-    id:           nextId(fb,'FB-'),
     customerName: document.getElementById('fb-f-name').value.trim(),
     phone:        document.getElementById('fb-f-phone').value.trim(),
     rating:       parseInt(document.getElementById('fb-f-rating').value),
@@ -1840,9 +1838,9 @@ async function renderInventory(){
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">Failed to load data: ' + (e.message || e) + '</td></tr>';
     return;
   }
-  var ok  = inv.filter(i=>i.quantity>i.reorderLevel).length;
-  var low = inv.filter(i=>i.quantity>0&&i.quantity<=i.reorderLevel).length;
-  var out = inv.filter(i=>i.quantity===0).length;
+  var ok  = inv.filter(i=>i.stock>i.reorder_level).length;
+  var low = inv.filter(i=>i.stock>0&&i.stock<=i.reorder_level).length;
+  var out = inv.filter(i=>i.stock===0).length;
 
   document.getElementById('inv-stat-row').innerHTML = `
     <div class="stat-card">
@@ -1867,16 +1865,16 @@ async function renderInventory(){
     </div>`;
 
   document.getElementById('inv-tbody').innerHTML = inv.map(i=>{
-    var cap   = i.reorderLevel * 3;
-    var pct   = cap>0 ? Math.min(100, Math.round((i.quantity/cap)*100)) : 0;
-    var barCls = i.quantity===0 ? 'out' : i.quantity<=i.reorderLevel ? 'low' : 'ok';
-    var stLabel = i.quantity===0 ? 'Out of Stock' : i.quantity<=i.reorderLevel ? 'Reorder' : 'OK';
-    var stCls   = i.quantity===0 ? 'overdue' : i.quantity<=i.reorderLevel ? 'due-soon' : 'active';
+    var cap   = i.reorder_level * 3;
+    var pct   = cap>0 ? Math.min(100, Math.round((i.stock/cap)*100)) : 0;
+    var barCls = i.stock===0 ? 'out' : i.stock<=i.reorder_level ? 'low' : 'ok';
+    var stLabel = i.stock===0 ? 'Out of Stock' : i.stock<=i.reorder_level ? 'Reorder' : 'OK';
+    var stCls   = i.stock===0 ? 'overdue' : i.stock<=i.reorder_level ? 'due-soon' : 'active';
     var unit  = i.unit||'Pcs';
     return `<tr>
       <td>
         <div style="font-weight:600">${i.name}</div>
-        <div style="font-size:11px;color:var(--dim)">${i.supplier||'—'}${i.unitPrice?'&nbsp;·&nbsp;Rs '+i.unitPrice+'/'+unit:''}</div>
+        <div style="font-size:11px;color:var(--dim)">${i.supplier||'—'}${i.unit_price?'&nbsp;·&nbsp;Rs '+i.unit_price+'/'+unit:''}</div>
       </td>
       <td>${i.category}</td>
       <td>
@@ -1885,8 +1883,8 @@ async function renderInventory(){
           <span style="font-size:11px;color:var(--dim);min-width:28px">${pct}%</span>
         </div>
       </td>
-      <td><strong>${i.quantity}</strong>&nbsp;<span style="font-size:11px;color:var(--dim)">${unit}</span></td>
-      <td>${i.reorderLevel}&nbsp;<span style="font-size:11px;color:var(--dim)">${unit}</span></td>
+      <td><strong>${i.stock}</strong>&nbsp;<span style="font-size:11px;color:var(--dim)">${unit}</span></td>
+      <td>${i.reorder_level}&nbsp;<span style="font-size:11px;color:var(--dim)">${unit}</span></td>
       <td><span class="badge badge-${stCls}">${stLabel}</span></td>
       <td><div class="td-actions">
         <button class="btn btn-green btn-sm" onclick="addStock('${i.id}')">+ Stock</button>
@@ -1912,9 +1910,9 @@ async function addStock(id){
   }
   var item = inv.find(i=>i.id===id);
   if(!item) return;
-  var newQty = item.quantity + qty;
+  var newQty = item.stock + qty;
   try {
-    await db.from('inventory').update({quantity: newQty}, 'id', id);
+    await db.from('inventory').update({stock: newQty}, 'id', id);
   } catch(e) {
     console.error('Update stock error:', e.message);
     alert('Failed to update stock:\n' + (e.message || e));
@@ -1948,14 +1946,14 @@ async function submitInventory(e){
     return;
   }
   var item = {
-    id:           nextId(inv,'INV-'),
-    name:         document.getElementById('iv-name').value.trim(),
-    category:     document.getElementById('iv-cat').value,
-    unit:         document.getElementById('iv-unit').value,
-    quantity:     parseInt(document.getElementById('iv-qty').value)||0,
-    reorderLevel: parseInt(document.getElementById('iv-reorder').value)||1,
-    unitPrice:    parseInt(document.getElementById('iv-price').value)||0,
-    supplier:     document.getElementById('iv-supplier').value.trim(),
+    id:            nextId(inv,'INV-'),
+    name:          document.getElementById('iv-name').value.trim(),
+    category:      document.getElementById('iv-cat').value,
+    unit:          document.getElementById('iv-unit').value,
+    stock:         parseInt(document.getElementById('iv-qty').value)||0,
+    reorder_level: parseInt(document.getElementById('iv-reorder').value)||1,
+    unit_price:    parseInt(document.getElementById('iv-price').value)||0,
+    supplier:      document.getElementById('iv-supplier').value.trim(),
   };
   try {
     await db.from('inventory').insert(item);
@@ -2170,8 +2168,8 @@ async function checkNotifications() {
   // Low stock items
   inventory.forEach(function(i) {
     var key = 'stock_' + (i.id||i.name) + '_' + today;
-    if ((i.quantity || 0) <= (i.reorderLevel || i.reorder_level || 0) && !notified[key]) {
-      sendNotif('📦 Low stock: ' + (i.name || i.item) + ' (' + (i.quantity || 0) + ' left)');
+    if ((i.stock || 0) <= (i.reorder_level || 0) && !notified[key]) {
+      sendNotif('📦 Low stock: ' + (i.name || i.item) + ' (' + (i.stock || 0) + ' left)');
       notified[key] = true;
       newAlerts++;
     }
@@ -2226,7 +2224,7 @@ async function shiftHandoff() {
     return d.startsWith(today);
   });
   var overdue   = customers.filter(function(c){ return daysRemaining(c.dueDate) < 0; });
-  var lowStock  = inventory.filter(function(i){ return (i.quantity||0) <= (i.reorderLevel||0); });
+  var lowStock  = inventory.filter(function(i){ return (i.stock||0) <= (i.reorder_level||0); });
   var dateStr   = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
 
   var msg = '📋 SHIFT HANDOFF — ' + dateStr + ' (' + shift + ')\n\n';
@@ -2280,7 +2278,7 @@ async function dailySummary() {
   });
   var topTech = Object.keys(techCount).sort(function(a,b){ return techCount[b]-techCount[a]; })[0];
 
-  var lowStock = inventory.filter(function(i){ return (i.quantity||0) <= (i.reorderLevel||0); });
+  var lowStock = inventory.filter(function(i){ return (i.stock||0) <= (i.reorder_level||0); });
 
   var tmrw = new Date(); tmrw.setDate(tmrw.getDate()+1);
   var tmrwStr = tmrw.toISOString().split('T')[0];
@@ -2310,7 +2308,7 @@ async function dailySummary() {
   msg += '📦 Inventory\n';
   if (lowStock.length) {
     msg += '⚠️ Low Stock: ' + lowStock.length + ' item' + (lowStock.length!==1?'s':'') + '\n';
-    lowStock.forEach(function(i){ msg += '  - ' + (i.name||i.item) + ': ' + i.quantity + ' left\n'; });
+    lowStock.forEach(function(i){ msg += '  - ' + (i.name||i.item) + ': ' + i.stock + ' left\n'; });
   } else {
     msg += '✓ All stock levels OK\n';
   }

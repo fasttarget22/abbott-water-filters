@@ -42,15 +42,16 @@ var db = {
       },
 
       insert: async function(data) {
-        var payload = Array.isArray(data) ? data : [data];
+        var body = JSON.stringify(data);
+        console.log('[Supabase] INSERT', table, 'body:', body);
         var res = await fetch(baseUrl, {
           method: 'POST',
           headers: baseHeaders,
-          body: JSON.stringify(payload)
+          body: body
         });
         if (!res.ok) {
           var errText = await res.text();
-          console.error('[Supabase] INSERT', table, res.status, errText);
+          console.error('[Supabase] INSERT error', table, res.status, errText, '| sent:', body);
           throw new Error('Supabase ' + res.status + ': ' + errText);
         }
         return await res.json();
@@ -58,14 +59,16 @@ var db = {
 
       update: async function(data, matchCol, matchVal) {
         var url = baseUrl + '?' + matchCol + '=eq.' + encodeURIComponent(matchVal);
+        var body = JSON.stringify(data);
+        console.log('[Supabase] UPDATE', table, url, 'body:', body);
         var res = await fetch(url, {
           method: 'PATCH',
           headers: baseHeaders,
-          body: JSON.stringify(data)
+          body: body
         });
         if (!res.ok) {
           var errText = await res.text();
-          console.error('[Supabase] UPDATE', table, res.status, errText);
+          console.error('[Supabase] UPDATE error', table, res.status, errText, '| url:', url, '| sent:', body);
           throw new Error('Supabase ' + res.status + ': ' + errText);
         }
         return await res.json();
@@ -73,10 +76,11 @@ var db = {
 
       delete: async function(matchCol, matchVal) {
         var url = baseUrl + '?' + matchCol + '=eq.' + encodeURIComponent(matchVal);
+        console.log('[Supabase] DELETE', table, url);
         var res = await fetch(url, { method: 'DELETE', headers: baseHeaders });
         if (!res.ok) {
           var errText = await res.text();
-          console.error('[Supabase] DELETE', table, res.status, errText);
+          console.error('[Supabase] DELETE error', table, res.status, errText, '| url:', url);
           throw new Error('Supabase ' + res.status + ': ' + errText);
         }
         return res.status === 204 ? [] : await res.json();

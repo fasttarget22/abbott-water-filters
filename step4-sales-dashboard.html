@@ -492,7 +492,6 @@ async function logActivityEntry() {
     }
     if (!found) {
       await db.from('activity_log').insert({
-        id: 'ACT-' + Date.now(),
         sessionId: sessionId,
         empId: currentUser.empId,
         empName: currentUser.name,
@@ -663,7 +662,6 @@ async function submitLogResult() {
   var followUpDate = document.getElementById('log-followup-date').value;
   var notes = document.getElementById('log-notes').value.trim();
   var entry = {
-    id: 'CALL-' + Date.now(),
     customerId: currentLogCustomer.id,
     customerName: currentLogCustomer.name,
     phone: currentLogCustomer.phone,
@@ -745,7 +743,6 @@ async function submitSale() {
   var paymentMethod = document.getElementById('sale-payment').value;
   var customerName = document.getElementById('sale-customer').value.trim();
   var entry = {
-    id: 'SALE-' + Date.now(),
     item: item,
     quantity: quantity,
     unitPrice: unitPrice,

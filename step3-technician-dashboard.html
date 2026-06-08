@@ -536,7 +536,6 @@ async function logSessionActivity() {
     var exists = log.some(function(e){ return e.sessionId === loginTime && e.empId === currentEmpId; });
     if (!exists) {
       await db.from('activity_log').insert({
-        id: 'ACT-' + Date.now(),
         sessionId: loginTime,
         empId: currentEmpId,
         empName: currentTechName,
@@ -816,7 +815,7 @@ async function buildInventoryOptions() {
   var opts = '<option value="">-- Select Part --</option>';
   for (var i = 0; i < inv.length; i++) {
     var item = inv[i];
-    opts += '<option value="' + esc(item.id) + '">' + esc(item.name) + ' (' + (item.quantity || 0) + ' Pcs)</option>';
+    opts += '<option value="' + esc(item.id) + '">' + esc(item.name) + ' (' + (item.stock || 0) + ' Pcs)</option>';
   }
   return opts;
 }
@@ -859,8 +858,8 @@ async function submitComplete() {
       if (inv[k].id === itemId) { invItem = inv[k]; break; }
     }
     if (!invItem) { errEl.textContent = 'Part not found in inventory.'; errEl.classList.add('show'); return; }
-    if (qty > (invItem.quantity || 0)) {
-      errEl.textContent = 'Not enough stock for "' + invItem.name + '". Available: ' + (invItem.quantity || 0);
+    if (qty > (invItem.stock || 0)) {
+      errEl.textContent = 'Not enough stock for "' + invItem.name + '". Available: ' + (invItem.stock || 0);
       errEl.classList.add('show');
       return;
     }
@@ -884,11 +883,11 @@ async function submitComplete() {
       var newQty = 0;
       for (var k = 0; k < inv.length; k++) {
         if (inv[k].id === part.itemId) {
-          newQty = (inv[k].quantity || 0) - part.qty;
+          newQty = (inv[k].stock || 0) - part.qty;
           break;
         }
       }
-      await db.from('inventory').update({ quantity: newQty }, 'id', part.itemId);
+      await db.from('inventory').update({ stock: newQty }, 'id', part.itemId);
     }
 
     closeCompleteModal();
