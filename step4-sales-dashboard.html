@@ -663,7 +663,7 @@ async function renderSales() {
     for (var i = 0; i < sales.length; i++) {
       if ((sales[i].sold_at || '').startsWith(today)) todaySales.push(sales[i]);
     }
-    todaySales.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
+    todaySales.sort(function(a,b){ return (b.sold_at||'').localeCompare(a.sold_at||''); });
     var total = 0;
     for (var j = 0; j < todaySales.length; j++) total += Number(todaySales[j].total) || 0;
     document.getElementById('ds-total').textContent = fmtMoney(total);
@@ -677,7 +677,7 @@ async function renderSales() {
     for (var k = 0; k < todaySales.length; k++) {
       var s = todaySales[k];
       html += '<tr>' +
-        '<td>' + esc(s.time||'') + '</td>' +
+        '<td>' + (s.sold_at ? new Date(s.sold_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : '') + '</td>' +
         '<td>' + esc(s.item||'') + '</td>' +
         '<td>' + esc(s.quantity||'') + '</td>' +
         '<td>' + fmtMoney(s.unit_price||0) + '</td>' +
@@ -720,7 +720,6 @@ async function submitSale() {
     total:          total,
     payment_method: paymentMethod,
     customer_name:  customerName,
-    time:           nowTimeStr(),
     sold_by:        currentUser.name
   };
   try {
