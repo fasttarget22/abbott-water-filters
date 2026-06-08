@@ -681,7 +681,8 @@ async function renderJobs() {
         html += '<div class="jc-detail">📞 <a href="tel:' + esc(cleanPhone) + '">' + esc(phone) + '</a></div>';
       }
       if (address) {
-        html += '<div class="jc-detail">📍 ' + esc(address) + '</div>';
+        var mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address + ', Abbottabad');
+        html += '<div class="jc-detail">📍 ' + esc(address) + ' <a href="' + mapUrl + '" target="_blank" title="Open in Google Maps" style="color:var(--teal);text-decoration:none;margin-left:4px;font-size:14px">🗺</a></div>';
       }
       if (j.notes) {
         html += '<div class="jc-notes">' + esc(j.notes) + '</div>';

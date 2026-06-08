@@ -53,6 +53,10 @@ nav{flex:1;padding:12px 0;overflow-y:auto}
 .btn-orange:hover{background:#fed7aa}
 .btn-logout{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.2)}
 .btn-logout:hover{background:rgba(220,38,38,.15)}
+.btn-handoff{background:rgba(26,155,191,.1);color:var(--teal3);border:1px solid rgba(26,155,191,.25)}
+.btn-handoff:hover{background:rgba(26,155,191,.2)}
+.btn-daily{background:rgba(13,34,51,.07);color:var(--navy);border:1px solid rgba(13,34,51,.18)}
+.btn-daily:hover{background:rgba(13,34,51,.14)}
 
 #content{flex:1;overflow-y:auto;padding:24px}
 .section{display:none}
@@ -358,6 +362,8 @@ tbody tr:hover{background:#f8fafb}
       </div>
     </div>
     <div class="tb-timer" id="tb-timer">00:00</div>
+    <button class="btn btn-handoff btn-sm" onclick="shiftHandoff()" title="Generate shift handoff message for WhatsApp">📋 Handoff</button>
+    <button class="btn btn-daily btn-sm" onclick="dailySummary()" title="Generate daily summary report for WhatsApp">📊 Daily</button>
     <button class="btn btn-logout btn-sm" onclick="logout()">&#9889; Logout</button>
   </header>
 
@@ -1684,6 +1690,7 @@ async function renderSchedule(){
       <td><div class="td-actions">
         ${j.status==='Scheduled' ? `<button class="btn btn-green btn-sm" onclick="markJobDone('${j.id}')">✓ Done</button>` : ''}
         ${j.phone ? `<a href="https://wa.me/${j.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm" title="Send confirmation">💬</button></a>` : ''}
+        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((j.area||j.customerName)+', Abbottabad')}" target="_blank" title="Open in Google Maps"><button class="btn btn-ghost btn-sm">🗺</button></a>
         ${j.status==='Scheduled' ? `<button class="btn btn-danger btn-sm" onclick="cancelJob('${j.id}')">✕</button>` : ''}
       </div></td>
     </tr>`;
@@ -2002,6 +2009,134 @@ async function submitEmployee(e){
   closeModal('modal-employee');
   document.getElementById('emp-form').reset();
   await renderEmployees();
+}
+
+// ════════════════════════════════════════
+//  SHIFT HANDOFF & DAILY SUMMARY
+// ════════════════════════════════════════
+async function shiftHandoff() {
+  var today = todayStr();
+  var hour = new Date().getHours();
+  var shift = hour < 14 ? 'Morning' : 'Evening';
+  var jobs, customers, inventory;
+  try {
+    jobs      = await db.from('jobs').select();
+    customers = await db.from('customers').select();
+    inventory = await db.from('inventory').select();
+  } catch(e) {
+    alert('Failed to load data. Check your connection.');
+    return;
+  }
+
+  var todayJobs = jobs.filter(function(j){ return j.date === today; });
+  var done      = todayJobs.filter(function(j){ return j.status === 'Completed'; });
+  var pending   = todayJobs.filter(function(j){ return j.status !== 'Completed' && j.status !== 'Cancelled'; });
+  var newCusts  = customers.filter(function(c){
+    var d = c.createdAt || c.addedDate || c.created_at || '';
+    return d.startsWith(today);
+  });
+  var overdue   = customers.filter(function(c){ return daysRemaining(c.dueDate) < 0; });
+  var lowStock  = inventory.filter(function(i){ return (i.quantity||0) <= (i.reorderLevel||0); });
+  var dateStr   = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+
+  var msg = '📋 SHIFT HANDOFF — ' + dateStr + ' (' + shift + ')\n\n';
+  msg += '✅ Jobs Done: ' + done.length + '\n';
+  done.forEach(function(j){ msg += '- ' + j.customerName + ' — ' + j.type + ' ✓\n'; });
+  if (!done.length) msg += '- None\n';
+  msg += '\n';
+
+  if (pending.length) {
+    msg += '⏳ Pending: ' + pending.length + '\n';
+    pending.forEach(function(j){
+      msg += '- ' + j.customerName + ' — ' + j.type + (j.time ? ' (' + j.time + ')' : '') + '\n';
+    });
+    msg += '\n';
+  }
+
+  msg += '🚨 Overdue Customers: ' + overdue.length + '\n';
+  msg += '📦 Low Stock: ' + lowStock.length + ' item' + (lowStock.length !== 1 ? 's' : '') + '\n';
+  msg += '👥 New Customers Today: ' + newCusts.length + '\n';
+  msg += '\n— Sent from Abbott Water Filters Staff Portal';
+
+  window.open('https://wa.me/923488115410?text=' + encodeURIComponent(msg), '_blank');
+}
+
+async function dailySummary() {
+  var today = todayStr();
+  var jobs, customers, inventory;
+  try {
+    jobs      = await db.from('jobs').select();
+    customers = await db.from('customers').select();
+    inventory = await db.from('inventory').select();
+  } catch(e) {
+    alert('Failed to load data. Check your connection.');
+    return;
+  }
+
+  var todayJobs  = jobs.filter(function(j){ return j.date === today; });
+  var completed  = todayJobs.filter(function(j){ return j.status === 'Completed'; });
+  var inProgress = todayJobs.filter(function(j){ return j.status === 'In Progress'; });
+  var scheduled  = todayJobs.filter(function(j){ return j.status === 'Scheduled'; });
+  var cancelled  = todayJobs.filter(function(j){ return j.status === 'Cancelled'; });
+
+  var totalLabor = completed.reduce(function(s,j){ return s+(parseFloat(j.labor)||parseFloat(j.labor_cost)||0); }, 0);
+  var totalParts = completed.reduce(function(s,j){ return s+(parseFloat(j.parts_cost)||parseFloat(j.partsCost)||0); }, 0);
+  var totalRev   = totalLabor + totalParts;
+
+  var techCount = {};
+  completed.forEach(function(j){
+    if(j.technician) techCount[j.technician] = (techCount[j.technician]||0)+1;
+  });
+  var topTech = Object.keys(techCount).sort(function(a,b){ return techCount[b]-techCount[a]; })[0];
+
+  var lowStock = inventory.filter(function(i){ return (i.quantity||0) <= (i.reorderLevel||0); });
+
+  var tmrw = new Date(); tmrw.setDate(tmrw.getDate()+1);
+  var tmrwStr = tmrw.toISOString().split('T')[0];
+  var expTmrw = customers.filter(function(c){ return (c.dueDate||'').startsWith(tmrwStr); });
+  var overdue  = customers.filter(function(c){ return daysRemaining(c.dueDate) < 0; });
+
+  var dateStr = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+
+  var msg = '📊 DAILY SUMMARY — ' + dateStr + '\n';
+  msg += '━━━━━━━━━━━━━━━━━\n\n';
+
+  msg += '💰 Revenue Today\n';
+  msg += 'Total: PKR ' + totalRev.toLocaleString() + '\n';
+  msg += '  Labor: PKR ' + totalLabor.toLocaleString() + '\n';
+  msg += '  Parts: PKR ' + totalParts.toLocaleString() + '\n\n';
+
+  msg += '🔧 Jobs Breakdown\n';
+  msg += '✅ Completed: ' + completed.length + '\n';
+  msg += '🔄 In Progress: ' + inProgress.length + '\n';
+  msg += '📅 Scheduled: ' + scheduled.length + '\n';
+  msg += '❌ Cancelled: ' + cancelled.length + '\n\n';
+
+  if (topTech) {
+    msg += '🏆 Top Technician: ' + topTech + ' (' + techCount[topTech] + ' job' + (techCount[topTech]!==1?'s':'') + ')\n\n';
+  }
+
+  msg += '📦 Inventory\n';
+  if (lowStock.length) {
+    msg += '⚠️ Low Stock: ' + lowStock.length + ' item' + (lowStock.length!==1?'s':'') + '\n';
+    lowStock.forEach(function(i){ msg += '  - ' + (i.name||i.item) + ': ' + i.quantity + ' left\n'; });
+  } else {
+    msg += '✓ All stock levels OK\n';
+  }
+  msg += '\n';
+
+  if (expTmrw.length) {
+    msg += '⏰ Expiring Tomorrow: ' + expTmrw.length + ' customer' + (expTmrw.length!==1?'s':'') + '\n';
+    expTmrw.forEach(function(c){ msg += '  - ' + c.name + '\n'; });
+    msg += '\n';
+  }
+  if (overdue.length) {
+    msg += '🚨 Overdue Customers: ' + overdue.length + '\n\n';
+  }
+
+  msg += '— Sent from Abbott Water Filters Staff Portal';
+
+  window.open('https://wa.me/923488115410?text=' + encodeURIComponent(msg), '_blank');
 }
 
 // ════════════════════════════════════════
