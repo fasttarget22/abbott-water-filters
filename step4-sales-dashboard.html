@@ -650,7 +650,7 @@ async function submitLogResult() {
     customer_name:  currentLogCustomer.name,
     phone:          currentLogCustomer.phone,
     result:         result,
-    follow_up_date: result === 'Follow Up Later' ? followUpDate : '',
+    follow_up_date: result === 'Follow Up Later' ? (followUpDate || null) : null,
     logged_by:      currentUser.name
   };
   try {
@@ -672,7 +672,7 @@ async function renderSales() {
     var today = todayStr();
     var todaySales = [];
     for (var i = 0; i < sales.length; i++) {
-      if (sales[i].date === today) todaySales.push(sales[i]);
+      if ((sales[i].sold_at || '').startsWith(today)) todaySales.push(sales[i]);
     }
     todaySales.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
     var total = 0;
@@ -731,7 +731,6 @@ async function submitSale() {
     total:          total,
     payment_method: paymentMethod,
     customer_name:  customerName,
-    date:           todayStr(),
     time:           nowTimeStr(),
     sold_by:        currentUser.name
   };
