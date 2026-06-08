@@ -418,6 +418,7 @@ var timerInterval = null;
 var loginTimeMs = 0;
 var activeJobFilter = 'today';
 var activeCompleteJobId = null;
+var jobsCache = {};
 
 // ── Date Helpers ──
 function todayStr() {
@@ -703,10 +704,15 @@ async function renderJobs() {
         html += '<div class="jc-notes">' + esc(j.notes) + '</div>';
       }
 
+      jobsCache[j.id] = j;
+
       if (j.status === 'Completed') {
         html += '<div class="jc-completed-text">&#10003; Completed</div>';
         if (j.completionNotes) {
           html += '<div class="jc-completion-notes"><strong>Notes:</strong> ' + esc(j.completionNotes) + '</div>';
+        }
+        if (j.latitude && j.longitude) {
+          html += '<div style="margin-top:8px"><a href="https://www.google.com/maps?q=' + j.latitude + ',' + j.longitude + '" target="_blank"><button class="btn btn-ghost btn-sm">📍 Navigate</button></a></div>';
         }
       } else {
         html += '<div class="jc-actions">';
@@ -715,6 +721,17 @@ async function renderJobs() {
         }
         if (j.status === 'In Progress') {
           html += '<button class="btn btn-primary btn-sm" onclick="openCompleteModal(\'' + esc(j.id) + '\')">&#10003; Complete Job</button>';
+        }
+        html += '</div>';
+        html += '<div id="loc-container-' + esc(j.id) + '" style="margin-top:8px">';
+        if (j.latitude && j.longitude) {
+          var savedLat = parseFloat(j.latitude).toFixed(4);
+          var savedLng = parseFloat(j.longitude).toFixed(4);
+          html += '<button class="btn btn-green btn-sm" disabled style="cursor:default">&#10003; Location Saved</button>';
+          html += '<div style="font-size:11px;color:var(--dim);margin-top:4px">&#128205; ' + savedLat + ', ' + savedLng + '</div>';
+          html += '<a href="https://www.google.com/maps?q=' + j.latitude + ',' + j.longitude + '" target="_blank"><button class="btn btn-ghost btn-sm" style="margin-top:4px">&#128507; Navigate</button></a>';
+        } else {
+          html += '<button class="btn btn-ghost btn-sm" id="loc-btn-' + esc(j.id) + '" onclick="captureLocation(\'' + esc(j.id) + '\')">&#128205; Capture Location</button>';
         }
         html += '</div>';
       }
@@ -738,6 +755,59 @@ async function startJob(jobId) {
     console.error('Start job error:', e.message);
     alert('Failed to start job:\n' + (e.message || e));
   }
+}
+
+// ── Capture GPS Location ──
+function captureLocation(jobId) {
+  if (!navigator.geolocation) {
+    alert('GPS not available. Please enable location services.');
+    return;
+  }
+  var btn = document.getElementById('loc-btn-' + jobId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Getting GPS…'; }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      var acc = Math.round(pos.coords.accuracy);
+
+      db.from('jobs').update({ latitude: lat, longitude: lng }, 'id', jobId).then(function() {
+        var custName = '';
+        if (jobsCache[jobId]) {
+          custName = jobsCache[jobId].customer_name || jobsCache[jobId].customer || '';
+        }
+        if (custName) {
+          return db.from('customers').select().then(function(custs) {
+            var cust = null;
+            for (var i = 0; i < custs.length; i++) {
+              if (custs[i].name === custName) { cust = custs[i]; break; }
+            }
+            if (cust) return db.from('customers').update({ latitude: lat, longitude: lng }, 'id', cust.id);
+          });
+        }
+      }).then(function() {
+        var container = document.getElementById('loc-container-' + jobId);
+        if (container) {
+          container.innerHTML =
+            '<button class="btn btn-green btn-sm" disabled style="cursor:default">&#10003; Location Saved</button>' +
+            '<div style="font-size:11px;color:var(--dim);margin-top:4px">&#128205; ' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ' (\xb1' + acc + 'm)</div>' +
+            '<a href="https://www.google.com/maps?q=' + lat + ',' + lng + '" target="_blank"><button class="btn btn-ghost btn-sm" style="margin-top:4px">&#128507; Navigate</button></a>';
+        }
+        alert('Location captured: ' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ' (accuracy: ' + acc + 'm)');
+      }).catch(function(err) {
+        console.error('Save location error:', err.message || err);
+        alert('Failed to save location: ' + (err.message || err));
+        if (btn) { btn.disabled = false; btn.textContent = '📍 Capture Location'; }
+      });
+    },
+    function(err) {
+      console.error('Geolocation error:', err.message || err);
+      alert('GPS not available. Please enable location services.');
+      if (btn) { btn.disabled = false; btn.textContent = '📍 Capture Location'; }
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
 }
 
 // ── Complete Job Modal ──

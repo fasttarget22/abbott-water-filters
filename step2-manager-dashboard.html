@@ -745,6 +745,13 @@ tbody tr:hover{background:#f8fafb}
             <label class="form-label">Notes</label>
             <textarea class="form-textarea" id="f-notes" placeholder="Any special notes…"></textarea>
           </div>
+          <div class="form-field full" id="cust-gps-row" style="display:none">
+            <label class="form-label">GPS Location (captured by technician)</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input class="form-input" id="f-gps-display" readonly style="background:var(--bg);color:var(--dim);cursor:default;flex:1" placeholder="Not captured yet">
+              <a id="f-gps-link" href="#" target="_blank"><button type="button" class="btn btn-ghost btn-sm">🗺 Open</button></a>
+            </div>
+          </div>
         </div>
       </form>
     </div>
@@ -1170,6 +1177,7 @@ async function renderDashboard(){
         <div class="urg-name">${c.name}</div>
         <div class="urg-meta">${c.model} &middot; ${c.area}</div>
       </div>
+      ${c.latitude && c.longitude ? `<a href="https://www.google.com/maps?q=${c.latitude},${c.longitude}" target="_blank" title="Navigate"><button class="btn btn-ghost btn-sm">📍</button></a>` : ''}
       <a href="${waLink(c.phone, fillTemplate(TEMPLATES[3].msg, c))}" target="_blank">
         <button class="btn btn-ghost btn-sm">💬</button>
       </a>
@@ -1241,7 +1249,10 @@ async function renderCustomers(filter){
     var daysLabel = d < 0 ? `${Math.abs(d)}d overdue` : `${d}d left`;
     return `<tr>
       <td><span style="font-size:11px;color:var(--dim)">${c.id}</span></td>
-      <td><strong>${c.name}</strong></td>
+      <td>
+        <strong>${c.name}</strong>
+        ${c.latitude && c.longitude ? `<a href="https://www.google.com/maps?q=${c.latitude},${c.longitude}" target="_blank" title="GPS: ${parseFloat(c.latitude).toFixed(4)}, ${parseFloat(c.longitude).toFixed(4)}" style="text-decoration:none;margin-left:5px">📍</a>` : ''}
+      </td>
       <td><a href="tel:+${c.phone}" style="color:var(--teal);text-decoration:none">${c.phone}</a></td>
       <td>${c.model}</td>
       <td>${fmtDate(c.install_date)}</td>
@@ -1382,6 +1393,7 @@ async function renderExpiry(){
           <button class="btn btn-ghost btn-sm">💬 WhatsApp</button>
         </a>
         <button class="btn btn-green btn-sm" onclick="navigate(document.querySelector('[data-section=schedule]'),'schedule');openSchedModal({name:'${c.name}',phone:'${c.phone}'})">📅 Book Job</button>
+        ${c.latitude && c.longitude ? `<a href="https://www.google.com/maps?q=${c.latitude},${c.longitude}" target="_blank"><button class="btn btn-ghost btn-sm">📍 Navigate</button></a>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1586,6 +1598,8 @@ function openAddCustomerModal(){
   document.getElementById('cust-modal-title').textContent = 'Add New Customer';
   document.getElementById('cust-modal-btn').textContent   = 'Save Customer';
   document.getElementById('cust-form').reset();
+  document.getElementById('cust-gps-row').style.display = 'none';
+  document.getElementById('f-gps-display').value = '';
   populateTechDropdowns('');
   openModal('modal-customer');
 }
@@ -1632,6 +1646,14 @@ async function editCustomer(id){
   document.getElementById('f-install').value = c.install_date||'';
   document.getElementById('f-tech').value    = c.technician||'';
   document.getElementById('f-notes').value   = c.notes||'';
+  if (c.latitude && c.longitude) {
+    document.getElementById('f-gps-display').value = parseFloat(c.latitude).toFixed(6) + ', ' + parseFloat(c.longitude).toFixed(6);
+    document.getElementById('f-gps-link').href = 'https://www.google.com/maps?q=' + c.latitude + ',' + c.longitude;
+    document.getElementById('cust-gps-row').style.display = '';
+  } else {
+    document.getElementById('cust-gps-row').style.display = 'none';
+    document.getElementById('f-gps-display').value = '';
+  }
   document.getElementById('cust-modal-title').textContent = 'Edit Customer';
   document.getElementById('cust-modal-btn').textContent   = 'Update Customer';
   populateTechDropdowns(c.technician||'');
@@ -2012,6 +2034,7 @@ async function renderSchedule(){
         ${j.status==='Scheduled' ? `<button class="btn btn-green btn-sm" onclick="markJobDone('${j.id}')">✓ Done</button>` : ''}
         ${j.phone ? `<a href="https://wa.me/${j.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm" title="Send confirmation">💬</button></a>` : ''}
         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((j.area||j.customer_name)+', Abbottabad')}" target="_blank" title="Open in Google Maps"><button class="btn btn-ghost btn-sm">🗺</button></a>
+        ${j.latitude && j.longitude ? `<a href="https://www.google.com/maps?q=${j.latitude},${j.longitude}" target="_blank" title="GPS: ${parseFloat(j.latitude).toFixed(4)}, ${parseFloat(j.longitude).toFixed(4)}"><button class="btn btn-ghost btn-sm">📍</button></a>` : ''}
         <button class="btn btn-ghost btn-sm" onclick="editJob('${j.id}')" title="Edit">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}')" title="Delete">🗑</button>
       </div></td>
