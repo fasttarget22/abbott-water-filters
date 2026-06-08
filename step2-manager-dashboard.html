@@ -738,9 +738,7 @@ tbody tr:hover{background:#f8fafb}
           <div class="form-field">
             <label class="form-label">Technician</label>
             <select class="form-select" id="f-tech">
-              <option>Ali Hassan</option>
-              <option>Kamran Malik</option>
-              <option>Muhammad Javed</option>
+              <option value="">Loading…</option>
             </select>
           </div>
           <div class="form-field full">
@@ -884,12 +882,16 @@ tbody tr:hover{background:#f8fafb}
     <div class="modal-body">
       <form id="emp-form" onsubmit="submitEmployee(event)">
         <div class="form-grid">
+          <div class="form-field full" id="em-id-row" style="display:none">
+            <label class="form-label">Employee ID</label>
+            <input class="form-input" id="em-id-display" readonly style="background:var(--bg);color:var(--dim);cursor:default" placeholder="Auto-generated">
+          </div>
           <div class="form-field">
             <label class="form-label">Full Name *</label>
             <input class="form-input" id="em-name" required placeholder="Full name">
           </div>
           <div class="form-field">
-            <label class="form-label">Phone *</label>
+            <label class="form-label">Phone / Mobile Number *</label>
             <input class="form-input" id="em-phone" required placeholder="923xxxxxxxxx">
           </div>
           <div class="form-field">
@@ -902,8 +904,8 @@ tbody tr:hover{background:#f8fafb}
             </select>
           </div>
           <div class="form-field">
-            <label class="form-label">Shift *</label>
-            <select class="form-select" id="em-shift" required>
+            <label class="form-label">Shift</label>
+            <select class="form-select" id="em-shift">
               <option value="">Select…</option>
               <option>Morning</option>
               <option>Evening</option>
@@ -911,11 +913,11 @@ tbody tr:hover{background:#f8fafb}
             </select>
           </div>
           <div class="form-field">
-            <label class="form-label">Area</label>
+            <label class="form-label">Area / Zone</label>
             <input class="form-input" id="em-area" placeholder="e.g. Mandian, Abbottabad">
           </div>
           <div class="form-field">
-            <label class="form-label">4-Digit PIN *</label>
+            <label class="form-label" id="em-pin-label">4-Digit PIN *</label>
             <input class="form-input" id="em-pin" type="password" maxlength="4" pattern="[0-9]{4}" required placeholder="••••">
           </div>
         </div>
@@ -963,9 +965,7 @@ tbody tr:hover{background:#f8fafb}
           <div class="form-field">
             <label class="form-label">Technician *</label>
             <select class="form-select" id="sj-tech" required>
-              <option>Ali Hassan</option>
-              <option>Kamran Malik</option>
-              <option>Muhammad Javed</option>
+              <option value="">Loading…</option>
             </select>
           </div>
           <div class="form-field">
@@ -1565,12 +1565,28 @@ var invEditId  = null;
 var fbEditId   = null;
 var empEditId  = null;
 
+async function populateTechDropdowns(selectedValue){
+  var emps;
+  try { emps = await db.from('employees').select(); }
+  catch(e){ emps = []; }
+  var techs = emps.filter(function(x){ return x.role==='Technician' && x.active!==false; });
+  var opts = techs.map(function(t){
+    return '<option value="'+t.name+'"'+(t.name===selectedValue?' selected':'')+'>'+t.name+'</option>';
+  }).join('');
+  if(!opts) opts = '<option value="">No active technicians</option>';
+  ['f-tech','sj-tech'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ el.innerHTML = opts; if(selectedValue) el.value = selectedValue; }
+  });
+}
+
 // ── Open-add wrappers (reset edit state before opening) ──
 function openAddCustomerModal(){
   custEditId = null;
   document.getElementById('cust-modal-title').textContent = 'Add New Customer';
   document.getElementById('cust-modal-btn').textContent   = 'Save Customer';
   document.getElementById('cust-form').reset();
+  populateTechDropdowns('');
   openModal('modal-customer');
 }
 function openAddFbModal(){
@@ -1593,6 +1609,9 @@ function openAddEmpModal(){
   document.getElementById('emp-modal-btn').textContent   = 'Add Employee';
   document.getElementById('emp-form').reset();
   document.getElementById('em-pin').required = true;
+  document.getElementById('em-pin-label').textContent = '4-Digit PIN *';
+  document.getElementById('em-id-row').style.display  = 'none';
+  document.getElementById('em-id-display').value      = '';
   openModal('modal-employee');
 }
 
@@ -1615,6 +1634,7 @@ async function editCustomer(id){
   document.getElementById('f-notes').value   = c.notes||'';
   document.getElementById('cust-modal-title').textContent = 'Edit Customer';
   document.getElementById('cust-modal-btn').textContent   = 'Update Customer';
+  populateTechDropdowns(c.technician||'');
   openModal('modal-customer');
 }
 
@@ -1638,6 +1658,7 @@ async function editJob(id){
   document.getElementById('sj-status').value  = j.status||'Scheduled';
   document.getElementById('job-modal-title').textContent = 'Edit Job';
   document.getElementById('job-modal-btn').textContent   = 'Update Job';
+  populateTechDropdowns(j.technician||'');
   openModal('modal-schedule');
 }
 
@@ -1689,8 +1710,11 @@ async function editEmployee(id){
   document.getElementById('em-role').value  = emp.role||'';
   document.getElementById('em-shift').value = emp.shift||'';
   document.getElementById('em-area').value  = emp.area||'';
-  document.getElementById('em-pin').value   = '';
-  document.getElementById('em-pin').required = false;
+  document.getElementById('em-pin').value        = '';
+  document.getElementById('em-pin').required      = false;
+  document.getElementById('em-pin-label').textContent = '4-Digit PIN (leave blank to keep current)';
+  document.getElementById('em-id-display').value  = emp.id;
+  document.getElementById('em-id-row').style.display = '';
   document.getElementById('emp-modal-title').textContent = 'Edit Employee';
   document.getElementById('emp-modal-btn').textContent   = 'Update Employee';
   openModal('modal-employee');
@@ -1919,6 +1943,7 @@ function openSchedModal(prefill){
   document.getElementById('sj-parts').value  = '';
   document.getElementById('sj-notes').value  = '';
   document.getElementById('sj-status').value = 'Scheduled';
+  populateTechDropdowns('');
   openModal('modal-schedule');
 }
 
@@ -2364,6 +2389,9 @@ async function submitEmployee(e){
   closeModal('modal-employee');
   document.getElementById('emp-form').reset();
   document.getElementById('em-pin').required = true;
+  document.getElementById('em-pin-label').textContent = '4-Digit PIN *';
+  document.getElementById('em-id-row').style.display  = 'none';
+  document.getElementById('em-id-display').value      = '';
   document.getElementById('emp-modal-title').textContent = 'Add Employee';
   document.getElementById('emp-modal-btn').textContent   = 'Add Employee';
   await renderEmployees();
