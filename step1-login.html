@@ -72,7 +72,7 @@ body{
 /* Wrapper */
 .wrapper{
   position:relative;z-index:1;
-  width:100%;max-width:420px;
+  width:100%;max-width:460px;
   padding:16px;
 }
 
@@ -357,6 +357,18 @@ body{
   left:50%;top:50%;margin-left:-40px;margin-top:-40px;
 }
 @keyframes ripple{to{transform:scale(2.6);opacity:0}}
+
+/* Mobile adjustments */
+@media(max-width:480px){
+  body{overflow-y:auto}
+  .wrapper{padding:10px;max-width:95vw}
+  .step{padding:22px 18px 18px}
+  .key{min-height:60px!important;padding:12px 6px}
+  .keypad{gap:8px}
+  .log-panel{right:10px;left:10px;width:auto}
+  .log-fab{bottom:12px;right:12px}
+  .pin-dots{gap:14px;margin-bottom:20px}
+}
 
 /* Hint */
 .hint{

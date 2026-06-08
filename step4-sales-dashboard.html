@@ -142,9 +142,43 @@ tbody tr:hover{background:#f8fafc;}
 /* SECTION HEADER */
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
 .section-header h2{font-size:17px;font-weight:700;color:var(--navy);}
+
+/* ── Mobile Responsive ── */
+.hamburger{display:none;align-items:center;justify-content:center;flex-direction:column}
+@media(max-width:768px){
+  body{overflow:auto!important;min-height:100vh}
+  #app{display:block!important;height:auto!important;overflow:auto!important;min-height:100vh}
+  #sidebar{position:fixed!important;left:-260px!important;width:240px;top:0;height:100vh;z-index:1000;transition:left .3s}
+  #sidebar.open{left:0!important}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
+  .sidebar-overlay.show{display:block!important}
+  #main{margin-left:0!important;width:100%!important;overflow:visible!important;display:block;height:auto}
+  #topbar{padding-left:60px!important;flex-wrap:wrap;height:auto!important;min-height:56px;padding-top:8px;padding-bottom:8px}
+  #topbar h1{font-size:15px}
+  .tb-timer{display:none}
+  #content{overflow-y:visible!important;padding:14px!important}
+  .hamburger{display:flex!important}
+  .stat-row{grid-template-columns:repeat(2,1fr)!important}
+  .reminders-grid{grid-template-columns:1fr!important}
+  .table-wrap{overflow-x:auto}
+  table{display:block!important;overflow-x:auto!important;white-space:nowrap!important}
+  .modal{width:95vw!important;max-width:95vw!important;max-height:90vh!important;overflow-y:auto!important;border-radius:12px;padding:18px!important}
+  .search-input{width:100%}
+  .table-toolbar{flex-direction:column;align-items:flex-start}
+  .rc-actions{flex-wrap:wrap}
+  .section-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .daily-summary{flex-direction:column;gap:8px}
+  .btn{min-height:44px}
+}
 </style>
 </head>
 <body>
+<button class="hamburger" onclick="toggleSidebar()" style="display:none; position:fixed; top:12px; left:12px; z-index:1001; background:var(--navy); border:none; border-radius:8px; padding:10px; cursor:pointer;">
+  <span style="display:block; width:22px; height:2px; background:white; margin:4px 0;"></span>
+  <span style="display:block; width:22px; height:2px; background:white; margin:4px 0;"></span>
+  <span style="display:block; width:22px; height:2px; background:white; margin:4px 0;"></span>
+</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 <div id="app">
 
   <!-- SIDEBAR -->
@@ -856,6 +890,24 @@ document.getElementById('log-modal').addEventListener('click', function(e) {
 });
 document.getElementById('sale-modal').addEventListener('click', function(e) {
   if (e.target === this) closeSaleModal();
+});
+
+// ── Sidebar toggle (mobile) ──
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.querySelector('.sidebar-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.querySelector('.sidebar-overlay').classList.remove('show');
+      }
+    });
+  });
 });
 
 // ---- INIT ----
