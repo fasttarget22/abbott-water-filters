@@ -448,7 +448,7 @@ tbody tr:hover{background:#f8fafb}
           <div class="section-title">All Customers</div>
           <div class="section-sub" id="cust-count">Loading…</div>
         </div>
-        <button class="btn btn-primary" onclick="openModal('modal-customer')">+ Add Customer</button>
+        <button class="btn btn-primary" onclick="openAddCustomerModal()">+ Add Customer</button>
       </div>
       <div class="search-bar">
         <input class="search-input" id="cust-search" type="text" placeholder="Search by name, phone, area or filter model…" oninput="renderCustomers(this.value)">
@@ -531,7 +531,7 @@ tbody tr:hover{background:#f8fafb}
           <div class="section-title">Customer Feedback</div>
           <div class="section-sub">Reviews and customer satisfaction</div>
         </div>
-        <button class="btn btn-primary" onclick="openModal('modal-feedback')">+ Record Feedback</button>
+        <button class="btn btn-primary" onclick="openAddFbModal()">+ Record Feedback</button>
       </div>
       <div class="stat-row" id="fb-stat-row"></div>
       <div class="fb-grid" id="fb-grid"></div>
@@ -577,7 +577,7 @@ tbody tr:hover{background:#f8fafb}
           <div class="section-title">Inventory</div>
           <div class="section-sub" id="inv-subtitle">Stock levels and reorder alerts</div>
         </div>
-        <button class="btn btn-primary" onclick="openModal('modal-inventory')">+ Add Item</button>
+        <button class="btn btn-primary" onclick="openAddInvModal()">+ Add Item</button>
       </div>
       <div class="stat-row" id="inv-stat-row"></div>
       <div class="tbl-wrap">
@@ -600,7 +600,7 @@ tbody tr:hover{background:#f8fafb}
           <div class="section-title">Employees</div>
           <div class="section-sub" id="emp-subtitle">Staff directory and management</div>
         </div>
-        <button class="btn btn-primary" onclick="openModal('modal-employee')">+ Add Employee</button>
+        <button class="btn btn-primary" onclick="openAddEmpModal()">+ Add Employee</button>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -683,7 +683,7 @@ tbody tr:hover{background:#f8fafb}
 <div class="modal-overlay" id="modal-customer" onclick="closeModalOuter(event,'modal-customer')">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">Add New Customer</div>
+      <div class="modal-title" id="cust-modal-title">Add New Customer</div>
       <button class="modal-close" onclick="closeModal('modal-customer')">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -752,7 +752,7 @@ tbody tr:hover{background:#f8fafb}
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('modal-customer')">Cancel</button>
-      <button class="btn btn-primary" onclick="document.getElementById('cust-form').requestSubmit()">Save Customer</button>
+      <button class="btn btn-primary" id="cust-modal-btn" onclick="document.getElementById('cust-form').requestSubmit()">Save Customer</button>
     </div>
   </div>
 </div>
@@ -761,7 +761,7 @@ tbody tr:hover{background:#f8fafb}
 <div class="modal-overlay" id="modal-feedback" onclick="closeModalOuter(event,'modal-feedback')">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">Record Customer Feedback</div>
+      <div class="modal-title" id="fb-modal-title">Record Customer Feedback</div>
       <button class="modal-close" onclick="closeModal('modal-feedback')">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -804,7 +804,7 @@ tbody tr:hover{background:#f8fafb}
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('modal-feedback')">Cancel</button>
-      <button class="btn btn-primary" onclick="document.getElementById('fb-form').requestSubmit()">Save Feedback</button>
+      <button class="btn btn-primary" id="fb-modal-btn" onclick="document.getElementById('fb-form').requestSubmit()">Save Feedback</button>
     </div>
   </div>
 </div>
@@ -813,7 +813,7 @@ tbody tr:hover{background:#f8fafb}
 <div class="modal-overlay" id="modal-inventory" onclick="closeModalOuter(event,'modal-inventory')">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">Add Inventory Item</div>
+      <div class="modal-title" id="inv-modal-title">Add Inventory Item</div>
       <button class="modal-close" onclick="closeModal('modal-inventory')">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -869,7 +869,7 @@ tbody tr:hover{background:#f8fafb}
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('modal-inventory')">Cancel</button>
-      <button class="btn btn-primary" onclick="document.getElementById('inv-form').requestSubmit()">Add Item</button>
+      <button class="btn btn-primary" id="inv-modal-btn" onclick="document.getElementById('inv-form').requestSubmit()">Add Item</button>
     </div>
   </div>
 </div>
@@ -878,7 +878,7 @@ tbody tr:hover{background:#f8fafb}
 <div class="modal-overlay" id="modal-employee" onclick="closeModalOuter(event,'modal-employee')">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">Add Employee</div>
+      <div class="modal-title" id="emp-modal-title">Add Employee</div>
       <button class="modal-close" onclick="closeModal('modal-employee')">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -923,7 +923,7 @@ tbody tr:hover{background:#f8fafb}
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('modal-employee')">Cancel</button>
-      <button class="btn btn-primary" onclick="document.getElementById('emp-form').requestSubmit()">Add Employee</button>
+      <button class="btn btn-primary" id="emp-modal-btn" onclick="document.getElementById('emp-form').requestSubmit()">Add Employee</button>
     </div>
   </div>
 </div>
@@ -932,7 +932,7 @@ tbody tr:hover{background:#f8fafb}
 <div class="modal-overlay" id="modal-schedule" onclick="closeModalOuter(event,'modal-schedule')">
   <div class="modal" style="max-width:620px">
     <div class="modal-head">
-      <div class="modal-title">Schedule Job</div>
+      <div class="modal-title" id="job-modal-title">Schedule Job</div>
       <button class="modal-close" onclick="closeModal('modal-schedule')">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -988,12 +988,20 @@ tbody tr:hover{background:#f8fafb}
             <label class="form-label">Notes</label>
             <textarea class="form-textarea" id="sj-notes" placeholder="Special instructions or job details…"></textarea>
           </div>
+          <div class="form-field">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="sj-status">
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
       </form>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('modal-schedule')">Cancel</button>
-      <button class="btn btn-primary" onclick="document.getElementById('sched-form').requestSubmit()">Schedule Job</button>
+      <button class="btn btn-primary" id="job-modal-btn" onclick="document.getElementById('sched-form').requestSubmit()">Schedule Job</button>
     </div>
   </div>
 </div>
@@ -1244,6 +1252,7 @@ async function renderCustomers(filter){
         <a href="${waLink(c.phone, fillTemplate(TEMPLATES[0].msg, c))}" target="_blank">
           <button class="btn btn-ghost btn-sm" title="WhatsApp">💬</button>
         </a>
+        <button class="btn btn-ghost btn-sm" onclick="editCustomer('${c.id}')" title="Edit">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')" title="Delete">🗑</button>
       </div></td>
     </tr>`;
@@ -1266,16 +1275,7 @@ async function submitCustomer(e){
   e.preventDefault();
   var installDate = document.getElementById('f-install').value;
   var lifespanMonths = parseInt(document.getElementById('f-lifespan').value);
-  var customers;
-  try {
-    customers = await db.from('customers').select();
-  } catch(err) {
-    console.error('Submit customer load error:', err.message);
-    alert('Failed to load customers:\n' + (err.message || err));
-    return;
-  }
   var c = {
-    id:           nextId(customers, 'AWF-'),
     name:         document.getElementById('f-name').value.trim(),
     phone:        document.getElementById('f-phone').value.trim(),
     address:      document.getElementById('f-address').value.trim(),
@@ -1287,15 +1287,37 @@ async function submitCustomer(e){
     technician:   document.getElementById('f-tech').value,
     notes:        document.getElementById('f-notes').value.trim(),
   };
-  try {
-    await db.from('customers').insert(c);
-  } catch(err) {
-    console.error('Save customer error:', err.message);
-    alert('Failed to save customer:\n' + (err.message || err));
-    return;
+  if(custEditId){
+    try {
+      await db.from('customers').update(c, 'id', custEditId);
+    } catch(err) {
+      console.error('Update customer error:', err.message);
+      alert('Failed to update customer:\n' + (err.message || err));
+      return;
+    }
+    custEditId = null;
+  } else {
+    var customers;
+    try {
+      customers = await db.from('customers').select();
+    } catch(err) {
+      console.error('Submit customer load error:', err.message);
+      alert('Failed to load customers:\n' + (err.message || err));
+      return;
+    }
+    c.id = nextId(customers, 'AWF-');
+    try {
+      await db.from('customers').insert(c);
+    } catch(err) {
+      console.error('Save customer error:', err.message);
+      alert('Failed to save customer:\n' + (err.message || err));
+      return;
+    }
   }
   closeModal('modal-customer');
   document.getElementById('cust-form').reset();
+  document.getElementById('cust-modal-title').textContent = 'Add New Customer';
+  document.getElementById('cust-modal-btn').textContent   = 'Save Customer';
   await renderCustomers('');
   document.getElementById('cust-search').value = '';
 }
@@ -1535,6 +1557,207 @@ function closeModal(id){ document.getElementById(id).classList.remove('open') }
 function closeModalOuter(e,id){ if(e.target===document.getElementById(id)) closeModal(id) }
 
 // ════════════════════════════════════════
+//  EDIT / DELETE — mode tracking
+// ════════════════════════════════════════
+var custEditId = null;
+var jobEditId  = null;
+var invEditId  = null;
+var fbEditId   = null;
+var empEditId  = null;
+
+// ── Open-add wrappers (reset edit state before opening) ──
+function openAddCustomerModal(){
+  custEditId = null;
+  document.getElementById('cust-modal-title').textContent = 'Add New Customer';
+  document.getElementById('cust-modal-btn').textContent   = 'Save Customer';
+  document.getElementById('cust-form').reset();
+  openModal('modal-customer');
+}
+function openAddFbModal(){
+  fbEditId = null;
+  document.getElementById('fb-modal-title').textContent = 'Record Customer Feedback';
+  document.getElementById('fb-modal-btn').textContent   = 'Save Feedback';
+  document.getElementById('fb-form').reset();
+  openModal('modal-feedback');
+}
+function openAddInvModal(){
+  invEditId = null;
+  document.getElementById('inv-modal-title').textContent = 'Add Inventory Item';
+  document.getElementById('inv-modal-btn').textContent   = 'Add Item';
+  document.getElementById('inv-form').reset();
+  openModal('modal-inventory');
+}
+function openAddEmpModal(){
+  empEditId = null;
+  document.getElementById('emp-modal-title').textContent = 'Add Employee';
+  document.getElementById('emp-modal-btn').textContent   = 'Add Employee';
+  document.getElementById('emp-form').reset();
+  document.getElementById('em-pin').required = true;
+  openModal('modal-employee');
+}
+
+// ── Edit functions ──
+async function editCustomer(id){
+  var customers;
+  try { customers = await db.from('customers').select(); }
+  catch(e){ alert('Failed to load: ' + (e.message||e)); return; }
+  var c = customers.find(function(x){ return x.id===id; });
+  if(!c) return;
+  custEditId = id;
+  document.getElementById('f-name').value    = c.name||'';
+  document.getElementById('f-phone').value   = c.phone||'';
+  document.getElementById('f-address').value = c.address||'';
+  document.getElementById('f-area').value    = c.area||'';
+  document.getElementById('f-model').value   = c.model||'';
+  document.getElementById('f-lifespan').value= c.life||'';
+  document.getElementById('f-install').value = c.install_date||'';
+  document.getElementById('f-tech').value    = c.technician||'';
+  document.getElementById('f-notes').value   = c.notes||'';
+  document.getElementById('cust-modal-title').textContent = 'Edit Customer';
+  document.getElementById('cust-modal-btn').textContent   = 'Update Customer';
+  openModal('modal-customer');
+}
+
+async function editJob(id){
+  var jobs;
+  try { jobs = await db.from('jobs').select(); }
+  catch(e){ alert('Failed to load: ' + (e.message||e)); return; }
+  var j = jobs.find(function(x){ return x.id===id; });
+  if(!j) return;
+  jobEditId = id;
+  document.getElementById('sj-name').value    = j.customer_name||'';
+  document.getElementById('sj-phone').value   = j.phone||'';
+  document.getElementById('sj-address').value = j.address||'';
+  document.getElementById('sj-type').value    = j.job_type||'';
+  document.getElementById('sj-tech').value    = j.technician||'';
+  document.getElementById('sj-date').value    = j.scheduled_date||'';
+  document.getElementById('sj-time').value    = j.scheduled_time||'';
+  document.getElementById('sj-labor').value   = j.labor||'';
+  document.getElementById('sj-parts').value   = j.parts_cost||'';
+  document.getElementById('sj-notes').value   = j.notes||'';
+  document.getElementById('sj-status').value  = j.status||'Scheduled';
+  document.getElementById('job-modal-title').textContent = 'Edit Job';
+  document.getElementById('job-modal-btn').textContent   = 'Update Job';
+  openModal('modal-schedule');
+}
+
+async function editInvItem(id){
+  var inv;
+  try { inv = await db.from('inventory').select(); }
+  catch(e){ alert('Failed to load: ' + (e.message||e)); return; }
+  var i = inv.find(function(x){ return x.id===id; });
+  if(!i) return;
+  invEditId = id;
+  document.getElementById('iv-name').value    = i.name||'';
+  document.getElementById('iv-cat').value     = i.category||'';
+  document.getElementById('iv-unit').value    = i.unit||'Pcs';
+  document.getElementById('iv-qty').value     = i.stock||0;
+  document.getElementById('iv-reorder').value = i.reorder_level||1;
+  document.getElementById('iv-price').value   = i.unit_price||0;
+  document.getElementById('iv-supplier').value= i.supplier||'';
+  document.getElementById('inv-modal-title').textContent = 'Edit Inventory Item';
+  document.getElementById('inv-modal-btn').textContent   = 'Update Item';
+  openModal('modal-inventory');
+}
+
+async function editFeedback(id){
+  var fb;
+  try { fb = await db.from('feedback').select(); }
+  catch(e){ alert('Failed to load: ' + (e.message||e)); return; }
+  var f = fb.find(function(x){ return x.id===id; });
+  if(!f) return;
+  fbEditId = id;
+  document.getElementById('fb-f-name').value    = f.customer_name||'';
+  document.getElementById('fb-f-phone').value   = f.phone||'';
+  document.getElementById('fb-f-rating').value  = f.rating||'';
+  document.getElementById('fb-f-type').value    = f.type||'';
+  document.getElementById('fb-f-comment').value = f.comment||'';
+  document.getElementById('fb-modal-title').textContent = 'Edit Feedback';
+  document.getElementById('fb-modal-btn').textContent   = 'Update Feedback';
+  openModal('modal-feedback');
+}
+
+async function editEmployee(id){
+  var emps;
+  try { emps = await db.from('employees').select(); }
+  catch(e){ alert('Failed to load: ' + (e.message||e)); return; }
+  var emp = emps.find(function(x){ return x.id===id; });
+  if(!emp) return;
+  empEditId = id;
+  document.getElementById('em-name').value  = emp.name||'';
+  document.getElementById('em-phone').value = emp.phone||'';
+  document.getElementById('em-role').value  = emp.role||'';
+  document.getElementById('em-shift').value = emp.shift||'';
+  document.getElementById('em-area').value  = emp.area||'';
+  document.getElementById('em-pin').value   = '';
+  document.getElementById('em-pin').required = false;
+  document.getElementById('emp-modal-title').textContent = 'Edit Employee';
+  document.getElementById('emp-modal-btn').textContent   = 'Update Employee';
+  openModal('modal-employee');
+}
+
+// ── Delete: Job ──
+async function deleteJob(id){
+  if(!confirm('Delete this job? This cannot be undone.')) return;
+  try {
+    await db.from('jobs').delete('id', id);
+  } catch(e) {
+    console.error('Delete job error:', e.message);
+    alert('Failed to delete job:\n' + (e.message||e));
+    return;
+  }
+  await renderSchedule();
+  await renderDashboard();
+}
+
+// ── Delete: Feedback ──
+async function deleteFeedback(id){
+  if(!confirm('Delete this feedback record? This cannot be undone.')) return;
+  try {
+    await db.from('feedback').delete('id', id);
+  } catch(e) {
+    console.error('Delete feedback error:', e.message);
+    alert('Failed to delete feedback:\n' + (e.message||e));
+    return;
+  }
+  await renderFeedback();
+}
+
+// ── Delete: Employee (with guards) ──
+async function deleteEmployee(id){
+  var session = {};
+  try { session = JSON.parse(localStorage.getItem('awf_session')||'{}'); } catch(ex){}
+  if(session.empId === id){
+    alert('You cannot delete your own account.');
+    return;
+  }
+  var emps;
+  try {
+    emps = await db.from('employees').select();
+  } catch(err) {
+    alert('Failed to load employees:\n' + (err.message||err));
+    return;
+  }
+  var target = emps.find(function(x){ return x.id===id; });
+  if(target && target.role==='Manager'){
+    var managers = emps.filter(function(x){ return x.role==='Manager'; });
+    if(managers.length <= 1){
+      alert('Cannot delete the only manager account.');
+      return;
+    }
+  }
+  if(!confirm('Delete this employee? This cannot be undone.')) return;
+  try {
+    await db.from('employees').delete('id', id);
+  } catch(err) {
+    console.error('Delete employee error:', err.message);
+    alert('Failed to delete employee:\n' + (err.message||err));
+    return;
+  }
+  await renderEmployees();
+}
+
+// ════════════════════════════════════════
 //  SESSION & TIMER
 // ════════════════════════════════════════
 function loadSession(){
@@ -1624,7 +1847,11 @@ async function renderFeedback(){
       <div class="fb-card-comment">${f.comment ? '"'+f.comment+'"' : '<em style="color:var(--dim)">No comment</em>'}</div>
       <div class="fb-card-footer">
         <div class="fb-card-date">${fmtDate(f.date)}</div>
-        ${f.phone ? `<a href="https://wa.me/${f.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm">💬 Follow up</button></a>` : ''}
+        <div style="display:flex;gap:6px;align-items:center">
+          ${f.phone ? `<a href="https://wa.me/${f.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm">💬 Follow up</button></a>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="editFeedback('${f.id}')" title="Edit">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFeedback('${f.id}')" title="Delete">🗑</button>
+        </div>
       </div>
     </div>`;
   }).join('') || '<div class="no-data" style="grid-column:1/-1">No feedback recorded yet — use "+ Record Feedback" to add the first one.</div>';
@@ -1632,31 +1859,36 @@ async function renderFeedback(){
 
 async function submitFeedback(e){
   e.preventDefault();
-  var fb;
-  try {
-    fb = await db.from('feedback').select();
-  } catch(err) {
-    console.error('Submit feedback load error:', err.message);
-    alert('Failed to load feedback:\n' + (err.message || err));
-    return;
-  }
   var entry = {
     customer_name: document.getElementById('fb-f-name').value.trim(),
     phone:        document.getElementById('fb-f-phone').value.trim(),
     rating:       parseInt(document.getElementById('fb-f-rating').value),
     type:         document.getElementById('fb-f-type').value,
     comment:      document.getElementById('fb-f-comment').value.trim(),
-    date:         todayStr()
   };
-  try {
-    await db.from('feedback').insert(entry);
-  } catch(err) {
-    console.error('Save feedback error:', err.message);
-    alert('Failed to save feedback:\n' + (err.message || err));
-    return;
+  if(fbEditId){
+    try {
+      await db.from('feedback').update(entry, 'id', fbEditId);
+    } catch(err) {
+      console.error('Update feedback error:', err.message);
+      alert('Failed to update feedback:\n' + (err.message || err));
+      return;
+    }
+    fbEditId = null;
+  } else {
+    entry.date = todayStr();
+    try {
+      await db.from('feedback').insert(entry);
+    } catch(err) {
+      console.error('Save feedback error:', err.message);
+      alert('Failed to save feedback:\n' + (err.message || err));
+      return;
+    }
   }
   closeModal('modal-feedback');
   document.getElementById('fb-form').reset();
+  document.getElementById('fb-modal-title').textContent = 'Record Customer Feedback';
+  document.getElementById('fb-modal-btn').textContent   = 'Save Feedback';
   await renderFeedback();
 }
 
@@ -1674,6 +1906,9 @@ async function schedFilter(el, key){
 
 function openSchedModal(prefill){
   prefill = prefill || {};
+  jobEditId = null;
+  document.getElementById('job-modal-title').textContent = 'Schedule Job';
+  document.getElementById('job-modal-btn').textContent   = 'Schedule Job';
   document.getElementById('sj-name').value   = prefill.name  || '';
   document.getElementById('sj-phone').value  = prefill.phone || '';
   document.getElementById('sj-address').value= '';
@@ -1683,6 +1918,7 @@ function openSchedModal(prefill){
   document.getElementById('sj-labor').value  = '';
   document.getElementById('sj-parts').value  = '';
   document.getElementById('sj-notes').value  = '';
+  document.getElementById('sj-status').value = 'Scheduled';
   openModal('modal-schedule');
 }
 
@@ -1751,7 +1987,8 @@ async function renderSchedule(){
         ${j.status==='Scheduled' ? `<button class="btn btn-green btn-sm" onclick="markJobDone('${j.id}')">✓ Done</button>` : ''}
         ${j.phone ? `<a href="https://wa.me/${j.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm" title="Send confirmation">💬</button></a>` : ''}
         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((j.area||j.customer_name)+', Abbottabad')}" target="_blank" title="Open in Google Maps"><button class="btn btn-ghost btn-sm">🗺</button></a>
-        ${j.status==='Scheduled' ? `<button class="btn btn-danger btn-sm" onclick="cancelJob('${j.id}')">✕</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="editJob('${j.id}')" title="Edit">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}')" title="Delete">🗑</button>
       </div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="7" class="no-data">No jobs for this period</td></tr>';
@@ -1783,16 +2020,7 @@ async function cancelJob(id){
 
 async function submitJob(e){
   e.preventDefault();
-  var jobs;
-  try {
-    jobs = await db.from('jobs').select();
-  } catch(err) {
-    console.error('Submit job load error:', err.message);
-    alert('Failed to load jobs:\n' + (err.message || err));
-    return;
-  }
   var job = {
-    id:             nextId(jobs,'JOB-'),
     customer_name:  document.getElementById('sj-name').value.trim(),
     phone:          document.getElementById('sj-phone').value.trim(),
     address:        document.getElementById('sj-address').value.trim(),
@@ -1803,17 +2031,39 @@ async function submitJob(e){
     labor:          document.getElementById('sj-labor').value||0,
     parts_cost:     document.getElementById('sj-parts').value||0,
     notes:          document.getElementById('sj-notes').value.trim(),
-    status:         'Scheduled'
+    status:         document.getElementById('sj-status').value||'Scheduled'
   };
-  try {
-    await db.from('jobs').insert(job);
-  } catch(err) {
-    console.error('Save job error:', err.message);
-    alert('Failed to save job:\n' + (err.message || err));
-    return;
+  if(jobEditId){
+    try {
+      await db.from('jobs').update(job, 'id', jobEditId);
+    } catch(err) {
+      console.error('Update job error:', err.message);
+      alert('Failed to update job:\n' + (err.message || err));
+      return;
+    }
+    jobEditId = null;
+  } else {
+    var jobs;
+    try {
+      jobs = await db.from('jobs').select();
+    } catch(err) {
+      console.error('Submit job load error:', err.message);
+      alert('Failed to load jobs:\n' + (err.message || err));
+      return;
+    }
+    job.id = nextId(jobs,'JOB-');
+    try {
+      await db.from('jobs').insert(job);
+    } catch(err) {
+      console.error('Save job error:', err.message);
+      alert('Failed to save job:\n' + (err.message || err));
+      return;
+    }
   }
   closeModal('modal-schedule');
   document.getElementById('sched-form').reset();
+  document.getElementById('job-modal-title').textContent = 'Schedule Job';
+  document.getElementById('job-modal-btn').textContent   = 'Schedule Job';
   await renderSchedule();
   await renderDashboard();
 }
@@ -1882,6 +2132,7 @@ async function renderInventory(){
       <td><span class="badge badge-${stCls}">${stLabel}</span></td>
       <td><div class="td-actions">
         <button class="btn btn-green btn-sm" onclick="addStock('${i.id}')">+ Stock</button>
+        <button class="btn btn-ghost btn-sm" onclick="editInvItem('${i.id}')" title="Edit">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteInvItem('${i.id}')">🗑</button>
       </div></td>
     </tr>`;
@@ -1931,16 +2182,7 @@ async function deleteInvItem(id){
 
 async function submitInventory(e){
   e.preventDefault();
-  var inv;
-  try {
-    inv = await db.from('inventory').select();
-  } catch(err) {
-    console.error('Submit inventory load error:', err.message);
-    alert('Failed to load inventory:\n' + (err.message || err));
-    return;
-  }
   var item = {
-    id:            nextId(inv,'INV-'),
     name:          document.getElementById('iv-name').value.trim(),
     category:      document.getElementById('iv-cat').value,
     unit:          document.getElementById('iv-unit').value,
@@ -1949,15 +2191,37 @@ async function submitInventory(e){
     unit_price:    parseInt(document.getElementById('iv-price').value)||0,
     supplier:      document.getElementById('iv-supplier').value.trim(),
   };
-  try {
-    await db.from('inventory').insert(item);
-  } catch(err) {
-    console.error('Save inventory error:', err.message);
-    alert('Failed to save inventory item:\n' + (err.message || err));
-    return;
+  if(invEditId){
+    try {
+      await db.from('inventory').update(item, 'id', invEditId);
+    } catch(err) {
+      console.error('Update inventory error:', err.message);
+      alert('Failed to update inventory item:\n' + (err.message || err));
+      return;
+    }
+    invEditId = null;
+  } else {
+    var inv;
+    try {
+      inv = await db.from('inventory').select();
+    } catch(err) {
+      console.error('Submit inventory load error:', err.message);
+      alert('Failed to load inventory:\n' + (err.message || err));
+      return;
+    }
+    item.id = nextId(inv,'INV-');
+    try {
+      await db.from('inventory').insert(item);
+    } catch(err) {
+      console.error('Save inventory error:', err.message);
+      alert('Failed to save inventory item:\n' + (err.message || err));
+      return;
+    }
   }
   closeModal('modal-inventory');
   document.getElementById('inv-form').reset();
+  document.getElementById('inv-modal-title').textContent = 'Add Inventory Item';
+  document.getElementById('inv-modal-btn').textContent   = 'Add Item';
   await renderInventory();
   await renderDashboard();
 }
@@ -2013,7 +2277,9 @@ async function renderEmployees(){
       <td><span class="badge badge-${active?'active':'overdue'}">${active?'Active':'Inactive'}</span></td>
       <td><div class="td-actions">
         <button class="btn btn-ghost btn-sm" onclick="resetPin('${e.id}')">🔑 Reset PIN</button>
+        <button class="btn btn-ghost btn-sm" onclick="editEmployee('${e.id}')" title="Edit">✏️</button>
         <button class="btn btn-${active?'danger':'green'} btn-sm" onclick="toggleEmployee('${e.id}')">${active?'Disable':'Enable'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${e.id}')" title="Delete">🗑</button>
       </div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="9" class="no-data">No employees found</td></tr>';
@@ -2057,33 +2323,49 @@ async function toggleEmployee(id){
 
 async function submitEmployee(e){
   e.preventDefault();
-  var emps;
-  try {
-    emps = await db.from('employees').select();
-  } catch(err) {
-    console.error('Submit employee load error:', err.message);
-    alert('Failed to load employees:\n' + (err.message || err));
-    return;
-  }
-  var emp = {
-    id:     nextId(emps,'EMP-'),
+  var empData = {
     name:   document.getElementById('em-name').value.trim(),
     phone:  document.getElementById('em-phone').value.trim(),
     role:   document.getElementById('em-role').value,
     shift:  document.getElementById('em-shift').value,
     area:   document.getElementById('em-area').value.trim(),
-    pin:    document.getElementById('em-pin').value,
-    active: true,
   };
-  try {
-    await db.from('employees').insert(emp);
-  } catch(err) {
-    console.error('Save employee error:', err.message);
-    alert('Failed to save employee:\n' + (err.message || err));
-    return;
+  if(empEditId){
+    var newPin = document.getElementById('em-pin').value;
+    if(newPin) empData.pin = newPin;
+    try {
+      await db.from('employees').update(empData, 'id', empEditId);
+    } catch(err) {
+      console.error('Update employee error:', err.message);
+      alert('Failed to update employee:\n' + (err.message || err));
+      return;
+    }
+    empEditId = null;
+  } else {
+    var emps;
+    try {
+      emps = await db.from('employees').select();
+    } catch(err) {
+      console.error('Submit employee load error:', err.message);
+      alert('Failed to load employees:\n' + (err.message || err));
+      return;
+    }
+    empData.id     = nextId(emps,'EMP-');
+    empData.pin    = document.getElementById('em-pin').value;
+    empData.active = true;
+    try {
+      await db.from('employees').insert(empData);
+    } catch(err) {
+      console.error('Save employee error:', err.message);
+      alert('Failed to save employee:\n' + (err.message || err));
+      return;
+    }
   }
   closeModal('modal-employee');
   document.getElementById('emp-form').reset();
+  document.getElementById('em-pin').required = true;
+  document.getElementById('emp-modal-title').textContent = 'Add Employee';
+  document.getElementById('emp-modal-btn').textContent   = 'Add Employee';
   await renderEmployees();
 }
 
