@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sales Dashboard — Abbott Water Filters</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0d2233;--navy2:#112840;--navy3:#1a3548;
+  --teal:#1a9bbf;--teal2:#22b8e0;--teal3:#127a96;
+  --bg:#f0f4f8;--white:#fff;--border:#e2e8ef;
+  --txt:#0d2233;--dim:#5a7080;
+  --red:#dc2626;--orange:#ea580c;--yellow:#ca8a04;--blue:#2563eb;--green:#16a34a;
+  --red-bg:#fee2e2;--orange-bg:#ffedd5;--yellow-bg:#fef9c3;--blue-bg:#dbeafe;--green-bg:#dcfce7;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;}
+#app{display:grid;grid-template-columns:240px 1fr;height:100vh;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar{background:var(--navy);display:flex;flex-direction:column;overflow-y:auto;}
+.sb-brand{padding:24px 16px 18px;text-align:center;border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-brand svg{display:block;margin:0 auto 8px;}
+.sb-title{color:var(--white);font-size:13px;font-weight:700;letter-spacing:.5px;}
+.sb-tagline{color:var(--teal2);font-size:11px;margin-top:2px;}
+.sb-nav{flex:1;padding:12px 0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;color:rgba(255,255,255,.72);cursor:pointer;border-left:3px solid transparent;transition:all .2s;font-size:13.5px;}
+.nav-item:hover{background:rgba(255,255,255,.07);color:var(--white);}
+.nav-item.active{background:rgba(26,155,191,.18);color:var(--teal2);border-left-color:var(--teal2);}
+.nav-item.locked{opacity:.4;cursor:not-allowed;}
+.nav-item.locked:hover{background:none;color:rgba(255,255,255,.72);}
+.nav-divider{height:1px;background:rgba(255,255,255,.1);margin:12px 16px 4px;}
+.nav-section-label{color:rgba(255,255,255,.35);font-size:10px;letter-spacing:1.2px;text-transform:uppercase;padding:6px 20px 4px;}
+.sb-footer{padding:16px;border-top:1px solid rgba(255,255,255,.1);}
+.sb-user{color:rgba(255,255,255,.6);font-size:12px;}
+.sb-user strong{color:var(--white);display:block;font-size:13px;}
+
+/* MAIN */
+#main{display:flex;flex-direction:column;overflow:hidden;}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;flex-shrink:0;}
+#topbar h1{font-size:18px;font-weight:700;color:var(--navy);}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;}
+.btn-primary{background:var(--teal);color:var(--white);}
+.btn-primary:hover{background:var(--teal2);}
+.btn-danger{background:var(--red);color:var(--white);}
+.btn-danger:hover{background:#b91c1c;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--txt);}
+.btn-ghost:hover{background:var(--bg);}
+#content{flex:1;overflow-y:auto;padding:28px;}
+
+/* SECTIONS */
+.section{display:none;}
+.section.active{display:block;}
+
+/* STAT CARDS */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--white);border-radius:10px;border:1px solid var(--border);padding:18px 20px;}
+.stat-card .sc-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+.stat-card .sc-val{font-size:26px;font-weight:800;color:var(--navy);}
+.stat-card .sc-val.red{color:var(--red);}
+.stat-card .sc-val.orange{color:var(--orange);}
+.stat-card .sc-val.green{color:var(--green);}
+.stat-card .sc-val.blue{color:var(--blue);}
+
+/* REMINDER CARDS */
+.reminders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+.reminder-card{background:var(--white);border-radius:10px;border:1px solid var(--border);padding:16px;border-left:4px solid var(--teal);}
+.reminder-card.rc-overdue{border-left-color:var(--red);}
+.reminder-card.rc-urgent{border-left-color:var(--orange);}
+.reminder-card.rc-due-soon{border-left-color:var(--yellow);}
+.reminder-card.rc-upcoming{border-left-color:var(--blue);}
+.rc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.rc-name{font-weight:700;font-size:15px;color:var(--navy);}
+.rc-area{font-size:12px;color:var(--dim);}
+.rc-model{font-size:12px;color:var(--dim);margin-bottom:6px;}
+.rc-days{font-size:13px;font-weight:700;margin-bottom:6px;}
+.rc-phone{font-size:13px;color:var(--dim);margin-bottom:10px;}
+.rc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.rc-actions a,.rc-actions button{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;border:none;transition:all .15s;}
+.btn-call{background:var(--blue-bg);color:var(--blue);}
+.btn-call:hover{background:#bfdbfe;}
+.btn-wa{background:var(--green-bg);color:var(--green);}
+.btn-wa:hover{background:#bbf7d0;}
+.btn-log{background:var(--navy);color:var(--white);}
+.btn-log:hover{background:var(--navy2);}
+.call-result-badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;margin-top:4px;}
+.crb-booked{background:var(--green-bg);color:var(--green);}
+.crb-no-answer{background:var(--yellow-bg);color:var(--yellow);}
+.crb-refused{background:var(--red-bg);color:var(--red);}
+.crb-follow-up{background:var(--blue-bg);color:var(--blue);}
+
+/* BADGE CSS */
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+.badge-overdue{background:var(--red-bg);color:var(--red);}
+.badge-urgent{background:var(--orange-bg);color:var(--orange);}
+.badge-due-soon{background:var(--yellow-bg);color:var(--yellow);}
+.badge-upcoming{background:var(--blue-bg);color:var(--blue);}
+.badge-active{background:var(--green-bg);color:var(--green);}
+
+/* TABLES */
+.table-wrap{background:var(--white);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.table-toolbar{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.search-input{padding:8px 14px;border:1px solid var(--border);border-radius:7px;font-size:13px;width:260px;outline:none;}
+.search-input:focus{border-color:var(--teal);}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--bg);padding:10px 14px;text-align:left;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#f8fafc;}
+.td-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.empty-msg{text-align:center;padding:40px;color:var(--dim);font-size:14px;}
+
+/* DAILY SALES */
+.daily-summary{background:var(--navy);color:var(--white);border-radius:10px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.ds-label{font-size:13px;opacity:.7;}
+.ds-amount{font-size:28px;font-weight:800;color:var(--teal2);}
+
+/* SESSIONS TABLE */
+.status-active{color:var(--green);font-weight:700;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:12px;padding:28px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18);}
+.modal h2{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:20px;}
+.form-row{margin-bottom:14px;}
+.form-row label{display:block;font-size:12px;font-weight:600;color:var(--dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:7px;font-size:13px;outline:none;font-family:inherit;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--teal);}
+.form-row textarea{resize:vertical;min-height:70px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+.hidden{display:none;}
+
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-header h2{font-size:17px;font-weight:700;color:var(--navy);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-brand">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="72" height="97" role="img" aria-label="Abbott Water Filters">
+        <defs>
+          <linearGradient id="sb-teal" x1="0" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0B6F96"/>
+          </linearGradient>
+          <linearGradient id="sb-silver" x1="200" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#D8E8F0"/><stop offset="100%" stop-color="#8AABBC"/>
+          </linearGradient>
+          <linearGradient id="sb-chrome" x1="0" y1="0" x2="200" y2="195" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#F0F5F8"/><stop offset="42%" stop-color="#C6D4DC"/><stop offset="100%" stop-color="#7A9AAC"/>
+          </linearGradient>
+          <linearGradient id="sb-drop" x1="85" y1="42" x2="115" y2="145" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0A4A6E"/>
+          </linearGradient>
+          <clipPath id="sb-inner"><path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z"/></clipPath>
+          <clipPath id="sb-left"><rect x="0" y="0" width="100" height="300"/></clipPath>
+          <clipPath id="sb-dclip"><path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z"/></clipPath>
+        </defs>
+        <path d="M100,5 L54,17 L24,33 L20,128 Q34,172 100,194 Q166,172 180,128 L176,33 L146,17 Z" fill="url(#sb-chrome)"/>
+        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-silver)"/>
+        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-teal)" clip-path="url(#sb-left)"/>
+        <path d="M100,18 L56,30 L33,45" fill="none" stroke="rgba(0,40,70,0.22)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M100,18 L144,30 L167,45" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="3" stroke-linecap="round"/>
+        <rect x="29" y="80" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+        <rect x="29" y="93" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+        <rect x="29" y="106" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+        <path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z" fill="url(#sb-drop)"/>
+        <ellipse cx="77" cy="69" rx="17" ry="23" fill="rgba(255,255,255,0.36)" transform="rotate(-20,77,69)" clip-path="url(#sb-dclip)"/>
+        <circle cx="79" cy="56" r="8.5" fill="rgba(255,255,255,0.58)" clip-path="url(#sb-dclip)"/>
+        <ellipse cx="124" cy="130" rx="23" ry="15" fill="rgba(0,22,45,0.24)" transform="rotate(25,124,130)" clip-path="url(#sb-dclip)"/>
+        <text x="100" y="222" text-anchor="middle" font-family="'Arial Black','Franklin Gothic Heavy',sans-serif" font-weight="900" font-size="37" fill="#0D2D5C">ABBOTT</text>
+        <text x="100" y="250" text-anchor="middle" font-family="'Arial Black',sans-serif" font-weight="700" font-size="15" fill="#0D2D5C" letter-spacing="3.5">WATER FILTERS</text>
+      </svg>
+      <div class="sb-title">Abbott Water Filters</div>
+      <div class="sb-tagline">Sales Portal</div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="nav-item active" data-section="reminders" onclick="showSection('reminders',this)">🔔 Reminders</div>
+      <div class="nav-item" data-section="daily-sales" onclick="showSection('daily-sales',this)">💰 Daily Sales</div>
+      <div class="nav-item" data-section="customers" onclick="showSection('customers',this)">👥 Customers</div>
+      <div class="nav-item" data-section="my-sessions" onclick="showSection('my-sessions',this)">🕐 My Sessions</div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">Restricted Access</div>
+      <div class="nav-item locked">📊 Reports 🔒</div>
+      <div class="nav-item locked">👥 Employees 🔒</div>
+      <div class="nav-item locked">📦 Inventory 🔒</div>
+      <div class="nav-item locked">📅 Schedule 🔒</div>
+    </nav>
+
+    <div class="sb-footer">
+      <div class="sb-user" style="margin-bottom:8px">
+        <strong id="sb-username">—</strong>
+        <span id="sb-role">Sales</span>
+      </div>
+      <div style="font-size:10px;color:rgba(180,200,216,.55);line-height:1.65;text-align:center">
+        <div>📞 0348-8115410 &nbsp;·&nbsp; 0335-6590095</div>
+        <div style="margin-top:3px">Kamran Plaza, Near Bhai Sweets</div>
+        <div>College Road Mandian, Abbottabad</div>
+        <div style="margin-top:5px;opacity:.5">&copy; 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="topbar">
+      <h1 id="topbar-title">Reminders</h1>
+      <div class="topbar-right">
+        <span id="topbar-date" style="color:var(--dim);font-size:13px;"></span>
+        <button class="btn btn-danger btn-sm" onclick="logout()">⏻ Logout</button>
+      </div>
+    </div>
+
+    <div id="content">
+
+      <!-- SECTION 1: REMINDERS -->
+      <div id="sec-reminders" class="section active">
+        <div class="stat-row" id="rem-stats"></div>
+        <div class="reminders-grid" id="reminders-grid"></div>
+        <div id="reminders-empty" class="empty-msg hidden">No customers due within 30 days.</div>
+      </div>
+
+      <!-- SECTION 2: DAILY SALES -->
+      <div id="sec-daily-sales" class="section">
+        <div class="section-header">
+          <h2>Daily Sales Log</h2>
+          <button class="btn btn-primary" onclick="openSaleModal()">+ Log Sale</button>
+        </div>
+        <div class="daily-summary">
+          <div>
+            <div class="ds-label">Total Revenue Today</div>
+            <div class="ds-amount" id="ds-total">Rs 0</div>
+          </div>
+          <div style="font-size:32px;opacity:.3;">💰</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Time</th><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Payment</th><th>Customer</th><th>Action</th>
+            </tr></thead>
+            <tbody id="sales-tbody"></tbody>
+          </table>
+          <div id="sales-empty" class="empty-msg hidden">No sales logged today.</div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: CUSTOMERS -->
+      <div id="sec-customers" class="section">
+        <div class="section-header">
+          <h2>Customers</h2>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <input class="search-input" type="text" id="cust-search" placeholder="Search name, phone, area..." oninput="renderCustomers()"/>
+            <span id="cust-count" style="color:var(--dim);font-size:13px;"></span>
+          </div>
+          <table>
+            <thead><tr>
+              <th>ID</th><th>Name</th><th>Phone</th><th>Filter Model</th><th>Install Date</th><th>Due Date</th><th>Status</th><th>Technician</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="cust-tbody"></tbody>
+          </table>
+          <div id="cust-empty" class="empty-msg hidden">No customers found.</div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: MY SESSIONS -->
+      <div id="sec-my-sessions" class="section">
+        <div class="section-header">
+          <h2>My Sessions</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Date</th><th>Login Time</th><th>Logout Time</th><th>Duration</th><th>Page</th>
+            </tr></thead>
+            <tbody id="sessions-tbody"></tbody>
+          </table>
+          <div id="sessions-empty" class="empty-msg hidden">No session history found.</div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- LOG RESULT MODAL -->
+<div class="modal-overlay" id="log-modal">
+  <div class="modal">
+    <h2>📋 Log Call Result — <span id="log-modal-name"></span></h2>
+    <div class="form-row">
+      <label>Result</label>
+      <select id="log-result" onchange="toggleFollowUpDate()">
+        <option value="Booked">Booked</option>
+        <option value="No Answer">No Answer</option>
+        <option value="Refused">Refused</option>
+        <option value="Follow Up Later">Follow Up Later</option>
+      </select>
+    </div>
+    <div class="form-row" id="follow-up-row" style="display:none;">
+      <label>Follow-Up Date</label>
+      <input type="date" id="log-followup-date"/>
+    </div>
+    <div class="form-row">
+      <label>Notes (optional)</label>
+      <textarea id="log-notes" placeholder="Add any notes..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeLogModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitLogResult()">Save Result</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG SALE MODAL -->
+<div class="modal-overlay" id="sale-modal">
+  <div class="modal">
+    <h2>💰 Log Sale</h2>
+    <div class="form-row">
+      <label>Item Sold *</label>
+      <input type="text" id="sale-item" placeholder="e.g. 7-Stage Filter"/>
+    </div>
+    <div class="form-row">
+      <label>Quantity</label>
+      <input type="number" id="sale-qty" value="1" min="1"/>
+    </div>
+    <div class="form-row">
+      <label>Unit Price (PKR)</label>
+      <input type="number" id="sale-price" placeholder="0" min="0"/>
+    </div>
+    <div class="form-row">
+      <label>Payment Method</label>
+      <select id="sale-payment">
+        <option value="Cash">Cash</option>
+        <option value="Card">Card</option>
+        <option value="Online Transfer">Online Transfer</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Customer Name (optional)</label>
+      <input type="text" id="sale-customer" placeholder="Customer name"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSaleModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitSale()">Save Sale</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var currentUser = null;
+var currentLogCustomer = null;
+
+// ---- UTILITIES ----
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function pad(n) { return n < 10 ? '0'+n : ''+n; }
+function nowTimeStr() {
+  var d = new Date();
+  return pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function fmtDate(str) {
+  if (!str) return '—';
+  var p = str.split('-');
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function fmtMoney(n) {
+  return 'Rs ' + Number(n).toLocaleString('en-PK');
+}
+function daysRemaining(dueDate) {
+  var today = new Date(); today.setHours(0,0,0,0);
+  return Math.round((new Date(dueDate) - today) / 86400000);
+}
+function statusInfo(days) {
+  if (days < 0)  return {label:'Overdue',  cls:'overdue',  color:'var(--red)'};
+  if (days <= 7) return {label:'Urgent',   cls:'urgent',   color:'var(--orange)'};
+  if (days <= 14)return {label:'Due Soon', cls:'due-soon', color:'var(--yellow)'};
+  if (days <= 30)return {label:'Upcoming', cls:'upcoming', color:'var(--blue)'};
+  return              {label:'Active',   cls:'active',   color:'var(--green)'};
+}
+function lsGet(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; }
+}
+function lsSet(key, val) {
+  localStorage.setItem(key, JSON.stringify(val));
+}
+function calcDuration(loginAt, logoutAt) {
+  if (!logoutAt) return '<span class="status-active">Active now</span>';
+  var ms = new Date(logoutAt) - new Date(loginAt);
+  if (ms < 0) return '—';
+  var mins = Math.floor(ms / 60000);
+  var hrs = Math.floor(mins / 60);
+  var rem = mins % 60;
+  if (hrs > 0) return hrs + 'h ' + rem + 'm';
+  return rem + 'm';
+}
+function buildWaExpiry(customer) {
+  var days = daysRemaining(customer.dueDate);
+  var absDays = Math.abs(days);
+  var name = customer.name || 'Customer';
+  var dueDate = fmtDate(customer.dueDate);
+  var msg;
+  if (days < 0) {
+    msg = 'Assalam-o-Alaikum ' + name + '! ⚠️ *URGENT:* Your water filter is *' + absDays + ' DAYS OVERDUE* (was due ' + dueDate + ').\n\nPlease contact us immediately to book your service appointment.\n\n📞 0348-8115410 | 0335-6590095\n📍 Kamran Plaza, College Road, Mandian Abbottabad\n\n— *Abbott Water Filters*';
+  } else {
+    msg = 'Assalam-o-Alaikum ' + name + '! 💧\n\nYour *Abbott Water Filter* is due for replacement in *' + absDays + ' days* (on ' + dueDate + ').\n\nPlease contact us to book your service appointment.\n\n📞 0348-8115410 | 0335-6590095\n📍 Kamran Plaza, College Road, Mandian Abbottabad\n\n— *Abbott Water Filters*';
+  }
+  return msg;
+}
+function buildWaFeedback(customer) {
+  var name = customer.name || 'Customer';
+  return 'Assalam-o-Alaikum ' + name + '! Thank you for choosing Abbott Water Filters. Please share your feedback to help us improve. ⭐ — Abbott Water Filters';
+}
+function normalizePhone(phone) {
+  if (!phone) return '';
+  var p = phone.replace(/\D/g,'');
+  if (p.startsWith('0') && p.length === 11) p = '92' + p.slice(1);
+  if (p.startsWith('92') && p.length === 12) return p;
+  return p;
+}
+
+// ---- SESSION ----
+function loadSession() {
+  var raw = localStorage.getItem('awf_session');
+  if (!raw) { window.location.href = 'step1-login.html'; return; }
+  try { currentUser = JSON.parse(raw); } catch(e) { window.location.href = 'step1-login.html'; return; }
+  if (!currentUser || currentUser.role === 'Technician') {
+    window.location.href = 'step1-login.html'; return;
+  }
+  document.getElementById('sb-username').textContent = currentUser.name || currentUser.empId;
+  document.getElementById('sb-role').textContent = currentUser.role || 'Sales';
+  document.getElementById('topbar-date').textContent = (function(){
+    var d = new Date();
+    return d.toLocaleDateString('en-PK',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+  })();
+  logActivityEntry();
+}
+
+function logActivityEntry() {
+  var log = lsGet('awf_activity_log');
+  var sessionId = currentUser.loginTime;
+  var found = false;
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].sessionId === sessionId && log[i].empId === currentUser.empId) {
+      found = true; break;
+    }
+  }
+  if (!found) {
+    log.push({
+      id: 'ACT-' + Date.now(),
+      sessionId: sessionId,
+      empId: currentUser.empId,
+      empName: currentUser.name,
+      role: currentUser.role,
+      page: 'Sales',
+      loginAt: currentUser.loginTime,
+      logoutAt: null
+    });
+    lsSet('awf_activity_log', log);
+  }
+}
+
+function logout() {
+  var log = lsGet('awf_activity_log');
+  var now = new Date().toISOString();
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].sessionId === currentUser.loginTime && log[i].empId === currentUser.empId && !log[i].logoutAt) {
+      log[i].logoutAt = now;
+      break;
+    }
+  }
+  lsSet('awf_activity_log', log);
+  localStorage.removeItem('awf_session');
+  window.location.href = 'step1-login.html';
+}
+
+// ---- NAVIGATION ----
+var sectionTitles = {
+  'reminders': 'Reminders',
+  'daily-sales': 'Daily Sales',
+  'customers': 'Customers',
+  'my-sessions': 'My Sessions'
+};
+function showSection(name, el) {
+  var items = document.querySelectorAll('.nav-item');
+  for (var i = 0; i < items.length; i++) items[i].classList.remove('active');
+  if (el) el.classList.add('active');
+  var sections = document.querySelectorAll('.section');
+  for (var j = 0; j < sections.length; j++) sections[j].classList.remove('active');
+  var sec = document.getElementById('sec-' + name);
+  if (sec) sec.classList.add('active');
+  document.getElementById('topbar-title').textContent = sectionTitles[name] || name;
+  if (name === 'reminders') renderReminders();
+  if (name === 'daily-sales') renderSales();
+  if (name === 'customers') renderCustomers();
+  if (name === 'my-sessions') renderSessions();
+}
+
+// ---- SECTION 1: REMINDERS ----
+function getLastCallResult(customerId) {
+  var log = lsGet('awf_call_log');
+  var matches = [];
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].customerId === customerId) matches.push(log[i]);
+  }
+  if (!matches.length) return null;
+  matches.sort(function(a,b){ return new Date(b.loggedAt) - new Date(a.loggedAt); });
+  return matches[0];
+}
+function countCalledToday() {
+  var log = lsGet('awf_call_log');
+  var today = todayStr();
+  var count = 0;
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].loggedBy === currentUser.name && log[i].loggedAt && log[i].loggedAt.startsWith(today)) count++;
+  }
+  return count;
+}
+function renderReminders() {
+  var customers = lsGet('awf_customers');
+  var reminders = [];
+  for (var i = 0; i < customers.length; i++) {
+    var d = daysRemaining(customers[i].dueDate);
+    if (d <= 30) reminders.push({customer: customers[i], days: d});
+  }
+  reminders.sort(function(a,b){ return a.days - b.days; });
+
+  var overdue = 0, thisWeek = 0;
+  for (var k = 0; k < reminders.length; k++) {
+    if (reminders[k].days < 0) overdue++;
+    else if (reminders[k].days <= 7) thisWeek++;
+  }
+  var calledToday = countCalledToday();
+
+  document.getElementById('rem-stats').innerHTML =
+    statCard('Total to Contact', reminders.length, '') +
+    statCard('Overdue', overdue, 'red') +
+    statCard('Due This Week', thisWeek, 'orange') +
+    statCard('Called Today', calledToday, 'green');
+
+  var grid = document.getElementById('reminders-grid');
+  var empty = document.getElementById('reminders-empty');
+  if (!reminders.length) {
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  var html = '';
+  for (var r = 0; r < reminders.length; r++) {
+    var cust = reminders[r].customer;
+    var days = reminders[r].days;
+    var info = statusInfo(days);
+    var rcCls = 'rc-' + info.cls;
+    var daysLabel = days < 0 ? Math.abs(days) + ' days overdue' : (days === 0 ? 'Due today' : days + ' days remaining');
+    var phone = cust.phone || '';
+    var waPhone = normalizePhone(phone);
+    var waMsg = encodeURIComponent(buildWaExpiry(cust));
+    var lastCall = getLastCallResult(cust.id);
+    var lastCallHtml = '';
+    if (lastCall) {
+      var crb = 'crb-' + lastCall.result.toLowerCase().replace(/ /g,'-');
+      lastCallHtml = '<div><span class="call-result-badge ' + crb + '">' + lastCall.result + '</span> <span style="font-size:11px;color:var(--dim);">' + (lastCall.loggedAt ? lastCall.loggedAt.slice(0,10) : '') + '</span></div>';
+    }
+    var custJson = escapeJson(JSON.stringify(cust));
+    html += '<div class="reminder-card ' + rcCls + '">' +
+      '<div class="rc-header"><div><div class="rc-name">' + esc(cust.name) + '</div><div class="rc-area">' + esc(cust.area||'') + '</div></div>' +
+      '<span class="badge badge-' + info.cls + '">' + info.label + '</span></div>' +
+      '<div class="rc-model">Filter: ' + esc(cust.filterModel||'—') + '</div>' +
+      '<div class="rc-days" style="color:' + info.color + ';">' + daysLabel + '</div>' +
+      '<div class="rc-phone">📞 ' + esc(phone) + '</div>' +
+      '<div class="rc-actions">' +
+        '<a class="btn-call" href="tel:+' + waPhone + '">📞 Call</a>' +
+        '<a class="btn-wa" href="https://wa.me/' + waPhone + '?text=' + waMsg + '" target="_blank">💬 WhatsApp</a>' +
+        '<button class="btn-log" onclick=\'openLogModal(' + custJson + ')\'>📋 Log Result</button>' +
+      '</div>' +
+      lastCallHtml +
+    '</div>';
+  }
+  grid.innerHTML = html;
+}
+function statCard(label, val, colorCls) {
+  return '<div class="stat-card"><div class="sc-label">' + label + '</div><div class="sc-val ' + colorCls + '">' + val + '</div></div>';
+}
+
+// ---- LOG RESULT MODAL ----
+function openLogModal(customer) {
+  currentLogCustomer = customer;
+  document.getElementById('log-modal-name').textContent = customer.name;
+  document.getElementById('log-result').value = 'Booked';
+  document.getElementById('log-notes').value = '';
+  document.getElementById('log-followup-date').value = '';
+  document.getElementById('follow-up-row').style.display = 'none';
+  document.getElementById('log-modal').classList.add('open');
+}
+function closeLogModal() {
+  document.getElementById('log-modal').classList.remove('open');
+  currentLogCustomer = null;
+}
+function toggleFollowUpDate() {
+  var val = document.getElementById('log-result').value;
+  document.getElementById('follow-up-row').style.display = val === 'Follow Up Later' ? 'block' : 'none';
+}
+function submitLogResult() {
+  if (!currentLogCustomer) return;
+  var result = document.getElementById('log-result').value;
+  var followUpDate = document.getElementById('log-followup-date').value;
+  var notes = document.getElementById('log-notes').value.trim();
+  var entry = {
+    id: 'CALL-' + Date.now(),
+    customerId: currentLogCustomer.id,
+    customerName: currentLogCustomer.name,
+    phone: currentLogCustomer.phone,
+    result: result,
+    followUpDate: result === 'Follow Up Later' ? followUpDate : '',
+    notes: notes,
+    loggedAt: new Date().toISOString(),
+    loggedBy: currentUser.name
+  };
+  var log = lsGet('awf_call_log');
+  log.push(entry);
+  lsSet('awf_call_log', log);
+  closeLogModal();
+  renderReminders();
+}
+
+// ---- SECTION 2: DAILY SALES ----
+function renderSales() {
+  var sales = lsGet('awf_daily_sales');
+  var today = todayStr();
+  var todaySales = [];
+  for (var i = 0; i < sales.length; i++) {
+    if (sales[i].date === today) todaySales.push(sales[i]);
+  }
+  todaySales.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
+  var total = 0;
+  for (var j = 0; j < todaySales.length; j++) total += Number(todaySales[j].total) || 0;
+  document.getElementById('ds-total').textContent = fmtMoney(total);
+  var tbody = document.getElementById('sales-tbody');
+  var empty = document.getElementById('sales-empty');
+  if (!todaySales.length) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  var html = '';
+  for (var k = 0; k < todaySales.length; k++) {
+    var s = todaySales[k];
+    html += '<tr>' +
+      '<td>' + esc(s.time||'') + '</td>' +
+      '<td>' + esc(s.item||'') + '</td>' +
+      '<td>' + esc(s.quantity||'') + '</td>' +
+      '<td>' + fmtMoney(s.unitPrice||0) + '</td>' +
+      '<td><strong>' + fmtMoney(s.total||0) + '</strong></td>' +
+      '<td>' + esc(s.paymentMethod||'') + '</td>' +
+      '<td>' + esc(s.customerName||'—') + '</td>' +
+      '<td><button class="btn btn-danger btn-sm" onclick="deleteSale(\'' + s.id + '\')">🗑</button></td>' +
+    '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+function openSaleModal() {
+  document.getElementById('sale-item').value = '';
+  document.getElementById('sale-qty').value = '1';
+  document.getElementById('sale-price').value = '';
+  document.getElementById('sale-payment').value = 'Cash';
+  document.getElementById('sale-customer').value = '';
+  document.getElementById('sale-modal').classList.add('open');
+}
+function closeSaleModal() {
+  document.getElementById('sale-modal').classList.remove('open');
+}
+function submitSale() {
+  var item = document.getElementById('sale-item').value.trim();
+  if (!item) { alert('Item sold is required.'); return; }
+  var quantity = parseInt(document.getElementById('sale-qty').value) || 1;
+  var unitPrice = parseFloat(document.getElementById('sale-price').value) || 0;
+  var total = quantity * unitPrice;
+  var paymentMethod = document.getElementById('sale-payment').value;
+  var customerName = document.getElementById('sale-customer').value.trim();
+  var entry = {
+    id: 'SALE-' + Date.now(),
+    item: item,
+    quantity: quantity,
+    unitPrice: unitPrice,
+    total: total,
+    paymentMethod: paymentMethod,
+    customerName: customerName,
+    date: todayStr(),
+    time: nowTimeStr(),
+    loggedBy: currentUser.name
+  };
+  var sales = lsGet('awf_daily_sales');
+  sales.push(entry);
+  lsSet('awf_daily_sales', sales);
+  closeSaleModal();
+  renderSales();
+}
+function deleteSale(id) {
+  if (!confirm('Delete this sale entry?')) return;
+  var sales = lsGet('awf_daily_sales');
+  var updated = [];
+  for (var i = 0; i < sales.length; i++) {
+    if (sales[i].id !== id) updated.push(sales[i]);
+  }
+  lsSet('awf_daily_sales', updated);
+  renderSales();
+}
+
+// ---- SECTION 3: CUSTOMERS ----
+function renderCustomers() {
+  var customers = lsGet('awf_customers');
+  var q = (document.getElementById('cust-search').value || '').toLowerCase();
+  var filtered = [];
+  for (var i = 0; i < customers.length; i++) {
+    var c = customers[i];
+    if (!q ||
+      (c.name||'').toLowerCase().indexOf(q) > -1 ||
+      (c.phone||'').toLowerCase().indexOf(q) > -1 ||
+      (c.area||'').toLowerCase().indexOf(q) > -1 ||
+      (c.filterModel||'').toLowerCase().indexOf(q) > -1
+    ) {
+      filtered.push(c);
+    }
+  }
+  document.getElementById('cust-count').textContent = filtered.length + ' customer' + (filtered.length !== 1 ? 's' : '');
+  var tbody = document.getElementById('cust-tbody');
+  var empty = document.getElementById('cust-empty');
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  var html = '';
+  for (var j = 0; j < filtered.length; j++) {
+    var cust = filtered[j];
+    var days = daysRemaining(cust.dueDate);
+    var info = statusInfo(days);
+    var waPhone = normalizePhone(cust.phone||'');
+    var waExpiryMsg = encodeURIComponent(buildWaExpiry(cust));
+    var waFeedbackMsg = encodeURIComponent(buildWaFeedback(cust));
+    html += '<tr>' +
+      '<td><span style="font-size:11px;color:var(--dim);">' + esc(cust.id||'') + '</span></td>' +
+      '<td><strong>' + esc(cust.name||'') + '</strong></td>' +
+      '<td>' + esc(cust.phone||'') + '</td>' +
+      '<td>' + esc(cust.filterModel||'—') + '</td>' +
+      '<td>' + fmtDate(cust.installDate) + '</td>' +
+      '<td>' + fmtDate(cust.dueDate) + '</td>' +
+      '<td><span class="badge badge-' + info.cls + '">' + info.label + '</span></td>' +
+      '<td>' + esc(cust.technician||'—') + '</td>' +
+      '<td><div class="td-actions">' +
+        '<a class="btn btn-sm" style="background:var(--green-bg);color:var(--green);" href="https://wa.me/' + waPhone + '?text=' + waExpiryMsg + '" target="_blank">💬 WhatsApp</a>' +
+        '<a class="btn btn-sm btn-ghost" href="https://wa.me/' + waPhone + '?text=' + waFeedbackMsg + '" target="_blank">📋 Feedback</a>' +
+      '</div></td>' +
+    '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+// ---- SECTION 4: MY SESSIONS ----
+function renderSessions() {
+  var log = lsGet('awf_activity_log');
+  var myLog = [];
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].empId === currentUser.empId) myLog.push(log[i]);
+  }
+  myLog.sort(function(a,b){ return new Date(b.loginAt) - new Date(a.loginAt); });
+  var tbody = document.getElementById('sessions-tbody');
+  var empty = document.getElementById('sessions-empty');
+  if (!myLog.length) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  var html = '';
+  for (var j = 0; j < myLog.length; j++) {
+    var entry = myLog[j];
+    var loginDt = entry.loginAt ? new Date(entry.loginAt) : null;
+    var dateStr = loginDt ? loginDt.toLocaleDateString('en-PK') : '—';
+    var loginTime = loginDt ? loginDt.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : '—';
+    var logoutTime = entry.logoutAt ? new Date(entry.logoutAt).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : null;
+    var logoutCell = logoutTime || '<span class="status-active">Active now</span>';
+    var duration = calcDuration(entry.loginAt, entry.logoutAt);
+    html += '<tr>' +
+      '<td>' + dateStr + '</td>' +
+      '<td>' + loginTime + '</td>' +
+      '<td>' + logoutCell + '</td>' +
+      '<td>' + duration + '</td>' +
+      '<td>' + esc(entry.page||'Sales') + '</td>' +
+    '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+// ---- HELPERS ----
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escapeJson(str) {
+  return str.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+// ---- CLOSE MODALS ON OVERLAY CLICK ----
+document.getElementById('log-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeLogModal();
+});
+document.getElementById('sale-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSaleModal();
+});
+
+// ---- INIT ----
+loadSession();
+renderReminders();
+</script>
+</body>
+</html>

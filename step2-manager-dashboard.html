@@ -1,0 +1,1828 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abbott Water Filters — Manager Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0d2233;--navy2:#112840;--navy3:#1a3548;
+  --teal:#1a9bbf;--teal2:#22b8e0;--teal3:#127a96;
+  --bg:#f0f4f8;--white:#fff;--border:#e2e8ef;
+  --txt:#0d2233;--dim:#5a7080;
+  --red:#dc2626;--orange:#ea580c;--yellow:#ca8a04;--blue:#2563eb;--green:#16a34a;
+  --red-bg:#fee2e2;--orange-bg:#ffedd5;--yellow-bg:#fef9c3;--blue-bg:#dbeafe;--green-bg:#dcfce7;
+}
+body{font-family:'Outfit','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);height:100vh;overflow:hidden}
+#app{display:grid;grid-template-columns:240px 1fr;height:100vh}
+
+/* ── Sidebar ── */
+#sidebar{background:var(--navy);display:flex;flex-direction:column;overflow:hidden;box-shadow:2px 0 12px rgba(0,0,0,.25)}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;gap:6px}
+.sb-logo-box{background:#fff;border-radius:12px;padding:8px 14px;display:inline-flex}
+.sb-logo-box svg{display:block}
+.sb-tagline{font-size:10px;color:rgba(192,205,216,.55);letter-spacing:.1em;text-transform:uppercase;text-align:center}
+nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:13.5px;font-weight:500;color:rgba(192,205,216,.7);transition:all .18s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(26,155,191,.1);color:#c0cdd8}
+.nav-item.active{background:rgba(26,155,191,.15);color:#fff;border-left-color:var(--teal)}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(192,205,216,.35);text-align:center}
+
+/* ── Main ── */
+#main{display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+#topbar-title{font-size:17px;font-weight:700;color:var(--navy);flex:1}
+.tb-user{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);padding:0 12px;border-right:1px solid var(--border)}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--teal3),var(--teal));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.tb-timer{font-size:12px;color:var(--dim);min-width:60px;text-align:right;font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s}
+.btn-primary{background:linear-gradient(135deg,var(--teal3),var(--teal));color:#fff;box-shadow:0 2px 8px rgba(26,155,191,.3)}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-danger{background:#fee2e2;color:var(--red)}
+.btn-danger:hover{background:#fecaca}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-ghost{background:rgba(26,155,191,.08);color:var(--teal);border:1px solid rgba(26,155,191,.2)}
+.btn-ghost:hover{background:rgba(26,155,191,.16)}
+.btn-green{background:#dcfce7;color:var(--green)}
+.btn-green:hover{background:#bbf7d0}
+.btn-orange{background:#ffedd5;color:var(--orange)}
+.btn-orange:hover{background:#fed7aa}
+.btn-logout{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.2)}
+.btn-logout:hover{background:rgba(220,38,38,.15)}
+
+#content{flex:1;overflow-y:auto;padding:24px}
+.section{display:none}
+.section.active{display:block}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-title{font-size:20px;font-weight:700;color:var(--navy)}
+.section-sub{font-size:13px;color:var(--dim);margin-top:2px}
+
+/* ── Cards ── */
+.card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+
+/* Stat cards */
+.stat-row{display:flex;gap:14px;margin-bottom:22px}
+.stat-card{flex:1;background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.stat-label{font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.stat-val{font-size:28px;font-weight:800;line-height:1}
+.stat-icon{font-size:22px;margin-bottom:8px}
+
+/* Widget grid */
+.widget-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.widget{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.widget-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.widget-empty{font-size:13px;color:var(--dim);text-align:center;padding:20px 0}
+
+/* Urgent card */
+.urg-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.urg-item:last-child{border:none}
+.urg-days{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.urg-info{flex:1;min-width:0}
+.urg-name{font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.urg-meta{font-size:11px;color:var(--dim);margin-top:1px}
+
+/* Job item */
+.job-item{padding:8px 0;border-bottom:1px solid var(--border)}
+.job-item:last-child{border:none}
+.job-name{font-size:13px;font-weight:600;color:var(--navy)}
+.job-meta{font-size:11px;color:var(--dim);margin-top:2px}
+
+/* Inventory alert item */
+.inv-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.inv-item:last-child{border:none}
+.inv-name{font-size:13px;font-weight:600;color:var(--navy)}
+.inv-qty{font-size:12px;font-weight:700;color:var(--red);background:var(--red-bg);padding:2px 8px;border-radius:12px}
+
+/* Feedback item */
+.fb-item{padding:8px 0;border-bottom:1px solid var(--border)}
+.fb-item:last-child{border:none}
+.fb-top{display:flex;align-items:center;justify-content:space-between}
+.fb-name{font-size:13px;font-weight:600;color:var(--navy)}
+.stars{color:#f59e0b;font-size:12px;letter-spacing:1px}
+.fb-comment{font-size:12px;color:var(--dim);margin-top:3px}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-overdue{background:var(--red-bg);color:var(--red)}
+.badge-urgent{background:var(--orange-bg);color:var(--orange)}
+.badge-due-soon{background:var(--yellow-bg);color:var(--yellow)}
+.badge-upcoming{background:var(--blue-bg);color:var(--blue)}
+.badge-active{background:var(--green-bg);color:var(--green)}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f8fafb;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border:none}
+tbody tr:hover{background:#f8fafb}
+.td-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── Search bar ── */
+.search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.search-input{flex:1;padding:9px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;outline:none;transition:border-color .2s;font-family:inherit}
+.search-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,155,191,.1)}
+
+/* ── Expiry cards ── */
+.expiry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.ec{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05);border-top:4px solid #e2e8ef}
+.ec.overdue{border-top-color:var(--red)}
+.ec.urgent{border-top-color:var(--orange)}
+.ec.due-soon{border-top-color:var(--yellow)}
+.ec.upcoming{border-top-color:var(--blue)}
+.ec.active{border-top-color:var(--green)}
+.ec-days{font-size:42px;font-weight:900;line-height:1;margin-bottom:4px}
+.ec-days-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.ec-name{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.ec-meta{font-size:12px;color:var(--dim);line-height:1.7}
+.ec-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+
+/* ── WhatsApp ── */
+.wa-templates{display:flex;gap:10px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
+.wa-tpl{background:var(--white);border:2px solid var(--border);border-radius:12px;padding:12px 16px;cursor:pointer;min-width:160px;transition:all .15s;flex-shrink:0}
+.wa-tpl:hover{border-color:rgba(26,155,191,.4)}
+.wa-tpl.selected{border-color:var(--teal);background:rgba(26,155,191,.05)}
+.wa-tpl-icon{font-size:22px;margin-bottom:6px}
+.wa-tpl-name{font-size:12px;font-weight:700;color:var(--navy)}
+.wa-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.wa-customers{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;max-height:380px;display:flex;flex-direction:column}
+.wa-cust-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--dim);background:#f8fafb;flex-shrink:0}
+.wa-cust-list{overflow-y:auto;flex:1}
+.wa-cust-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.wa-cust-item:hover{background:#f8fafb}
+.wa-cust-item:last-child{border:none}
+.wa-cust-item label{cursor:pointer;flex:1}
+.wa-cust-name{font-size:13px;font-weight:600;color:var(--navy)}
+.wa-cust-phone{font-size:11px;color:var(--dim)}
+.wa-preview{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px;display:flex;flex-direction:column;max-height:380px}
+.wa-preview-head{font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.wa-bubble{background:#e8f5e9;border-radius:12px 12px 4px 12px;padding:12px 14px;font-size:13px;line-height:1.6;white-space:pre-wrap;flex:1;overflow-y:auto;color:#1a2a1a;word-break:break-word}
+.wa-preview-foot{margin-top:10px;display:flex;gap:8px;align-items:center}
+.wa-send-count{font-size:12px;color:var(--dim);flex:1}
+
+/* Sent log */
+.sent-log{margin-top:8px}
+.sent-log-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:18px;width:100%;max-width:560px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.25)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:17px;font-weight:700;color:var(--navy)}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--dim);line-height:1;padding:2px 6px;border-radius:6px}
+.modal-close:hover{background:var(--border)}
+.modal-body{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-field{display:flex;flex-direction:column;gap:5px}
+.form-field.full{grid-column:span 2}
+.form-label{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.form-input,.form-select,.form-textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;outline:none;font-family:inherit;transition:border-color .2s;background:#fff;color:var(--txt)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,155,191,.1)}
+.form-textarea{resize:vertical;min-height:72px}
+
+/* Placeholder sections */
+.placeholder-section{text-align:center;padding:80px 20px;color:var(--dim)}
+.placeholder-section .ph-icon{font-size:48px;margin-bottom:16px}
+.placeholder-section h3{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.placeholder-section p{font-size:14px}
+
+/* ── Feedback ── */
+.fb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.fb-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;flex-direction:column}
+.fb-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.fb-card-name{font-size:14px;font-weight:700;color:var(--navy)}
+.fb-card-phone{font-size:12px;color:var(--dim);margin-top:2px}
+.fb-card-stars{font-size:18px;color:#f59e0b;letter-spacing:2px;margin-bottom:8px}
+.fb-card-comment{font-size:13px;color:var(--dim);line-height:1.6;flex:1;font-style:italic}
+.fb-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.fb-card-date{font-size:11px;color:var(--dim)}
+.badge-compliment{background:#dcfce7;color:var(--green)}
+.badge-suggestion{background:var(--blue-bg);color:var(--blue)}
+.badge-complaint{background:var(--red-bg);color:var(--red)}
+
+/* ── Schedule ── */
+.sched-filter-tabs{display:flex;gap:8px;margin-bottom:20px}
+.sched-tab{padding:8px 18px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;color:var(--dim);cursor:pointer;transition:all .15s;white-space:nowrap}
+.sched-tab:hover{border-color:var(--teal);color:var(--teal)}
+.sched-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sched-layout{display:grid;grid-template-columns:256px 1fr;gap:16px;align-items:start}
+.sched-timeline{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:18px;overflow-y:auto;max-height:580px}
+.sched-tl-title{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px}
+.tl-item{display:flex;gap:12px;padding-bottom:18px;position:relative}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:8px;top:20px;bottom:0;width:2px;background:var(--border)}
+.tl-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;margin-top:2px;position:relative;z-index:1;border:2px solid var(--white)}
+.tl-dot.completed{background:var(--green);box-shadow:0 0 0 2px rgba(22,163,74,.2)}
+.tl-dot.scheduled{background:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.2)}
+.tl-dot.cancelled{background:var(--dim)}
+.tl-time{font-size:11px;font-weight:700;color:var(--dim);margin-bottom:2px}
+.tl-name{font-size:13px;font-weight:600;color:var(--navy)}
+.tl-meta{font-size:11px;color:var(--dim);margin-top:1px}
+.sched-table-wrap{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden}
+
+/* ── Inventory ── */
+.stock-bar-wrap{width:90px;background:var(--border);border-radius:20px;height:8px;overflow:hidden;flex-shrink:0}
+.stock-bar{height:100%;border-radius:20px;transition:width .4s}
+.stock-bar.ok{background:var(--green)}
+.stock-bar.low{background:var(--yellow)}
+.stock-bar.out{background:var(--red)}
+
+/* ── Employees ── */
+.emp-avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.badge-manager{background:#fef3c7;color:#92400e}
+.badge-technician{background:rgba(26,155,191,.13);color:var(--teal3)}
+.badge-sales{background:#f3e8ff;color:#7c3aed}
+
+/* Misc */
+.divider{height:1px;background:var(--border);margin:20px 0}
+.text-red{color:var(--red)} .text-orange{color:var(--orange)} .text-green{color:var(--green)} .text-blue{color:var(--blue)}
+.flex{display:flex} .items-center{align-items:center} .gap-8{gap:8px} .gap-12{gap:12px} .mb-16{margin-bottom:16px}
+.no-data{text-align:center;padding:30px;color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<!-- ══ SIDEBAR ══ -->
+<aside id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="72" height="97" role="img" aria-label="Abbott Water Filters">
+        <defs>
+          <linearGradient id="sb-teal" x1="0" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0B6F96"/>
+          </linearGradient>
+          <linearGradient id="sb-silver" x1="200" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#D8E8F0"/><stop offset="100%" stop-color="#8AABBC"/>
+          </linearGradient>
+          <linearGradient id="sb-chrome" x1="0" y1="0" x2="200" y2="195" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#F0F5F8"/><stop offset="42%" stop-color="#C6D4DC"/><stop offset="100%" stop-color="#7A9AAC"/>
+          </linearGradient>
+          <linearGradient id="sb-drop" x1="85" y1="42" x2="115" y2="145" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0A4A6E"/>
+          </linearGradient>
+          <clipPath id="sb-inner"><path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z"/></clipPath>
+          <clipPath id="sb-left"><rect x="0" y="0" width="100" height="300"/></clipPath>
+          <clipPath id="sb-dclip"><path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z"/></clipPath>
+        </defs>
+        <path d="M100,5 L54,17 L24,33 L20,128 Q34,172 100,194 Q166,172 180,128 L176,33 L146,17 Z" fill="url(#sb-chrome)"/>
+        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-silver)"/>
+        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-teal)" clip-path="url(#sb-left)"/>
+        <path d="M100,18 L56,30 L33,45" fill="none" stroke="rgba(0,40,70,0.22)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M100,18 L144,30 L167,45" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="3" stroke-linecap="round"/>
+        <rect x="29" y="80" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+        <rect x="29" y="93" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+        <rect x="29" y="106" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+        <path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z" fill="url(#sb-drop)"/>
+        <ellipse cx="77" cy="69" rx="17" ry="23" fill="rgba(255,255,255,0.36)" transform="rotate(-20,77,69)" clip-path="url(#sb-dclip)"/>
+        <circle cx="79" cy="56" r="8.5" fill="rgba(255,255,255,0.58)" clip-path="url(#sb-dclip)"/>
+        <ellipse cx="124" cy="130" rx="23" ry="15" fill="rgba(0,22,45,0.24)" transform="rotate(25,124,130)" clip-path="url(#sb-dclip)"/>
+        <text x="100" y="222" text-anchor="middle" font-family="'Arial Black','Franklin Gothic Heavy',sans-serif" font-weight="900" font-size="37" fill="#0D2D5C">ABBOTT</text>
+        <text x="100" y="250" text-anchor="middle" font-family="'Arial Black',sans-serif" font-weight="700" font-size="15" fill="#0D2D5C" letter-spacing="3.5">WATER FILTERS</text>
+      </svg>
+    </div>
+    <div class="sb-tagline">Manager Portal</div>
+  </div>
+
+  <nav>
+    <div class="nav-item active" data-section="dashboard" onclick="navigate(this,'dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" data-section="customers" onclick="navigate(this,'customers')">
+      <span class="nav-icon">👥</span> All Customers
+    </div>
+    <div class="nav-item" data-section="expiry" onclick="navigate(this,'expiry')">
+      <span class="nav-icon">⏰</span> Expiry Alerts
+    </div>
+    <div class="nav-item" data-section="whatsapp" onclick="navigate(this,'whatsapp')">
+      <span class="nav-icon">💬</span> WhatsApp
+    </div>
+    <div class="nav-item" data-section="feedback" onclick="navigate(this,'feedback')">
+      <span class="nav-icon">⭐</span> Feedback
+    </div>
+    <div class="nav-item" data-section="schedule" onclick="navigate(this,'schedule')">
+      <span class="nav-icon">📅</span> Schedule
+    </div>
+    <div class="nav-item" data-section="inventory" onclick="navigate(this,'inventory')">
+      <span class="nav-icon">📦</span> Inventory
+    </div>
+    <div class="nav-item" data-section="employees" onclick="navigate(this,'employees')">
+      <span class="nav-icon">🔧</span> Employees
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div style="font-size:10px;color:rgba(180,200,216,.55);line-height:1.65;text-align:center">
+      <div style="font-weight:700;color:rgba(200,220,235,.75);margin-bottom:4px;font-size:11px">Abbott Water Filters</div>
+      <div>📞 0348-8115410 &nbsp;·&nbsp; 0335-6590095</div>
+      <div style="margin-top:3px">Kamran Plaza, Near Bhai Sweets</div>
+      <div>College Road Mandian, Abbottabad</div>
+      <div style="margin-top:5px;opacity:.5">&copy; 2026</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+
+  <!-- Top bar -->
+  <header id="topbar">
+    <div id="topbar-title">Dashboard Overview</div>
+    <div class="tb-user">
+      <div class="tb-avatar" id="tb-initials">JA</div>
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--navy)" id="tb-name">Javed Ahmed</div>
+        <div style="font-size:11px;color:var(--dim)" id="tb-role">Manager</div>
+      </div>
+    </div>
+    <div class="tb-timer" id="tb-timer">00:00</div>
+    <button class="btn btn-logout btn-sm" onclick="logout()">&#9889; Logout</button>
+  </header>
+
+  <!-- Content -->
+  <div id="content">
+
+    <!-- ── SECTION 1: Dashboard ── -->
+    <section id="sec-dashboard" class="section active">
+
+      <!-- Stat cards -->
+      <div class="stat-row" id="stat-row"></div>
+
+      <!-- 2×2 Widgets -->
+      <div class="widget-grid">
+        <div class="widget">
+          <div class="widget-title">🚨 Urgent — Top Overdue</div>
+          <div id="w-urgent"></div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">🔧 Today's Installations</div>
+          <div id="w-today"></div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">📦 Inventory Alerts</div>
+          <div id="w-inventory"></div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">⭐ Latest Feedback</div>
+          <div id="w-feedback"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION 2: All Customers ── -->
+    <section id="sec-customers" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">All Customers</div>
+          <div class="section-sub" id="cust-count">Loading…</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-customer')">+ Add Customer</button>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" id="cust-search" type="text" placeholder="Search by name, phone, area or filter model…" oninput="renderCustomers(this.value)">
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Phone</th><th>Filter Model</th>
+              <th>Install Date</th><th>Due Date</th><th>Status</th>
+              <th>Technician</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cust-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECTION 3: Expiry Alerts ── -->
+    <section id="sec-expiry" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Expiry Alerts</div>
+          <div class="section-sub">Customers whose filters need attention</div>
+        </div>
+        <button class="btn btn-primary" onclick="waAllOverdue()" id="wa-all-overdue-btn">
+          💬 WhatsApp All Overdue
+        </button>
+      </div>
+      <div class="stat-row" id="expiry-stat-row"></div>
+      <div class="expiry-grid" id="expiry-grid"></div>
+    </section>
+
+    <!-- ── SECTION 4: WhatsApp ── -->
+    <section id="sec-whatsapp" class="section">
+      <div class="section-header">
+        <div class="section-title">WhatsApp Notifications</div>
+      </div>
+
+      <!-- Template cards -->
+      <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Select Template</div>
+      <div class="wa-templates" id="wa-templates"></div>
+
+      <!-- Layout: customer list + preview -->
+      <div class="wa-layout">
+        <div class="wa-customers">
+          <div class="wa-cust-head">
+            <input type="checkbox" id="wa-select-all" onchange="waSelectAll(this.checked)">
+            <span style="flex:1">Customers</span>
+            <button class="btn btn-sm btn-ghost" onclick="waClear()">Clear</button>
+          </div>
+          <div class="wa-cust-list" id="wa-cust-list"></div>
+        </div>
+        <div class="wa-preview">
+          <div class="wa-preview-head">💬 Message Preview</div>
+          <div class="wa-bubble" id="wa-preview-bubble">Select a template and customer to preview.</div>
+          <div class="wa-preview-foot">
+            <div class="wa-send-count" id="wa-send-count">0 customers selected</div>
+            <button class="btn btn-primary btn-sm" onclick="sendWA()">Send Messages ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sent log -->
+      <div class="sent-log">
+        <div class="sent-log-title">📋 Sent Log (last 20)</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Template</th></tr></thead>
+            <tbody id="wa-log-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Feedback ── -->
+    <section id="sec-feedback" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Customer Feedback</div>
+          <div class="section-sub">Reviews and customer satisfaction</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-feedback')">+ Record Feedback</button>
+      </div>
+      <div class="stat-row" id="fb-stat-row"></div>
+      <div class="fb-grid" id="fb-grid"></div>
+    </section>
+
+    <!-- ── Schedule ── -->
+    <section id="sec-schedule" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Job Schedule</div>
+          <div class="section-sub" id="sched-subtitle">Upcoming service appointments</div>
+        </div>
+        <button class="btn btn-primary" onclick="openSchedModal()">+ Schedule Job</button>
+      </div>
+      <div class="sched-filter-tabs">
+        <div class="sched-tab active" onclick="schedFilter(this,'today')">Today</div>
+        <div class="sched-tab" onclick="schedFilter(this,'tomorrow')">Tomorrow</div>
+        <div class="sched-tab" onclick="schedFilter(this,'week')">This Week</div>
+        <div class="sched-tab" onclick="schedFilter(this,'all')">All Upcoming</div>
+      </div>
+      <div class="sched-layout">
+        <div class="sched-timeline">
+          <div class="sched-tl-title">Timeline</div>
+          <div id="sched-timeline"></div>
+        </div>
+        <div class="sched-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th><th>Customer</th><th>Type</th><th>Technician</th>
+                <th>Cost</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sched-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <!-- ── Inventory ── -->
+    <section id="sec-inventory" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Inventory</div>
+          <div class="section-sub" id="inv-subtitle">Stock levels and reorder alerts</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-inventory')">+ Add Item</button>
+      </div>
+      <div class="stat-row" id="inv-stat-row"></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Item Name &amp; Supplier</th><th>Category</th><th>Stock Level</th>
+              <th>Current Stock</th><th>Reorder Level</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Employees ── -->
+    <section id="sec-employees" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Employees</div>
+          <div class="section-sub" id="emp-subtitle">Staff directory and management</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-employee')">+ Add Employee</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Role</th><th>Phone</th>
+              <th>Shift</th><th>Area</th><th>Jobs / Month</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="emp-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══ Add Customer Modal ══ -->
+<div class="modal-overlay" id="modal-customer" onclick="closeModalOuter(event,'modal-customer')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Add New Customer</div>
+      <button class="modal-close" onclick="closeModal('modal-customer')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <form id="cust-form" onsubmit="submitCustomer(event)">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Full Name *</label>
+            <input class="form-input" id="f-name" required placeholder="e.g. Muhammad Ali">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Phone (WhatsApp) *</label>
+            <input class="form-input" id="f-phone" required placeholder="923001234567">
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Address</label>
+            <input class="form-input" id="f-address" placeholder="Street, area, city">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Area</label>
+            <input class="form-input" id="f-area" placeholder="e.g. Mandian">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Filter Model *</label>
+            <select class="form-select" id="f-model" required>
+              <option value="">Select model…</option>
+              <option>RO-5 Stage</option>
+              <option>RO-7 Stage</option>
+              <option>RO-9 Stage</option>
+              <option>UF Filter</option>
+              <option>UV Purifier</option>
+              <option>Carbon Block Filter</option>
+              <option>Sediment Filter</option>
+              <option>Alkaline Filter</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Filter Lifespan *</label>
+            <select class="form-select" id="f-lifespan" required>
+              <option value="">Select…</option>
+              <option value="3">3 months</option>
+              <option value="6">6 months</option>
+              <option value="9">9 months</option>
+              <option value="12">12 months</option>
+              <option value="18">18 months</option>
+              <option value="24">24 months</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Install Date *</label>
+            <input class="form-input" id="f-install" type="date" required>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Technician</label>
+            <select class="form-select" id="f-tech">
+              <option>Ali Hassan</option>
+              <option>Kamran Malik</option>
+              <option>Javed Ahmed</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="f-notes" placeholder="Any special notes…"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-customer')">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('cust-form').requestSubmit()">Save Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Record Feedback ── -->
+<div class="modal-overlay" id="modal-feedback" onclick="closeModalOuter(event,'modal-feedback')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Record Customer Feedback</div>
+      <button class="modal-close" onclick="closeModal('modal-feedback')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <form id="fb-form" onsubmit="submitFeedback(event)">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Customer Name *</label>
+            <input class="form-input" id="fb-f-name" required placeholder="Full name">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Phone</label>
+            <input class="form-input" id="fb-f-phone" placeholder="923xxxxxxxxx">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Rating *</label>
+            <select class="form-select" id="fb-f-rating" required>
+              <option value="">Select rating…</option>
+              <option value="5">⭐⭐⭐⭐⭐ — 5 Star (Excellent)</option>
+              <option value="4">⭐⭐⭐⭐ — 4 Star (Good)</option>
+              <option value="3">⭐⭐⭐ — 3 Star (Average)</option>
+              <option value="2">⭐⭐ — 2 Star (Poor)</option>
+              <option value="1">⭐ — 1 Star (Very Poor)</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Feedback Type *</label>
+            <select class="form-select" id="fb-f-type" required>
+              <option value="">Select type…</option>
+              <option value="Compliment">Compliment</option>
+              <option value="Suggestion">Suggestion</option>
+              <option value="Complaint">Complaint</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Comment</label>
+            <textarea class="form-textarea" id="fb-f-comment" placeholder="Customer's feedback in their own words…"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-feedback')">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('fb-form').requestSubmit()">Save Feedback</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Add Inventory Item ── -->
+<div class="modal-overlay" id="modal-inventory" onclick="closeModalOuter(event,'modal-inventory')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Add Inventory Item</div>
+      <button class="modal-close" onclick="closeModal('modal-inventory')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <form id="inv-form" onsubmit="submitInventory(event)">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label class="form-label">Item Name *</label>
+            <input class="form-input" id="iv-name" required placeholder="e.g. RO Membrane 75GPD">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Category *</label>
+            <select class="form-select" id="iv-cat" required>
+              <option value="">Select…</option>
+              <option>Filter Cartridge</option>
+              <option>Membrane</option>
+              <option>Housing</option>
+              <option>Fittings</option>
+              <option>Tubing</option>
+              <option>Tank</option>
+              <option>Tools</option>
+              <option>UV</option>
+              <option>Parts</option>
+              <option>Equipment</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Unit</label>
+            <select class="form-select" id="iv-unit">
+              <option>Pcs</option>
+              <option>Sets</option>
+              <option>Meters</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Current Stock *</label>
+            <input class="form-input" id="iv-qty" type="number" min="0" required placeholder="0">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Reorder Level *</label>
+            <input class="form-input" id="iv-reorder" type="number" min="1" required placeholder="10">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Unit Price (PKR)</label>
+            <input class="form-input" id="iv-price" type="number" min="0" placeholder="0">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Supplier</label>
+            <input class="form-input" id="iv-supplier" placeholder="Supplier name">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-inventory')">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('inv-form').requestSubmit()">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Add Employee ── -->
+<div class="modal-overlay" id="modal-employee" onclick="closeModalOuter(event,'modal-employee')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Add Employee</div>
+      <button class="modal-close" onclick="closeModal('modal-employee')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <form id="emp-form" onsubmit="submitEmployee(event)">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Full Name *</label>
+            <input class="form-input" id="em-name" required placeholder="Full name">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Phone *</label>
+            <input class="form-input" id="em-phone" required placeholder="923xxxxxxxxx">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Role *</label>
+            <select class="form-select" id="em-role" required>
+              <option value="">Select…</option>
+              <option>Manager</option>
+              <option>Technician</option>
+              <option>Sales Staff</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Shift *</label>
+            <select class="form-select" id="em-shift" required>
+              <option value="">Select…</option>
+              <option>Morning</option>
+              <option>Evening</option>
+              <option>Night</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Area</label>
+            <input class="form-input" id="em-area" placeholder="e.g. Mandian, Abbottabad">
+          </div>
+          <div class="form-field">
+            <label class="form-label">4-Digit PIN *</label>
+            <input class="form-input" id="em-pin" type="password" maxlength="4" pattern="[0-9]{4}" required placeholder="••••">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-employee')">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('emp-form').requestSubmit()">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Schedule Job ── -->
+<div class="modal-overlay" id="modal-schedule" onclick="closeModalOuter(event,'modal-schedule')">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-head">
+      <div class="modal-title">Schedule Job</div>
+      <button class="modal-close" onclick="closeModal('modal-schedule')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <form id="sched-form" onsubmit="submitJob(event)">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Customer Name *</label>
+            <input class="form-input" id="sj-name" required placeholder="Full name">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Phone</label>
+            <input class="form-input" id="sj-phone" placeholder="923xxxxxxxxx">
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Address</label>
+            <input class="form-input" id="sj-address" placeholder="Service address">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Job Type *</label>
+            <select class="form-select" id="sj-type" required>
+              <option value="">Select type…</option>
+              <option>New Installation</option>
+              <option>Filter Replacement</option>
+              <option>Repair</option>
+              <option>Inspection</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Technician *</label>
+            <select class="form-select" id="sj-tech" required>
+              <option>Ali Hassan</option>
+              <option>Kamran Malik</option>
+              <option>Javed Ahmed</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Date *</label>
+            <input class="form-input" id="sj-date" type="date" required>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Time *</label>
+            <input class="form-input" id="sj-time" type="time" required>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Labor Cost (PKR)</label>
+            <input class="form-input" id="sj-labor" type="number" min="0" placeholder="0">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Parts Cost (PKR)</label>
+            <input class="form-input" id="sj-parts" type="number" min="0" placeholder="0">
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="sj-notes" placeholder="Special instructions or job details…"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-schedule')">Cancel</button>
+      <button class="btn btn-primary" onclick="document.getElementById('sched-form').requestSubmit()">Schedule Job</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════
+var TEMPLATES = [
+  {
+    icon:'🔔', name:'Filter Expiry',
+    msg:`Assalam-o-Alaikum {customer_name}! 💧\n\nYour *Abbott Water Filter* is due for replacement in *{days} days* (on {date}).\n\nPlease contact us to book your service appointment at your convenience.\n\n📞 0348-8115410 | 0335-6590095\n📍 Kamran Plaza, College Road, Mandian Abbottabad\n\n— *Abbott Water Filters*`
+  },
+  {
+    icon:'✅', name:'Booking Confirmed',
+    msg:`Assalam-o-Alaikum {customer_name}! ✅\n\nYour filter service appointment is *CONFIRMED*.\n\n📅 Date: *{date}*\n⏰ Time: *{time}*\n👨‍🔧 Technician: *{technician_name}*\n\nPlease ensure someone is available at home. Call us for any changes.\n\n📞 0348-8115410\n— *Abbott Water Filters*`
+  },
+  {
+    icon:'⭐', name:'Feedback Request',
+    msg:`Assalam-o-Alaikum {customer_name}! 😊\n\nThank you for choosing *Abbott Water Filters*! We hope you are satisfied with our service.\n\nWe would love to hear your feedback — it helps us serve you better!\n\nPlease rate our service: ⭐⭐⭐⭐⭐\n\n📞 0348-8115410\n— *Abbott Water Filters, Abbottabad*`
+  },
+  {
+    icon:'⚠️', name:'Overdue Urgent',
+    msg:`⚠️ *URGENT NOTICE*\n\nAssalam-o-Alaikum {customer_name}!\n\nYour water filter is *{days} DAYS OVERDUE* for replacement.\n\nDrinking unfiltered water can seriously affect your health. Please call us *immediately* to schedule a replacement.\n\n📞 *0348-8115410*\n📞 *0335-6590095*\n\n— *Abbott Water Filters, Abbottabad*`
+  },
+  {
+    icon:'🎉', name:'Special Offer',
+    msg:`🎉 *SPECIAL OFFER* for you, {customer_name}!\n\nGet your water filter replaced at *20% DISCOUNT*!\n\n✅ Offer valid till: *{date}*\n✅ All filter models included\n✅ Free home service\n\nDon't miss this limited-time offer!\n\n📞 *0348-8115410* | *0335-6590095*\n— *Abbott Water Filters, Abbottabad*`
+  }
+];
+
+// ════════════════════════════════════════
+//  DATA LAYER
+// ════════════════════════════════════════
+var DB = {
+  get(k, def=[]){ try{ return JSON.parse(localStorage.getItem(k)) ?? def }catch{ return def } },
+  set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
+};
+
+function seedIfEmpty(){
+  if(DB.get('awf_seeded_v2', false)) return;
+
+  var customers = [
+    {id:'AWF-001',name:'Muhammad Ali',   phone:'923001234567',address:'45 College Road, Mandian',   area:'Mandian',   filterModel:'RO-5 Stage',       lifespanMonths:6,  installDate:'2025-06-01',technician:'Ali Hassan',  notes:''},
+    {id:'AWF-002',name:'Fatima Bibi',    phone:'923012345678',address:'12 Circular Road, Abbottabad',area:'Abbottabad',filterModel:'UF Filter',          lifespanMonths:12, installDate:'2024-06-08',technician:'Ali Hassan',  notes:'Has well water'},
+    {id:'AWF-003',name:'Ahmed Khan',     phone:'923023456789',address:'78 Havelian Road',            area:'Havelian',  filterModel:'RO-7 Stage',       lifespanMonths:6,  installDate:'2025-12-05',technician:'Kamran Malik', notes:''},
+    {id:'AWF-004',name:'Sara Malik',     phone:'923034567890',address:'23 Cantt Area',               area:'Cantt',     filterModel:'Carbon Block Filter',lifespanMonths:3,  installDate:'2026-03-10',technician:'Ali Hassan',  notes:''},
+    {id:'AWF-005',name:'Bilal Hassan',   phone:'923045678901',address:'67 Mandian Bazar',            area:'Mandian',   filterModel:'RO-5 Stage',       lifespanMonths:6,  installDate:'2025-12-18',technician:'Kamran Malik', notes:'2nd floor access'},
+    {id:'AWF-006',name:'Amna Sheikh',    phone:'923056789012',address:'34 Mirpur Road',              area:'Mirpur',    filterModel:'Alkaline Filter',   lifespanMonths:6,  installDate:'2025-12-21',technician:'Ali Hassan',  notes:''},
+    {id:'AWF-007',name:'Tariq Mehmood', phone:'923067890123',address:'89 Cantt Road',               area:'Cantt',     filterModel:'RO-7 Stage',       lifespanMonths:6,  installDate:'2025-12-28',technician:'Kamran Malik', notes:''},
+    {id:'AWF-008',name:'Zainab Ali',     phone:'923078901234',address:'15 Abbottabad City',          area:'Abbottabad',filterModel:'UV Purifier',       lifespanMonths:12, installDate:'2025-07-06',technician:'Ali Hassan',  notes:''},
+    {id:'AWF-009',name:'Hassan Raza',    phone:'923089012345',address:'56 Havelian Bypass',          area:'Havelian',  filterModel:'RO-5 Stage',       lifespanMonths:6,  installDate:'2026-01-24',technician:'Kamran Malik', notes:''},
+    {id:'AWF-010',name:'Nadia Iqbal',    phone:'923090123456',address:'28 College Road, Mandian',    area:'Mandian',   filterModel:'RO-7 Stage',       lifespanMonths:6,  installDate:'2026-02-08',technician:'Ali Hassan',  notes:''},
+  ];
+  customers.forEach(c => c.dueDate = calcDueDate(c.installDate, c.lifespanMonths));
+  DB.set('awf_customers', customers);
+
+  var today = todayStr();
+  DB.set('awf_jobs', [
+    {id:'JOB-001',customerId:'AWF-003',customerName:'Ahmed Khan',   type:'Filter Replacement',date:today,        time:'10:00',technician:'Ali Hassan', status:'Scheduled',  notes:''},
+    {id:'JOB-002',customerId:'AWF-004',customerName:'Sara Malik',   type:'Filter Replacement',date:today,        time:'14:00',technician:'Kamran Malik',status:'Scheduled',  notes:''},
+    {id:'JOB-003',customerId:'AWF-001',customerName:'Muhammad Ali', type:'Filter Replacement',date:'2026-06-01', time:'11:00',technician:'Ali Hassan', status:'Completed',  notes:''},
+    {id:'JOB-004',customerId:'AWF-005',customerName:'Bilal Hassan', type:'Filter Check',      date:'2026-06-03', time:'09:00',technician:'Kamran Malik',status:'Completed',  notes:''},
+    {id:'JOB-005',customerId:'AWF-002',customerName:'Fatima Bibi',  type:'Filter Replacement',date:'2026-06-05', time:'15:00',technician:'Ali Hassan', status:'Completed',  notes:''},
+  ]);
+
+  DB.set('awf_inventory', [
+    {id:'INV-001',name:'RO Membrane 75GPD',       category:'Membrane',        unit:'Pcs', quantity:3,  reorderLevel:10,unitPrice:2500,supplier:'AquaPure'},
+    {id:'INV-002',name:'Sediment Filter 5 Micron',category:'Filter Cartridge',unit:'Pcs', quantity:15, reorderLevel:10,unitPrice:150, supplier:'FilterPro'},
+    {id:'INV-003',name:'Carbon Block Filter',     category:'Filter Cartridge',unit:'Pcs', quantity:8,  reorderLevel:10,unitPrice:280, supplier:'AquaPure'},
+    {id:'INV-004',name:'GAC Filter',              category:'Filter Cartridge',unit:'Pcs', quantity:12, reorderLevel:10,unitPrice:220, supplier:'FilterPro'},
+    {id:'INV-005',name:'UV Lamp 11W',             category:'UV',              unit:'Pcs', quantity:2,  reorderLevel:5, unitPrice:1200,supplier:'UVTech'},
+    {id:'INV-006',name:'RO Pressure Vessel',      category:'Parts',           unit:'Pcs', quantity:6,  reorderLevel:5, unitPrice:800, supplier:'AquaPure'},
+    {id:'INV-007',name:'TDS Meter Digital',       category:'Equipment',       unit:'Pcs', quantity:4,  reorderLevel:5, unitPrice:350, supplier:'MeterKing'},
+    {id:'INV-008',name:'Alkaline Mineral Balls',  category:'Filter Cartridge',unit:'Pcs', quantity:20, reorderLevel:10,unitPrice:400, supplier:'AlkaLife'},
+  ]);
+
+  DB.set('awf_feedback', [
+    {id:'FB-001',phone:'923348115410',customerName:'Muhammad Ali',  rating:5,type:'Compliment', comment:'Excellent service! Very professional and on time.',date:'2026-06-01'},
+    {id:'FB-002',phone:'923361234567',customerName:'Fatima Bibi',   rating:4,type:'Suggestion', comment:'Good service but arrived 30 minutes late. Please improve punctuality.',date:'2026-06-05'},
+    {id:'FB-003',phone:'923359876543',customerName:'Ahmed Khan',    rating:5,type:'Compliment', comment:'Very happy with the filter quality! Best in Abbottabad.',date:'2026-06-06'},
+    {id:'FB-004',phone:'923351122334',customerName:'Sara Malik',    rating:2,type:'Complaint',  comment:'Technician did not explain the filter maintenance properly.',date:'2026-06-07'},
+    {id:'FB-005',phone:'923341234567',customerName:'Bilal Hassan',  rating:5,type:'Compliment', comment:'Highly recommended! Will definitely call again.',date:'2026-06-08'},
+  ]);
+
+  DB.set('awf_employees', [
+    {id:'EMP-001',name:'Javed Ahmed',  role:'Manager',    phone:'923481115410',shift:'Morning',area:'All Areas',          pin:'1234',active:true},
+    {id:'EMP-002',name:'Ali Hassan',   role:'Technician', phone:'923338115410',shift:'Morning',area:'Mandian, Abbottabad',pin:'2222',active:true},
+    {id:'EMP-003',name:'Kamran Malik', role:'Technician', phone:'923558115410',shift:'Morning',area:'Cantt, Havelian',    pin:'3333',active:true},
+    {id:'EMP-004',name:'Sara Malik',   role:'Sales Staff',phone:'923551122334',shift:'Evening',area:'Mandian',            pin:'4444',active:true},
+  ]);
+
+  DB.set('awf_whatsapp_log', []);
+  DB.set('awf_seeded_v2', true);
+}
+
+// ════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════
+function todayStr(){
+  return new Date().toISOString().split('T')[0];
+}
+function calcDueDate(installDate, lifespanMonths){
+  var d = new Date(installDate);
+  d.setMonth(d.getMonth() + parseInt(lifespanMonths));
+  return d.toISOString().split('T')[0];
+}
+function daysRemaining(dueDate){
+  var today = new Date(); today.setHours(0,0,0,0);
+  var due = new Date(dueDate);
+  return Math.round((due - today) / 86400000);
+}
+function statusInfo(days){
+  if(days < 0)  return {label:'Overdue',   cls:'overdue',   color:'var(--red)',    bg:'var(--red-bg)'};
+  if(days <= 7) return {label:'Urgent',    cls:'urgent',    color:'var(--orange)', bg:'var(--orange-bg)'};
+  if(days <= 14)return {label:'Due Soon',  cls:'due-soon',  color:'var(--yellow)', bg:'var(--yellow-bg)'};
+  if(days <= 30)return {label:'Upcoming',  cls:'upcoming',  color:'var(--blue)',   bg:'var(--blue-bg)'};
+  return             {label:'Active',    cls:'active',    color:'var(--green)',  bg:'var(--green-bg)'};
+}
+function fmtDate(d){
+  if(!d) return '—';
+  var dt = new Date(d);
+  return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function stars(n){ return '★'.repeat(n) + '☆'.repeat(5-n); }
+function nextId(arr, prefix){
+  var nums = arr.map(x => parseInt(x.id.replace(/\D/g,''))).filter(n=>!isNaN(n));
+  var next = nums.length ? Math.max(...nums)+1 : 1;
+  return prefix + String(next).padStart(3,'0');
+}
+function waLink(phone, msg){
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}
+function fillTemplate(tpl, customer){
+  var days = daysRemaining(customer.dueDate);
+  return tpl
+    .replace(/{customer_name}/g, customer.name)
+    .replace(/{days}/g, Math.abs(days))
+    .replace(/{date}/g, fmtDate(customer.dueDate))
+    .replace(/{time}/g, '10:00 AM')
+    .replace(/{technician_name}/g, customer.technician || 'our technician');
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+var SECTION_TITLES = {
+  dashboard:'Dashboard Overview', customers:'All Customers', expiry:'Expiry Alerts',
+  whatsapp:'WhatsApp Notifications', feedback:'Customer Feedback',
+  schedule:'Job Schedule', inventory:'Inventory', employees:'Employees'
+};
+function navigate(el, id){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  document.getElementById('topbar-title').textContent = SECTION_TITLES[id];
+  // Lazy render
+  if(id==='dashboard')  renderDashboard();
+  if(id==='customers')  renderCustomers('');
+  if(id==='expiry')     renderExpiry();
+  if(id==='whatsapp')   renderWhatsApp();
+  if(id==='feedback')   renderFeedback();
+  if(id==='schedule')   { schedActive='today'; renderSchedule(); }
+  if(id==='inventory')  renderInventory();
+  if(id==='employees')  renderEmployees();
+}
+
+// ════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════
+function renderDashboard(){
+  var customers = DB.get('awf_customers');
+  var jobs      = DB.get('awf_jobs');
+  var inventory = DB.get('awf_inventory');
+  var feedback  = DB.get('awf_feedback');
+
+  var thisMonth = new Date().toISOString().slice(0,7);
+  var overdue   = customers.filter(c => daysRemaining(c.dueDate) < 0);
+  var dueMonth  = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0 && d<=30; });
+  var jobsDone  = jobs.filter(j => j.status==='Completed' && j.date.startsWith(thisMonth));
+  var lowStock  = inventory.filter(i => i.quantity <= i.reorderLevel);
+
+  document.getElementById('stat-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">Total Customers</div>
+      <div class="stat-val" style="color:var(--teal)">${customers.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔴</div>
+      <div class="stat-label">Overdue</div>
+      <div class="stat-val text-red">${overdue.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🟠</div>
+      <div class="stat-label">Due This Month</div>
+      <div class="stat-val text-orange">${dueMonth.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-label">Jobs This Month</div>
+      <div class="stat-val text-green">${jobsDone.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-label">Low Stock Items</div>
+      <div class="stat-val" style="color:var(--yellow)">${lowStock.length}</div>
+    </div>`;
+
+  // Urgent widget — top 5 overdue sorted by most overdue
+  var urgSorted = [...overdue].sort((a,b)=>daysRemaining(a.dueDate)-daysRemaining(b.dueDate));
+  document.getElementById('w-urgent').innerHTML = urgSorted.slice(0,5).map(c=>{
+    var d = daysRemaining(c.dueDate);
+    var si = statusInfo(d);
+    return `<div class="urg-item">
+      <div class="urg-days" style="background:${si.bg};color:${si.color}">${Math.abs(d)}d</div>
+      <div class="urg-info">
+        <div class="urg-name">${c.name}</div>
+        <div class="urg-meta">${c.filterModel} &middot; ${c.area}</div>
+      </div>
+      <a href="${waLink(c.phone, fillTemplate(TEMPLATES[3].msg, c))}" target="_blank">
+        <button class="btn btn-ghost btn-sm">💬</button>
+      </a>
+    </div>`;
+  }).join('') || '<div class="widget-empty">No overdue customers 🎉</div>';
+
+  // Today's jobs
+  var todayJobs = jobs.filter(j => j.date === todayStr());
+  document.getElementById('w-today').innerHTML = todayJobs.map(j=>`
+    <div class="job-item">
+      <div class="job-name">${j.customerName}</div>
+      <div class="job-meta">⏰ ${j.time} &middot; ${j.type} &middot; 👨‍🔧 ${j.technician}</div>
+      <div class="job-meta" style="margin-top:2px">
+        <span class="badge badge-${j.status==='Completed'?'active':'upcoming'}">${j.status}</span>
+      </div>
+    </div>`).join('') || '<div class="widget-empty">No jobs scheduled for today</div>';
+
+  // Inventory alerts
+  document.getElementById('w-inventory').innerHTML = lowStock.map(i=>`
+    <div class="inv-item">
+      <div>
+        <div class="inv-name">${i.name}</div>
+        <div style="font-size:11px;color:var(--dim)">${i.category} &middot; Reorder: ${i.reorderLevel}</div>
+      </div>
+      <span class="inv-qty">Qty: ${i.quantity}</span>
+    </div>`).join('') || '<div class="widget-empty">All stock levels OK ✅</div>';
+
+  // Latest feedback
+  var latestFB = [...feedback].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  document.getElementById('w-feedback').innerHTML = latestFB.map(f=>`
+    <div class="fb-item">
+      <div class="fb-top">
+        <div class="fb-name">${f.customerName}</div>
+        <div class="stars">${stars(f.rating)}</div>
+      </div>
+      <div class="fb-comment">${f.comment}</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:3px">${fmtDate(f.date)}</div>
+    </div>`).join('') || '<div class="widget-empty">No feedback yet</div>';
+}
+
+// ════════════════════════════════════════
+//  CUSTOMERS
+// ════════════════════════════════════════
+function renderCustomers(filter=''){
+  var customers = DB.get('awf_customers');
+  var q = filter.toLowerCase();
+  var filtered = q ? customers.filter(c =>
+    c.name.toLowerCase().includes(q) ||
+    c.phone.includes(q) ||
+    c.area.toLowerCase().includes(q) ||
+    c.filterModel.toLowerCase().includes(q)
+  ) : customers;
+
+  document.getElementById('cust-count').textContent = `${filtered.length} of ${customers.length} customers`;
+
+  document.getElementById('cust-tbody').innerHTML = filtered.map(c=>{
+    var d = daysRemaining(c.dueDate);
+    var si = statusInfo(d);
+    var daysLabel = d < 0 ? `${Math.abs(d)}d overdue` : `${d}d left`;
+    return `<tr>
+      <td><span style="font-size:11px;color:var(--dim)">${c.id}</span></td>
+      <td><strong>${c.name}</strong></td>
+      <td><a href="tel:+${c.phone}" style="color:var(--teal);text-decoration:none">${c.phone}</a></td>
+      <td>${c.filterModel}</td>
+      <td>${fmtDate(c.installDate)}</td>
+      <td>${fmtDate(c.dueDate)}<br><span style="font-size:10px;color:${si.color}">${daysLabel}</span></td>
+      <td><span class="badge badge-${si.cls}">${si.label}</span></td>
+      <td>${c.technician}</td>
+      <td><div class="td-actions">
+        <a href="${waLink(c.phone, fillTemplate(TEMPLATES[0].msg, c))}" target="_blank">
+          <button class="btn btn-ghost btn-sm" title="WhatsApp">💬</button>
+        </a>
+        <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')" title="Delete">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" class="no-data">No customers found</td></tr>`;
+}
+
+function deleteCustomer(id){
+  if(!confirm('Delete this customer? This cannot be undone.')) return;
+  var customers = DB.get('awf_customers').filter(c => c.id !== id);
+  DB.set('awf_customers', customers);
+  renderCustomers(document.getElementById('cust-search').value);
+}
+
+function submitCustomer(e){
+  e.preventDefault();
+  var customers = DB.get('awf_customers');
+  var installDate = document.getElementById('f-install').value;
+  var lifespanMonths = parseInt(document.getElementById('f-lifespan').value);
+  var c = {
+    id:           nextId(customers, 'AWF-'),
+    name:         document.getElementById('f-name').value.trim(),
+    phone:        document.getElementById('f-phone').value.trim(),
+    address:      document.getElementById('f-address').value.trim(),
+    area:         document.getElementById('f-area').value.trim(),
+    filterModel:  document.getElementById('f-model').value,
+    lifespanMonths,
+    installDate,
+    dueDate:      calcDueDate(installDate, lifespanMonths),
+    technician:   document.getElementById('f-tech').value,
+    notes:        document.getElementById('f-notes').value.trim(),
+  };
+  customers.push(c);
+  DB.set('awf_customers', customers);
+  closeModal('modal-customer');
+  document.getElementById('cust-form').reset();
+  renderCustomers('');
+  document.getElementById('cust-search').value = '';
+}
+
+// ════════════════════════════════════════
+//  EXPIRY ALERTS
+// ════════════════════════════════════════
+function renderExpiry(){
+  var customers = DB.get('awf_customers');
+
+  var overdue   = customers.filter(c => daysRemaining(c.dueDate) < 0).length;
+  var thisWeek  = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0&&d<=7; }).length;
+  var thisMonth = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0&&d<=30; }).length;
+
+  document.getElementById('expiry-stat-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon">🔴</div>
+      <div class="stat-label">Overdue</div>
+      <div class="stat-val text-red">${overdue}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🟠</div>
+      <div class="stat-label">Due This Week</div>
+      <div class="stat-val text-orange">${thisWeek}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🟡</div>
+      <div class="stat-label">Due This Month</div>
+      <div class="stat-val text-orange">${thisMonth}</div>
+    </div>`;
+
+  var sorted = [...customers].sort((a,b) => daysRemaining(a.dueDate) - daysRemaining(b.dueDate));
+
+  document.getElementById('expiry-grid').innerHTML = sorted.map(c=>{
+    var d = daysRemaining(c.dueDate);
+    var si = statusInfo(d);
+    var daysDisplay = d < 0 ? `−${Math.abs(d)}` : `+${d}`;
+    var label = d < 0 ? 'days overdue' : 'days remaining';
+    var waMsgExpiry = fillTemplate(TEMPLATES[d<0 ? 3 : 0].msg, c);
+    return `<div class="ec ${si.cls}">
+      <div class="ec-days" style="color:${si.color}">${daysDisplay}</div>
+      <div class="ec-days-label" style="color:${si.color}">${label}</div>
+      <div class="ec-name">${c.name}</div>
+      <div class="ec-meta">
+        📞 ${c.phone}<br>
+        📍 ${c.area}<br>
+        🔧 ${c.filterModel}<br>
+        📅 Due: ${fmtDate(c.dueDate)}<br>
+        👨‍🔧 ${c.technician}
+      </div>
+      <div class="ec-actions">
+        <a href="${waLink(c.phone, waMsgExpiry)}" target="_blank" onclick="logWA(event,'${c.name}','${c.phone}','${d<0?'Overdue Urgent':'Filter Expiry'}')">
+          <button class="btn btn-ghost btn-sm">💬 WhatsApp</button>
+        </a>
+        <button class="btn btn-green btn-sm" onclick="navigate(document.querySelector('[data-section=schedule]'),'schedule');openSchedModal({name:'${c.name}',phone:'${c.phone}'})">📅 Book Job</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function waAllOverdue(){
+  var customers = DB.get('awf_customers');
+  var overdue = customers.filter(c => daysRemaining(c.dueDate) < 0);
+  if(!overdue.length){ alert('No overdue customers.'); return; }
+  if(!confirm(`Send WhatsApp to ${overdue.length} overdue customers? Each will open in a new tab.`)) return;
+  overdue.forEach((c, i) => {
+    setTimeout(() => {
+      window.open(waLink(c.phone, fillTemplate(TEMPLATES[3].msg, c)), '_blank');
+      logWASilent(c.name, c.phone, 'Overdue Urgent');
+    }, i * 350);
+  });
+}
+
+// ════════════════════════════════════════
+//  WHATSAPP
+// ════════════════════════════════════════
+let selectedTpl = 0;
+let selectedCusts = new Set();
+
+function renderWhatsApp(){
+  // Template cards
+  document.getElementById('wa-templates').innerHTML = TEMPLATES.map((t,i)=>`
+    <div class="wa-tpl ${i===selectedTpl?'selected':''}" onclick="selectTpl(${i})">
+      <div class="wa-tpl-icon">${t.icon}</div>
+      <div class="wa-tpl-name">${t.name}</div>
+    </div>`).join('');
+
+  // Customer list
+  var customers = DB.get('awf_customers');
+  document.getElementById('wa-cust-list').innerHTML = customers.map(c=>{
+    var d = daysRemaining(c.dueDate);
+    var si = statusInfo(d);
+    var checked = selectedCusts.has(c.id) ? 'checked' : '';
+    return `<div class="wa-cust-item" onclick="toggleCust(event,'${c.id}')">
+      <input type="checkbox" ${checked} id="wc-${c.id}" onchange="toggleCustCb('${c.id}',this.checked)">
+      <div>
+        <div class="wa-cust-name">${c.name} <span class="badge badge-${si.cls}" style="font-size:10px">${si.label}</span></div>
+        <div class="wa-cust-phone">📞 ${c.phone}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateWAPreview();
+  renderWALog();
+}
+
+function selectTpl(i){
+  selectedTpl = i;
+  document.querySelectorAll('.wa-tpl').forEach((el,idx)=>el.classList.toggle('selected',idx===i));
+  updateWAPreview();
+}
+
+function toggleCust(e, id){
+  if(e.target.tagName==='INPUT') return;
+  var cb = document.getElementById('wc-'+id);
+  if(!cb) return;
+  cb.checked = !cb.checked;
+  toggleCustCb(id, cb.checked);
+}
+function toggleCustCb(id, checked){
+  if(checked) selectedCusts.add(id); else selectedCusts.delete(id);
+  document.getElementById('wa-send-count').textContent = `${selectedCusts.size} customer${selectedCusts.size!==1?'s':''} selected`;
+  document.getElementById('wa-select-all').checked = selectedCusts.size === DB.get('awf_customers').length;
+  updateWAPreview();
+}
+function waSelectAll(checked){
+  var customers = DB.get('awf_customers');
+  if(checked) customers.forEach(c => selectedCusts.add(c.id));
+  else selectedCusts.clear();
+  renderWhatsApp();
+}
+function waClear(){ selectedCusts.clear(); renderWhatsApp(); }
+
+function updateWAPreview(){
+  var customers = DB.get('awf_customers');
+  var previewCust = selectedCusts.size
+    ? customers.find(c => selectedCusts.has(c.id))
+    : customers[0];
+  var msg = previewCust
+    ? fillTemplate(TEMPLATES[selectedTpl].msg, previewCust)
+    : TEMPLATES[selectedTpl].msg;
+  document.getElementById('wa-preview-bubble').textContent = msg;
+}
+
+function sendWA(){
+  if(!selectedCusts.size){ alert('Select at least one customer.'); return; }
+  var customers = DB.get('awf_customers');
+  var tpl = TEMPLATES[selectedTpl];
+  var toSend = customers.filter(c => selectedCusts.has(c.id));
+  if(!confirm(`Send "${tpl.name}" to ${toSend.length} customer(s)?`)) return;
+  toSend.forEach((c,i) => {
+    setTimeout(() => {
+      var msg = fillTemplate(tpl.msg, c);
+      window.open(waLink(c.phone, msg), '_blank');
+      logWASilent(c.name, c.phone, tpl.name);
+    }, i * 350);
+  });
+  selectedCusts.clear();
+  setTimeout(() => renderWhatsApp(), toSend.length * 350 + 100);
+}
+
+function logWA(e, name, phone, tplName){
+  logWASilent(name, phone, tplName);
+}
+function logWASilent(name, phone, tplName){
+  var log = DB.get('awf_whatsapp_log');
+  log.unshift({
+    id: 'WA-'+Date.now(),
+    customerName: name, phone, template: tplName,
+    sentAt: new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
+  });
+  DB.set('awf_whatsapp_log', log.slice(0,20));
+  if(document.getElementById('wa-log-tbody')) renderWALog();
+}
+function renderWALog(){
+  var log = DB.get('awf_whatsapp_log');
+  document.getElementById('wa-log-tbody').innerHTML = log.map(e=>`
+    <tr>
+      <td>${e.sentAt}</td>
+      <td>${e.customerName}</td>
+      <td>${e.phone}</td>
+      <td><span class="badge badge-active">${e.template}</span></td>
+    </tr>`).join('') || '<tr><td colspan="4" class="no-data">No messages sent yet</td></tr>';
+}
+
+// ════════════════════════════════════════
+//  MODAL
+// ════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function closeModalOuter(e,id){ if(e.target===document.getElementById(id)) closeModal(id) }
+
+// ════════════════════════════════════════
+//  SESSION & TIMER
+// ════════════════════════════════════════
+function loadSession(){
+  try{
+    var sess = JSON.parse(localStorage.getItem('awf_session'));
+    if(!sess || sess.role !== 'Manager'){
+      window.location.href = 'step1-login.html';
+      return;
+    }
+    document.getElementById('tb-name').textContent = sess.name || 'Javed Ahmed';
+    document.getElementById('tb-role').textContent = sess.role || 'Manager';
+    var init = (sess.name||'JA').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('tb-initials').textContent = init;
+  }catch(e){
+    window.location.href = 'step1-login.html';
+  }
+}
+let timerSecs = 0, timerInt;
+function startTimer(){
+  timerInt = setInterval(()=>{
+    timerSecs++;
+    var m = String(Math.floor(timerSecs/60)).padStart(2,'0');
+    var s = String(timerSecs%60).padStart(2,'0');
+    document.getElementById('tb-timer').textContent = `${m}:${s}`;
+  }, 1000);
+}
+function logout(){
+  clearInterval(timerInt);
+  localStorage.removeItem('awf_session');
+  window.location.href = 'step1-login.html';
+}
+
+// ════════════════════════════════════════
+//  FEEDBACK
+// ════════════════════════════════════════
+function renderFeedback(){
+  var fb = DB.get('awf_feedback');
+  var total = fb.length;
+  var avg   = total ? (fb.reduce((s,f)=>s+f.rating,0)/total).toFixed(1) : '–';
+  var five  = fb.filter(f=>f.rating===5).length;
+  var comps = fb.filter(f=>f.type==='Complaint').length;
+
+  document.getElementById('fb-stat-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:28px">⭐</div>
+      <div class="stat-label">Average Rating</div>
+      <div class="stat-val" style="color:#f59e0b">${avg}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:28px">📝</div>
+      <div class="stat-label">Total Reviews</div>
+      <div class="stat-val" style="color:var(--teal)">${total}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:28px">🌟</div>
+      <div class="stat-label">5-Star Reviews</div>
+      <div class="stat-val" style="color:var(--green)">${five}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:28px">⚠️</div>
+      <div class="stat-label">Complaints</div>
+      <div class="stat-val" style="color:var(--red)">${comps}</div>
+    </div>`;
+
+  var sorted = [...fb].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('fb-grid').innerHTML = sorted.map(f=>{
+    var typeCls = {Compliment:'compliment',Suggestion:'suggestion',Complaint:'complaint'}[f.type]||'upcoming';
+    var waMsg = encodeURIComponent(`Assalam o Alaikum ${f.customerName}! Thank you for your valuable feedback. We appreciate your time. — Abbott Water Filters`);
+    return `<div class="fb-card">
+      <div class="fb-card-top">
+        <div>
+          <div class="fb-card-name">${f.customerName}</div>
+          <div class="fb-card-phone">${f.phone ? '📞 '+f.phone : ''}</div>
+        </div>
+        <span class="badge badge-${typeCls}">${f.type||'General'}</span>
+      </div>
+      <div class="fb-card-stars">${stars(f.rating)}</div>
+      <div class="fb-card-comment">${f.comment ? '"'+f.comment+'"' : '<em style="color:var(--dim)">No comment</em>'}</div>
+      <div class="fb-card-footer">
+        <div class="fb-card-date">${fmtDate(f.date)}</div>
+        ${f.phone ? `<a href="https://wa.me/${f.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm">💬 Follow up</button></a>` : ''}
+      </div>
+    </div>`;
+  }).join('') || '<div class="no-data" style="grid-column:1/-1">No feedback recorded yet — use "+ Record Feedback" to add the first one.</div>';
+}
+
+function submitFeedback(e){
+  e.preventDefault();
+  var fb = DB.get('awf_feedback');
+  fb.push({
+    id:           nextId(fb,'FB-'),
+    customerName: document.getElementById('fb-f-name').value.trim(),
+    phone:        document.getElementById('fb-f-phone').value.trim(),
+    rating:       parseInt(document.getElementById('fb-f-rating').value),
+    type:         document.getElementById('fb-f-type').value,
+    comment:      document.getElementById('fb-f-comment').value.trim(),
+    date:         todayStr()
+  });
+  DB.set('awf_feedback', fb);
+  closeModal('modal-feedback');
+  document.getElementById('fb-form').reset();
+  renderFeedback();
+}
+
+// ════════════════════════════════════════
+//  SCHEDULE
+// ════════════════════════════════════════
+let schedActive = 'today';
+
+function schedFilter(el, key){
+  schedActive = key;
+  document.querySelectorAll('.sched-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderSchedule();
+}
+
+function openSchedModal(prefill){
+  prefill = prefill || {};
+  document.getElementById('sj-name').value   = prefill.name  || '';
+  document.getElementById('sj-phone').value  = prefill.phone || '';
+  document.getElementById('sj-address').value= '';
+  document.getElementById('sj-type').value   = '';
+  document.getElementById('sj-date').value   = prefill.date  || todayStr();
+  document.getElementById('sj-time').value   = '';
+  document.getElementById('sj-labor').value  = '';
+  document.getElementById('sj-parts').value  = '';
+  document.getElementById('sj-notes').value  = '';
+  openModal('modal-schedule');
+}
+
+function renderSchedule(){
+  var all = DB.get('awf_jobs');
+  var today = todayStr();
+
+  var tmrw = new Date();
+  tmrw.setDate(tmrw.getDate()+1);
+  var tmrwStr = tmrw.toISOString().split('T')[0];
+
+  var wkEnd = new Date();
+  wkEnd.setDate(wkEnd.getDate()+7);
+  var wkStr = wkEnd.toISOString().split('T')[0];
+
+  let filtered;
+  if(schedActive==='today')    filtered = all.filter(j=>j.date===today);
+  else if(schedActive==='tomorrow') filtered = all.filter(j=>j.date===tmrwStr);
+  else if(schedActive==='week') filtered = all.filter(j=>j.date>=today && j.date<=wkStr);
+  else                          filtered = all.filter(j=>j.date>=today);
+
+  filtered = filtered.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+
+  var labels = {today:'Today',tomorrow:'Tomorrow',week:'This Week',all:'All Upcoming'};
+  document.getElementById('sched-subtitle').textContent =
+    `${filtered.length} job${filtered.length!==1?'s':''} — ${labels[schedActive]}`;
+
+  // Timeline
+  document.getElementById('sched-timeline').innerHTML = filtered.length
+    ? filtered.map(j=>`
+        <div class="tl-item">
+          <div class="tl-dot ${j.status.toLowerCase()}"></div>
+          <div>
+            <div class="tl-time">${j.time||'–'}${j.date!==today?' · '+fmtDate(j.date):''}</div>
+            <div class="tl-name">${j.customerName}</div>
+            <div class="tl-meta">${j.type} · ${j.technician}</div>
+          </div>
+        </div>`).join('')
+    : '<div style="font-size:13px;color:var(--dim);text-align:center;padding:24px 0">No jobs</div>';
+
+  // Table
+  document.getElementById('sched-tbody').innerHTML = filtered.map(j=>{
+    var cost = (+j.labor||0)+(+j.parts||0);
+    var stCls = j.status==='Completed' ? 'active' : j.status==='Cancelled' ? 'overdue' : 'upcoming';
+    var waMsg = encodeURIComponent(fillTemplate(TEMPLATES[1].msg, {name:j.customerName, phone:j.phone||'', dueDate:j.date, technician:j.technician}));
+    return `<tr>
+      <td><strong>${j.time||'–'}</strong>${j.date!==today?'<br><span style="font-size:10px;color:var(--dim)">'+fmtDate(j.date)+'</span>':''}</td>
+      <td>
+        <div style="font-weight:600">${j.customerName}</div>
+        <div style="font-size:11px;color:var(--dim)">${j.phone||''}</div>
+      </td>
+      <td>${j.type}</td>
+      <td>${j.technician}</td>
+      <td>${cost ? 'Rs '+cost.toLocaleString() : '—'}</td>
+      <td><span class="badge badge-${stCls}">${j.status}</span></td>
+      <td><div class="td-actions">
+        ${j.status==='Scheduled' ? `<button class="btn btn-green btn-sm" onclick="markJobDone('${j.id}')">✓ Done</button>` : ''}
+        ${j.phone ? `<a href="https://wa.me/${j.phone}?text=${waMsg}" target="_blank"><button class="btn btn-ghost btn-sm" title="Send confirmation">💬</button></a>` : ''}
+        ${j.status==='Scheduled' ? `<button class="btn btn-danger btn-sm" onclick="cancelJob('${j.id}')">✕</button>` : ''}
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="no-data">No jobs for this period</td></tr>';
+}
+
+function markJobDone(id){
+  var jobs = DB.get('awf_jobs');
+  var j = jobs.find(x=>x.id===id);
+  if(j) j.status = 'Completed';
+  DB.set('awf_jobs', jobs);
+  renderSchedule();
+  renderDashboard();
+}
+
+function cancelJob(id){
+  if(!confirm('Cancel this job?')) return;
+  var jobs = DB.get('awf_jobs');
+  var j = jobs.find(x=>x.id===id);
+  if(j) j.status = 'Cancelled';
+  DB.set('awf_jobs', jobs);
+  renderSchedule();
+}
+
+function submitJob(e){
+  e.preventDefault();
+  var jobs = DB.get('awf_jobs');
+  var job = {
+    id:           nextId(jobs,'JOB-'),
+    customerName: document.getElementById('sj-name').value.trim(),
+    phone:        document.getElementById('sj-phone').value.trim(),
+    address:      document.getElementById('sj-address').value.trim(),
+    type:         document.getElementById('sj-type').value,
+    technician:   document.getElementById('sj-tech').value,
+    date:         document.getElementById('sj-date').value,
+    time:         document.getElementById('sj-time').value,
+    labor:        document.getElementById('sj-labor').value||0,
+    parts:        document.getElementById('sj-parts').value||0,
+    notes:        document.getElementById('sj-notes').value.trim(),
+    status:       'Scheduled'
+  };
+  jobs.push(job);
+  DB.set('awf_jobs', jobs);
+  closeModal('modal-schedule');
+  document.getElementById('sched-form').reset();
+  renderSchedule();
+  renderDashboard();
+}
+
+// ════════════════════════════════════════
+//  INVENTORY
+// ════════════════════════════════════════
+function renderInventory(){
+  var inv = DB.get('awf_inventory');
+  var ok  = inv.filter(i=>i.quantity>i.reorderLevel).length;
+  var low = inv.filter(i=>i.quantity>0&&i.quantity<=i.reorderLevel).length;
+  var out = inv.filter(i=>i.quantity===0).length;
+
+  document.getElementById('inv-stat-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:26px">📦</div>
+      <div class="stat-label">Total Items</div>
+      <div class="stat-val" style="color:var(--teal)">${inv.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:26px">✅</div>
+      <div class="stat-label">OK Stock</div>
+      <div class="stat-val" style="color:var(--green)">${ok}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:26px">⚠️</div>
+      <div class="stat-label">Need Reorder</div>
+      <div class="stat-val" style="color:var(--yellow)">${low}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="font-size:26px">🔴</div>
+      <div class="stat-label">Out of Stock</div>
+      <div class="stat-val" style="color:var(--red)">${out}</div>
+    </div>`;
+
+  document.getElementById('inv-tbody').innerHTML = inv.map(i=>{
+    var cap   = i.reorderLevel * 3;
+    var pct   = cap>0 ? Math.min(100, Math.round((i.quantity/cap)*100)) : 0;
+    var barCls = i.quantity===0 ? 'out' : i.quantity<=i.reorderLevel ? 'low' : 'ok';
+    var stLabel = i.quantity===0 ? 'Out of Stock' : i.quantity<=i.reorderLevel ? 'Reorder' : 'OK';
+    var stCls   = i.quantity===0 ? 'overdue' : i.quantity<=i.reorderLevel ? 'due-soon' : 'active';
+    var unit  = i.unit||'Pcs';
+    return `<tr>
+      <td>
+        <div style="font-weight:600">${i.name}</div>
+        <div style="font-size:11px;color:var(--dim)">${i.supplier||'—'}${i.unitPrice?'&nbsp;·&nbsp;Rs '+i.unitPrice+'/'+unit:''}</div>
+      </td>
+      <td>${i.category}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="stock-bar-wrap"><div class="stock-bar ${barCls}" style="width:${pct}%"></div></div>
+          <span style="font-size:11px;color:var(--dim);min-width:28px">${pct}%</span>
+        </div>
+      </td>
+      <td><strong>${i.quantity}</strong>&nbsp;<span style="font-size:11px;color:var(--dim)">${unit}</span></td>
+      <td>${i.reorderLevel}&nbsp;<span style="font-size:11px;color:var(--dim)">${unit}</span></td>
+      <td><span class="badge badge-${stCls}">${stLabel}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-green btn-sm" onclick="addStock('${i.id}')">+ Stock</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteInvItem('${i.id}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="no-data">No inventory items</td></tr>';
+
+  document.getElementById('inv-subtitle').textContent =
+    `${inv.length} items · ${low+out} need attention`;
+}
+
+function addStock(id){
+  var qty = parseInt(prompt('How many units to add to stock?'));
+  if(!qty || qty<=0) return;
+  var inv  = DB.get('awf_inventory');
+  var item = inv.find(i=>i.id===id);
+  if(item){ item.quantity += qty; }
+  DB.set('awf_inventory', inv);
+  renderInventory();
+  renderDashboard();
+}
+
+function deleteInvItem(id){
+  if(!confirm('Delete this inventory item?')) return;
+  DB.set('awf_inventory', DB.get('awf_inventory').filter(i=>i.id!==id));
+  renderInventory();
+  renderDashboard();
+}
+
+function submitInventory(e){
+  e.preventDefault();
+  var inv = DB.get('awf_inventory');
+  inv.push({
+    id:           nextId(inv,'INV-'),
+    name:         document.getElementById('iv-name').value.trim(),
+    category:     document.getElementById('iv-cat').value,
+    unit:         document.getElementById('iv-unit').value,
+    quantity:     parseInt(document.getElementById('iv-qty').value)||0,
+    reorderLevel: parseInt(document.getElementById('iv-reorder').value)||1,
+    unitPrice:    parseInt(document.getElementById('iv-price').value)||0,
+    supplier:     document.getElementById('iv-supplier').value.trim(),
+  });
+  DB.set('awf_inventory', inv);
+  closeModal('modal-inventory');
+  document.getElementById('inv-form').reset();
+  renderInventory();
+  renderDashboard();
+}
+
+// ════════════════════════════════════════
+//  EMPLOYEES
+// ════════════════════════════════════════
+function renderEmployees(){
+  var emps = DB.get('awf_employees');
+  var jobs = DB.get('awf_jobs');
+  var thisMonth = new Date().toISOString().slice(0,7);
+  var activeCount = emps.filter(e=>e.active!==false).length;
+
+  document.getElementById('emp-subtitle').textContent =
+    `${emps.length} employee${emps.length!==1?'s':''} · ${activeCount} active`;
+
+  var roleColor = {
+    'Manager':    '#92400e',
+    'Technician': 'var(--teal3)',
+    'Sales Staff':'#7c3aed',
+  };
+  var roleCls = r => r==='Manager'?'manager':r==='Technician'?'technician':'sales';
+
+  document.getElementById('emp-tbody').innerHTML = emps.map(e=>{
+    var active = e.active !== false;
+    var initials = e.name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    var avatarColor = roleColor[e.role]||'var(--dim)';
+    var jobsMonth = jobs.filter(j=>
+      j.technician===e.name && j.status==='Completed' && j.date.startsWith(thisMonth)
+    ).length;
+    return `<tr style="${active?'':'opacity:.55'}">
+      <td><span style="font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums">${e.id}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="emp-avatar" style="background:${avatarColor}">${initials}</div>
+          <strong>${e.name}</strong>
+        </div>
+      </td>
+      <td><span class="badge badge-${roleCls(e.role)}">${e.role}</span></td>
+      <td><a href="tel:+${e.phone}" style="color:var(--teal);text-decoration:none">${e.phone||'—'}</a></td>
+      <td>${e.shift||'Morning'}</td>
+      <td>${e.area||'—'}</td>
+      <td><strong>${jobsMonth}</strong><span style="font-size:11px;color:var(--dim)"> jobs</span></td>
+      <td><span class="badge badge-${active?'active':'overdue'}">${active?'Active':'Inactive'}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="resetPin('${e.id}')">🔑 Reset PIN</button>
+        <button class="btn btn-${active?'danger':'green'} btn-sm" onclick="toggleEmployee('${e.id}')">${active?'Disable':'Enable'}</button>
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" class="no-data">No employees found</td></tr>';
+}
+
+function resetPin(id){
+  var pin = prompt('Enter new 4-digit PIN for this employee:');
+  if(pin===null) return;
+  if(!/^\d{4}$/.test(pin)){ alert('PIN must be exactly 4 digits (numbers only).'); return; }
+  var emps = DB.get('awf_employees');
+  var e = emps.find(x=>x.id===id);
+  if(e){ e.pin = pin; }
+  DB.set('awf_employees', emps);
+  alert('PIN updated successfully.');
+}
+
+function toggleEmployee(id){
+  var emps = DB.get('awf_employees');
+  var e = emps.find(x=>x.id===id);
+  if(!e) return;
+  var isActive = e.active !== false;
+  if(isActive && !confirm(`Disable ${e.name}? They will not be able to log in.`)) return;
+  e.active = !isActive;
+  DB.set('awf_employees', emps);
+  renderEmployees();
+}
+
+function submitEmployee(e){
+  e.preventDefault();
+  var emps = DB.get('awf_employees');
+  emps.push({
+    id:     nextId(emps,'EMP-'),
+    name:   document.getElementById('em-name').value.trim(),
+    phone:  document.getElementById('em-phone').value.trim(),
+    role:   document.getElementById('em-role').value,
+    shift:  document.getElementById('em-shift').value,
+    area:   document.getElementById('em-area').value.trim(),
+    pin:    document.getElementById('em-pin').value,
+    active: true,
+  });
+  DB.set('awf_employees', emps);
+  closeModal('modal-employee');
+  document.getElementById('emp-form').reset();
+  renderEmployees();
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+window.onload = function(){
+  seedIfEmpty();
+  loadSession();
+  startTimer();
+  renderDashboard();
+};
+</script>
+</body>
+</html>

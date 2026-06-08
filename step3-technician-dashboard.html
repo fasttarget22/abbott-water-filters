@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abbott Water Filters — Technician Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0d2233;--navy2:#112840;--navy3:#1a3548;
+  --teal:#1a9bbf;--teal2:#22b8e0;--teal3:#127a96;
+  --bg:#f0f4f8;--white:#fff;--border:#e2e8ef;
+  --txt:#0d2233;--dim:#5a7080;
+  --red:#dc2626;--orange:#ea580c;--yellow:#ca8a04;--blue:#2563eb;--green:#16a34a;
+  --red-bg:#fee2e2;--orange-bg:#ffedd5;--yellow-bg:#fef9c3;--blue-bg:#dbeafe;--green-bg:#dcfce7;
+}
+body{font-family:'Outfit','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);height:100vh;overflow:hidden}
+#app{display:grid;grid-template-columns:240px 1fr;height:100vh}
+
+/* ── Sidebar ── */
+#sidebar{background:var(--navy);display:flex;flex-direction:column;overflow:hidden;box-shadow:2px 0 12px rgba(0,0,0,.25)}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;gap:6px}
+.sb-logo-box{background:#fff;border-radius:12px;padding:8px 14px;display:inline-flex}
+.sb-logo-box svg{display:block}
+.sb-tagline{font-size:10px;color:rgba(192,205,216,.55);letter-spacing:.1em;text-transform:uppercase;text-align:center}
+nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:13.5px;font-weight:500;color:rgba(192,205,216,.7);transition:all .18s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(26,155,191,.1);color:#c0cdd8}
+.nav-item.active{background:rgba(26,155,191,.15);color:#fff;border-left-color:var(--teal)}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-divider{border-top:1px solid rgba(255,255,255,.07);margin:10px 16px 4px}
+.nav-section-label{font-size:10px;font-weight:700;color:rgba(192,205,216,.3);text-transform:uppercase;letter-spacing:.12em;padding:4px 20px 6px}
+.nav-item.locked{opacity:.4;cursor:not-allowed;pointer-events:none}
+.nav-item.locked:hover{background:none}
+.lock-icon{font-size:11px;margin-left:auto;opacity:.7}
+.sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(192,205,216,.35);text-align:center}
+
+/* ── Main ── */
+#main{display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+#topbar-title{font-size:17px;font-weight:700;color:var(--navy);flex:1}
+.tb-user{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);padding:0 12px;border-right:1px solid var(--border)}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--teal3),var(--teal));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.tb-timer{font-size:12px;color:var(--dim);min-width:60px;text-align:right;font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s}
+.btn-primary{background:linear-gradient(135deg,var(--teal3),var(--teal));color:#fff;box-shadow:0 2px 8px rgba(26,155,191,.3)}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-danger{background:#fee2e2;color:var(--red)}
+.btn-danger:hover{background:#fecaca}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-ghost{background:rgba(26,155,191,.08);color:var(--teal);border:1px solid rgba(26,155,191,.2)}
+.btn-ghost:hover{background:rgba(26,155,191,.16)}
+.btn-green{background:#dcfce7;color:var(--green)}
+.btn-green:hover{background:#bbf7d0}
+.btn-orange{background:#ffedd5;color:var(--orange)}
+.btn-orange:hover{background:#fed7aa}
+.btn-logout{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.2)}
+.btn-logout:hover{background:rgba(220,38,38,.15)}
+
+#content{flex:1;overflow-y:auto;padding:24px}
+.section{display:none}
+.section.active{display:block}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-title{font-size:20px;font-weight:700;color:var(--navy)}
+.section-sub{font-size:13px;color:var(--dim);margin-top:2px}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.badge-teal{background:rgba(26,155,191,.12);color:var(--teal3)}
+.badge-orange{background:var(--orange-bg);color:var(--orange)}
+.badge-grey{background:#f1f5f9;color:#64748b}
+.badge-green{background:var(--green-bg);color:var(--green)}
+
+/* ── Filter tabs ── */
+.filter-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.filter-tab{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;background:var(--white);color:var(--dim);transition:all .15s}
+.filter-tab:hover{border-color:var(--teal);color:var(--teal)}
+.filter-tab.active{background:var(--teal);border-color:var(--teal);color:#fff}
+
+/* ── Job cards ── */
+.jobs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.job-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05);border-left:4px solid #e2e8ef;transition:box-shadow .15s}
+.job-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.job-card.status-scheduled{border-left-color:var(--blue)}
+.job-card.status-in-progress{border-left-color:var(--orange)}
+.job-card.status-completed{border-left-color:var(--green)}
+.jc-time{font-size:28px;font-weight:900;color:var(--navy);line-height:1}
+.jc-date-label{font-size:11px;color:var(--dim);font-weight:500;margin-bottom:10px;margin-top:2px}
+.jc-badges{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.jc-customer{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.jc-detail{font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:2px}
+.jc-detail a{color:var(--teal);text-decoration:none}
+.jc-detail a:hover{text-decoration:underline}
+.jc-notes{font-size:12px;color:var(--dim);font-style:italic;background:#f8fafb;border-radius:8px;padding:8px;margin-top:8px;margin-bottom:8px}
+.jc-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.jc-completed-text{font-size:12px;color:var(--green);font-weight:700;display:flex;align-items:center;gap:4px;margin-top:8px}
+.jc-completion-notes{font-size:12px;color:var(--dim);background:var(--green-bg);border-radius:8px;padding:8px;margin-top:6px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--dim)}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.4}
+.empty-state-text{font-size:15px;font-weight:600;color:var(--dim)}
+.empty-state-sub{font-size:13px;margin-top:4px}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f8fafb;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border:none}
+tbody tr:hover{background:#f8fafb}
+
+/* ── Locations ── */
+.loc-grid{display:grid;gap:14px}
+.loc-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;gap:14px;align-items:flex-start}
+.loc-num{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--teal3),var(--teal));color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0}
+.loc-body{flex:1;min-width:0}
+.loc-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.loc-time{font-size:13px;font-weight:700;color:var(--navy)}
+.loc-name{font-size:17px;font-weight:800;color:var(--navy);margin-bottom:2px}
+.loc-type{font-size:12px;color:var(--dim);margin-bottom:8px}
+.loc-address{font-size:13px;color:var(--dim);margin-bottom:12px;line-height:1.6}
+.loc-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-call{background:#dcfce7;color:var(--green);border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn-call:hover{background:#bbf7d0}
+.btn-wa{background:#d1fae5;color:#047857;border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn-wa:hover{background:#a7f3d0}
+.btn-maps{background:var(--blue-bg);color:var(--blue);border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn-maps:hover{background:#bfdbfe}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:18px;width:100%;max-width:580px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.25)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:17px;font-weight:700;color:var(--navy)}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--dim);line-height:1;padding:2px 6px;border-radius:6px}
+.modal-close:hover{background:var(--border)}
+.modal-body{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-shrink:0}
+
+/* Job summary box */
+.job-summary-box{background:#f8fafb;border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:18px}
+.job-summary-row{font-size:13px;color:var(--dim);line-height:1.9}
+.job-summary-row span{font-weight:700;color:var(--navy)}
+
+/* Parts section */
+.parts-section-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.part-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.part-select{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none}
+.part-select:focus{border-color:var(--teal)}
+.part-qty{width:80px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;text-align:center}
+.part-qty:focus{border-color:var(--teal)}
+.btn-remove-part{background:var(--red-bg);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;font-weight:700;flex-shrink:0}
+.btn-remove-part:hover{background:#fecaca}
+.btn-add-part{background:rgba(26,155,191,.08);color:var(--teal);border:1.5px dashed rgba(26,155,191,.3);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:4px}
+.btn-add-part:hover{background:rgba(26,155,191,.15)}
+
+/* Notes textarea */
+.notes-label{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px;margin-top:16px;display:block}
+.notes-textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;min-height:90px;resize:vertical;outline:none}
+.notes-textarea:focus{border-color:var(--teal)}
+.form-error{font-size:12px;color:var(--red);margin-top:6px;display:none}
+.form-error.show{display:block}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ── Sidebar ── -->
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-box">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="72" height="97" role="img" aria-label="Abbott Water Filters">
+          <defs>
+            <linearGradient id="sb-teal" x1="0" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0B6F96"/>
+            </linearGradient>
+            <linearGradient id="sb-silver" x1="200" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#D8E8F0"/><stop offset="100%" stop-color="#8AABBC"/>
+            </linearGradient>
+            <linearGradient id="sb-chrome" x1="0" y1="0" x2="200" y2="195" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#F0F5F8"/><stop offset="42%" stop-color="#C6D4DC"/><stop offset="100%" stop-color="#7A9AAC"/>
+            </linearGradient>
+            <linearGradient id="sb-drop" x1="85" y1="42" x2="115" y2="145" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#3CD8EC"/><stop offset="100%" stop-color="#0A4A6E"/>
+            </linearGradient>
+            <clipPath id="sb-inner"><path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z"/></clipPath>
+            <clipPath id="sb-left"><rect x="0" y="0" width="100" height="300"/></clipPath>
+            <clipPath id="sb-dclip"><path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z"/></clipPath>
+          </defs>
+          <path d="M100,5 L54,17 L24,33 L20,128 Q34,172 100,194 Q166,172 180,128 L176,33 L146,17 Z" fill="url(#sb-chrome)"/>
+          <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-silver)"/>
+          <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z" fill="url(#sb-teal)" clip-path="url(#sb-left)"/>
+          <path d="M100,18 L56,30 L33,45" fill="none" stroke="rgba(0,40,70,0.22)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M100,18 L144,30 L167,45" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="3" stroke-linecap="round"/>
+          <rect x="29" y="80" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+          <rect x="29" y="93" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+          <rect x="29" y="106" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#sb-inner)"/>
+          <path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z" fill="url(#sb-drop)"/>
+          <ellipse cx="77" cy="69" rx="17" ry="23" fill="rgba(255,255,255,0.36)" transform="rotate(-20,77,69)" clip-path="url(#sb-dclip)"/>
+          <circle cx="79" cy="56" r="8.5" fill="rgba(255,255,255,0.58)" clip-path="url(#sb-dclip)"/>
+          <ellipse cx="124" cy="130" rx="23" ry="15" fill="rgba(0,22,45,0.24)" transform="rotate(25,124,130)" clip-path="url(#sb-dclip)"/>
+          <text x="100" y="222" text-anchor="middle" font-family="'Arial Black','Franklin Gothic Heavy',sans-serif" font-weight="900" font-size="37" fill="#0D2D5C">ABBOTT</text>
+          <text x="100" y="250" text-anchor="middle" font-family="'Arial Black',sans-serif" font-weight="700" font-size="15" fill="#0D2D5C" letter-spacing="3.5">WATER FILTERS</text>
+        </svg>
+      </div>
+      <div class="sb-tagline">Technician Portal</div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showSection('jobs',this)">
+        <span class="nav-icon">📋</span> My Jobs
+      </div>
+      <div class="nav-item" onclick="showSection('parts',this)">
+        <span class="nav-icon">🔧</span> Parts Log
+      </div>
+      <div class="nav-item" onclick="showSection('locations',this)">
+        <span class="nav-icon">📍</span> Job Locations
+      </div>
+      <div class="nav-item" onclick="showSection('sessions',this)">
+        <span class="nav-icon">🕐</span> Session History
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">Restricted Access</div>
+      <div class="nav-item locked">
+        <span class="nav-icon">📊</span> Reports <span class="lock-icon">🔒</span>
+      </div>
+      <div class="nav-item locked">
+        <span class="nav-icon">👥</span> Employees <span class="lock-icon">🔒</span>
+      </div>
+      <div class="nav-item locked">
+        <span class="nav-icon">⚙️</span> Settings <span class="lock-icon">🔒</span>
+      </div>
+      <div class="nav-item locked">
+        <span class="nav-icon">📦</span> Full Inventory <span class="lock-icon">🔒</span>
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <div style="font-size:10px;color:rgba(180,200,216,.55);line-height:1.65;text-align:center">
+        <div style="font-weight:700;color:rgba(200,220,235,.75);margin-bottom:4px;font-size:11px">Abbott Water Filters</div>
+        <div>📞 0348-8115410 &nbsp;·&nbsp; 0335-6590095</div>
+        <div style="margin-top:3px">Kamran Plaza, Near Bhai Sweets</div>
+        <div>College Road Mandian, Abbottabad</div>
+        <div style="margin-top:5px;opacity:.5">&copy; 2026</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div id="main">
+    <div id="topbar">
+      <div id="topbar-title">My Jobs</div>
+      <div class="tb-user">
+        <div class="tb-avatar" id="tb-avatar">T</div>
+        <div>
+          <div style="font-weight:700;color:var(--navy);font-size:13px" id="tb-name">Technician</div>
+          <div style="font-size:11px;color:var(--dim)" id="tb-role">Technician</div>
+        </div>
+      </div>
+      <div class="tb-timer" id="tb-timer">00:00</div>
+      <button class="btn btn-logout btn-sm" onclick="logout()">Logout</button>
+    </div>
+
+    <div id="content">
+      <!-- ── Section 1: My Jobs ── -->
+      <div class="section active" id="sec-jobs">
+        <div class="section-header">
+          <div>
+            <div class="section-title">My Jobs</div>
+            <div class="section-sub" id="jobs-sub">Loading...</div>
+          </div>
+        </div>
+        <div class="filter-tabs">
+          <div class="filter-tab active" onclick="setJobFilter('today',this)">Today</div>
+          <div class="filter-tab" onclick="setJobFilter('tomorrow',this)">Tomorrow</div>
+          <div class="filter-tab" onclick="setJobFilter('week',this)">This Week</div>
+          <div class="filter-tab" onclick="setJobFilter('all',this)">All</div>
+        </div>
+        <div class="jobs-grid" id="jobs-grid"></div>
+      </div>
+
+      <!-- ── Section 2: Parts Log ── -->
+      <div class="section" id="sec-parts">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Parts Log</div>
+            <div class="section-sub">Parts used in your jobs</div>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Job ID</th>
+                <th>Customer</th>
+                <th>Part Name</th>
+                <th>Qty Used</th>
+                <th>Job Status</th>
+              </tr>
+            </thead>
+            <tbody id="parts-tbody"></tbody>
+          </table>
+        </div>
+        <div id="parts-empty" class="empty-state" style="display:none">
+          <div class="empty-state-icon">🔧</div>
+          <div class="empty-state-text">No parts logged yet</div>
+          <div class="empty-state-sub">Parts you use in jobs will appear here</div>
+        </div>
+      </div>
+
+      <!-- ── Section 3: Job Locations ── -->
+      <div class="section" id="sec-locations">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Job Locations</div>
+            <div class="section-sub">Today's job addresses</div>
+          </div>
+        </div>
+        <div class="loc-grid" id="loc-grid"></div>
+        <div id="loc-empty" class="empty-state" style="display:none">
+          <div class="empty-state-icon">📍</div>
+          <div class="empty-state-text">No jobs scheduled for today</div>
+          <div class="empty-state-sub">Your today's job locations will appear here</div>
+        </div>
+      </div>
+
+      <!-- ── Section 4: Session History ── -->
+      <div class="section" id="sec-sessions">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Session History</div>
+            <div class="section-sub">Your login and logout history</div>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Login Time</th>
+                <th>Logout Time</th>
+                <th>Duration</th>
+                <th>Page</th>
+              </tr>
+            </thead>
+            <tbody id="sessions-tbody"></tbody>
+          </table>
+        </div>
+        <div id="sessions-empty" class="empty-state" style="display:none">
+          <div class="empty-state-icon">🕐</div>
+          <div class="empty-state-text">No session history yet</div>
+          <div class="empty-state-sub">Your login sessions will be tracked here</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Complete Job Modal ── -->
+<div class="modal-overlay" id="complete-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Complete Job</div>
+      <button class="modal-close" onclick="closeCompleteModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="job-summary-box" id="modal-job-summary"></div>
+      <div class="parts-section-title">Parts Used</div>
+      <div id="parts-rows"></div>
+      <button class="btn-add-part" onclick="addPartRow()">+ Add Part</button>
+      <label class="notes-label" for="completion-notes">Completion Notes</label>
+      <textarea class="notes-textarea" id="completion-notes" placeholder="Describe what was done, any issues found, etc."></textarea>
+      <div class="form-error" id="modal-error"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCompleteModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitComplete()">Save &amp; Complete Job</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DB Helpers ──
+var DB = {
+  get: function(key) {
+    try { return JSON.parse(localStorage.getItem(key)) || []; }
+    catch(e) { return []; }
+  },
+  set: function(key, val) {
+    localStorage.setItem(key, JSON.stringify(val));
+  }
+};
+
+// ── Session State ──
+var currentSession = null;
+var currentTechName = '';
+var currentEmpId = '';
+var timerInterval = null;
+var loginTimeMs = 0;
+var activeJobFilter = 'today';
+var activeCompleteJobId = null;
+
+// ── Date Helpers ──
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function tomorrowStr() {
+  var d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function weekEndStr() {
+  var d = new Date();
+  d.setDate(d.getDate() + 6);
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function formatTime12(timeStr) {
+  if (!timeStr) return '';
+  var parts = timeStr.split(':');
+  var h = parseInt(parts[0]);
+  var m = parts[1] || '00';
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + m + ' ' + ampm;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  var today = todayStr();
+  var tomorrow = tomorrowStr();
+  if (dateStr === today) return 'Today';
+  if (dateStr === tomorrow) return 'Tomorrow';
+  var d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-PK', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function formatDateTime(isoStr) {
+  if (!isoStr) return '—';
+  var d = new Date(isoStr);
+  return d.toLocaleDateString('en-PK', { month:'short', day:'numeric', year:'numeric' })
+    + ' ' + d.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit', hour12:true });
+}
+
+function formatTimeOnly(isoStr) {
+  if (!isoStr) return '—';
+  var d = new Date(isoStr);
+  return d.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit', hour12:true });
+}
+
+function formatDateOnly(isoStr) {
+  if (!isoStr) return '—';
+  var d = new Date(isoStr);
+  return d.toLocaleDateString('en-PK', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+
+function durationMins(loginIso, logoutIso) {
+  if (!logoutIso) return 'Active now';
+  var diff = Math.round((new Date(logoutIso) - new Date(loginIso)) / 60000);
+  if (diff < 0) diff = 0;
+  var h = Math.floor(diff / 60);
+  var m = diff % 60;
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + ' min';
+}
+
+// ── Session Load ──
+function loadSession() {
+  var raw = localStorage.getItem('awf_session');
+  if (!raw) { window.location.href = 'step1-login.html'; return; }
+  try { currentSession = JSON.parse(raw); } catch(e) { window.location.href = 'step1-login.html'; return; }
+  if (!currentSession || currentSession.role === 'Sales Staff') {
+    window.location.href = 'step1-login.html'; return;
+  }
+  currentTechName = currentSession.name || '';
+  currentEmpId = currentSession.empId || '';
+
+  // Update topbar
+  document.getElementById('tb-name').textContent = currentTechName;
+  document.getElementById('tb-role').textContent = currentSession.role || 'Technician';
+  var initials = currentTechName.split(' ').map(function(w){ return w[0]||''; }).join('').toUpperCase().slice(0,2);
+  document.getElementById('tb-avatar').textContent = initials || 'T';
+
+  // Start session timer
+  loginTimeMs = currentSession.loginTime ? new Date(currentSession.loginTime).getTime() : Date.now();
+  updateTimer();
+  timerInterval = setInterval(updateTimer, 1000);
+
+  // Log session to activity log if not already logged
+  logSessionActivity();
+
+  // Initial render
+  renderJobs();
+  renderLocations();
+  renderParts();
+  renderSessions();
+}
+
+function logSessionActivity() {
+  var log = DB.get('awf_activity_log');
+  var loginTime = currentSession.loginTime || new Date().toISOString();
+  var exists = log.some(function(e){ return e.sessionId === loginTime && e.empId === currentEmpId; });
+  if (!exists) {
+    log.unshift({
+      id: 'ACT-' + Date.now(),
+      sessionId: loginTime,
+      empId: currentEmpId,
+      empName: currentTechName,
+      role: currentSession.role,
+      loginTime: loginTime,
+      logoutTime: null,
+      page: 'Technician'
+    });
+    DB.set('awf_activity_log', log);
+  }
+}
+
+function updateTimer() {
+  var elapsed = Math.floor((Date.now() - loginTimeMs) / 1000);
+  var h = Math.floor(elapsed / 3600);
+  var m = Math.floor((elapsed % 3600) / 60);
+  var s = elapsed % 60;
+  document.getElementById('tb-timer').textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+}
+
+// ── Logout ──
+function logout() {
+  var logoutTime = new Date().toISOString();
+  // Update activity log
+  var log = DB.get('awf_activity_log');
+  var loginTime = currentSession ? (currentSession.loginTime || '') : '';
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].sessionId === loginTime && log[i].empId === currentEmpId) {
+      log[i].logoutTime = logoutTime;
+      break;
+    }
+  }
+  DB.set('awf_activity_log', log);
+  if (timerInterval) clearInterval(timerInterval);
+  localStorage.removeItem('awf_session');
+  window.location.href = 'step1-login.html';
+}
+
+// ── Navigation ──
+function showSection(name, el) {
+  var sections = document.querySelectorAll('.section');
+  for (var i = 0; i < sections.length; i++) sections[i].classList.remove('active');
+  document.getElementById('sec-' + name).classList.add('active');
+
+  var navItems = document.querySelectorAll('.nav-item');
+  for (var j = 0; j < navItems.length; j++) navItems[j].classList.remove('active');
+  if (el) el.classList.add('active');
+
+  var titles = { jobs:'My Jobs', parts:'Parts Log', locations:'Job Locations', sessions:'Session History' };
+  document.getElementById('topbar-title').textContent = titles[name] || '';
+
+  if (name === 'parts') renderParts();
+  if (name === 'sessions') renderSessions();
+  if (name === 'locations') renderLocations();
+}
+
+// ── Customer lookups ──
+function getJobPhone(j) {
+  if (j.phone) return j.phone;
+  var custs = DB.get('awf_customers');
+  var c = custs.find(function(x){ return x.id === j.customerId; });
+  return c ? (c.phone || '') : '';
+}
+
+function getJobAddress(j) {
+  if (j.address) return j.address;
+  var custs = DB.get('awf_customers');
+  var c = custs.find(function(x){ return x.id === j.customerId; });
+  return c ? (c.address || '') : '';
+}
+
+// ── Status badge HTML ──
+function statusBadge(status) {
+  if (status === 'Scheduled') return '<span class="badge badge-blue">Scheduled</span>';
+  if (status === 'In Progress') return '<span class="badge badge-orange">In Progress</span>';
+  if (status === 'Completed') return '<span class="badge badge-green">Completed</span>';
+  return '<span class="badge badge-grey">' + esc(status) + '</span>';
+}
+
+// ── Job type badge HTML ──
+function typeBadge(type) {
+  if (type === 'New Installation') return '<span class="badge badge-blue">' + esc(type) + '</span>';
+  if (type === 'Filter Replacement') return '<span class="badge badge-teal">' + esc(type) + '</span>';
+  if (type === 'Repair') return '<span class="badge badge-orange">' + esc(type) + '</span>';
+  if (type === 'Inspection') return '<span class="badge badge-grey">' + esc(type) + '</span>';
+  if (type === 'Filter Check') return '<span class="badge badge-teal">' + esc(type) + '</span>';
+  return '<span class="badge badge-grey">' + esc(type || '') + '</span>';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Job Filter ──
+function setJobFilter(filter, el) {
+  activeJobFilter = filter;
+  var tabs = document.querySelectorAll('.filter-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  if (el) el.classList.add('active');
+  renderJobs();
+}
+
+function getMyJobs() {
+  var jobs = DB.get('awf_jobs');
+  return jobs.filter(function(j) {
+    return j.technician && j.technician.trim().toLowerCase() === currentTechName.trim().toLowerCase();
+  });
+}
+
+function filterJobsByPeriod(jobs, filter) {
+  var today = todayStr();
+  var tomorrow = tomorrowStr();
+  var weekEnd = weekEndStr();
+  return jobs.filter(function(j) {
+    if (!j.date) return filter === 'all';
+    if (filter === 'today') return j.date === today;
+    if (filter === 'tomorrow') return j.date === tomorrow;
+    if (filter === 'week') return j.date >= today && j.date <= weekEnd;
+    return true;
+  });
+}
+
+function renderJobs() {
+  var myJobs = getMyJobs();
+  var filtered = filterJobsByPeriod(myJobs, activeJobFilter);
+  // Sort by date then time
+  filtered.sort(function(a, b) {
+    var d = (a.date || '').localeCompare(b.date || '');
+    if (d !== 0) return d;
+    return (a.time || '').localeCompare(b.time || '');
+  });
+
+  var sub = filtered.length + ' job' + (filtered.length !== 1 ? 's' : '');
+  document.getElementById('jobs-sub').textContent = sub;
+
+  var grid = document.getElementById('jobs-grid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📋</div><div class="empty-state-text">No jobs found</div><div class="empty-state-sub">No jobs for this period</div></div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var j = filtered[i];
+    var phone = getJobPhone(j);
+    var address = getJobAddress(j);
+    var timeLabel = j.time ? formatTime12(j.time) : '—';
+    var dateLabel = j.date ? formatDate(j.date) : '';
+    var statusClass = 'status-' + (j.status || 'scheduled').toLowerCase().replace(/ /g, '-');
+
+    html += '<div class="job-card ' + statusClass + '">';
+    html += '<div class="jc-time">' + esc(timeLabel) + '</div>';
+    html += '<div class="jc-date-label">' + esc(dateLabel) + '</div>';
+    html += '<div class="jc-badges">' + typeBadge(j.type) + statusBadge(j.status) + '</div>';
+    html += '<div class="jc-customer">' + esc(j.customerName || j.customer || 'Unknown Customer') + '</div>';
+
+    if (phone) {
+      var cleanPhone = phone.replace(/[^0-9]/g,'');
+      html += '<div class="jc-detail">📞 <a href="tel:' + esc(cleanPhone) + '">' + esc(phone) + '</a></div>';
+    }
+    if (address) {
+      html += '<div class="jc-detail">📍 ' + esc(address) + '</div>';
+    }
+    if (j.notes) {
+      html += '<div class="jc-notes">' + esc(j.notes) + '</div>';
+    }
+
+    if (j.status === 'Completed') {
+      html += '<div class="jc-completed-text">&#10003; Completed</div>';
+      if (j.completionNotes) {
+        html += '<div class="jc-completion-notes"><strong>Notes:</strong> ' + esc(j.completionNotes) + '</div>';
+      }
+    } else {
+      html += '<div class="jc-actions">';
+      if (j.status === 'Scheduled') {
+        html += '<button class="btn btn-orange btn-sm" onclick="startJob(\'' + esc(j.id) + '\')">&#9654; Start Job</button>';
+      }
+      if (j.status === 'In Progress') {
+        html += '<button class="btn btn-primary btn-sm" onclick="openCompleteModal(\'' + esc(j.id) + '\')">&#10003; Complete Job</button>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+// ── Start Job ──
+function startJob(jobId) {
+  var jobs = DB.get('awf_jobs');
+  for (var i = 0; i < jobs.length; i++) {
+    if (jobs[i].id === jobId) {
+      jobs[i].status = 'In Progress';
+      jobs[i].startedAt = new Date().toISOString();
+      break;
+    }
+  }
+  DB.set('awf_jobs', jobs);
+  renderJobs();
+}
+
+// ── Complete Job Modal ──
+function openCompleteModal(jobId) {
+  activeCompleteJobId = jobId;
+  var jobs = DB.get('awf_jobs');
+  var job = null;
+  for (var i = 0; i < jobs.length; i++) {
+    if (jobs[i].id === jobId) { job = jobs[i]; break; }
+  }
+  if (!job) return;
+
+  var phone = getJobPhone(job);
+  var address = getJobAddress(job);
+  var summaryHtml = '<div class="job-summary-row">';
+  summaryHtml += '<strong>Customer:</strong> ' + esc(job.customerName || job.customer || '—') + '<br>';
+  summaryHtml += '<strong>Type:</strong> ' + esc(job.type || '—') + '<br>';
+  if (address) summaryHtml += '<strong>Address:</strong> ' + esc(address) + '<br>';
+  if (job.time) summaryHtml += '<strong>Time:</strong> ' + esc(formatTime12(job.time));
+  summaryHtml += '</div>';
+  document.getElementById('modal-job-summary').innerHTML = summaryHtml;
+  document.getElementById('parts-rows').innerHTML = '';
+  document.getElementById('completion-notes').value = '';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('modal-error').classList.remove('show');
+  document.getElementById('complete-modal').classList.add('open');
+}
+
+function closeCompleteModal() {
+  document.getElementById('complete-modal').classList.remove('open');
+  activeCompleteJobId = null;
+}
+
+function getInventory() {
+  return DB.get('awf_inventory');
+}
+
+function buildInventoryOptions() {
+  var inv = getInventory();
+  var opts = '<option value="">-- Select Part --</option>';
+  for (var i = 0; i < inv.length; i++) {
+    var item = inv[i];
+    opts += '<option value="' + esc(item.id) + '">' + esc(item.name) + ' (' + (item.quantity || 0) + ' Pcs)</option>';
+  }
+  return opts;
+}
+
+function addPartRow() {
+  var container = document.getElementById('parts-rows');
+  var row = document.createElement('div');
+  row.className = 'part-row';
+  row.innerHTML = '<select class="part-select">' + buildInventoryOptions() + '</select>'
+    + '<input type="number" class="part-qty" placeholder="Qty" min="1" value="1">'
+    + '<button class="btn-remove-part" onclick="removePartRow(this)">&#x2715;</button>';
+  container.appendChild(row);
+}
+
+function removePartRow(btn) {
+  btn.parentElement.remove();
+}
+
+function submitComplete() {
+  if (!activeCompleteJobId) return;
+  var rows = document.querySelectorAll('#parts-rows .part-row');
+  var partsUsed = [];
+  var inv = getInventory();
+  var errEl = document.getElementById('modal-error');
+  errEl.classList.remove('show');
+
+  for (var i = 0; i < rows.length; i++) {
+    var sel = rows[i].querySelector('.part-select');
+    var qtyInput = rows[i].querySelector('.part-qty');
+    var itemId = sel.value;
+    var qty = parseInt(qtyInput.value) || 0;
+    if (!itemId) { errEl.textContent = 'Please select a part for each row, or remove empty rows.'; errEl.classList.add('show'); return; }
+    if (qty <= 0) { errEl.textContent = 'Quantity must be greater than 0.'; errEl.classList.add('show'); return; }
+    // Find inventory item
+    var invItem = null;
+    for (var k = 0; k < inv.length; k++) {
+      if (inv[k].id === itemId) { invItem = inv[k]; break; }
+    }
+    if (!invItem) { errEl.textContent = 'Part not found in inventory.'; errEl.classList.add('show'); return; }
+    if (qty > (invItem.quantity || 0)) {
+      errEl.textContent = 'Not enough stock for "' + invItem.name + '". Available: ' + (invItem.quantity || 0);
+      errEl.classList.add('show');
+      return;
+    }
+    partsUsed.push({ itemId: itemId, itemName: invItem.name, qty: qty });
+  }
+
+  // Deduct from inventory
+  for (var p = 0; p < partsUsed.length; p++) {
+    for (var k = 0; k < inv.length; k++) {
+      if (inv[k].id === partsUsed[p].itemId) {
+        inv[k].quantity = (inv[k].quantity || 0) - partsUsed[p].qty;
+        break;
+      }
+    }
+  }
+  DB.set('awf_inventory', inv);
+
+  // Update job
+  var jobs = DB.get('awf_jobs');
+  var completionNotes = document.getElementById('completion-notes').value.trim();
+  for (var j = 0; j < jobs.length; j++) {
+    if (jobs[j].id === activeCompleteJobId) {
+      jobs[j].status = 'Completed';
+      jobs[j].completedAt = new Date().toISOString();
+      jobs[j].partsUsed = partsUsed;
+      jobs[j].completionNotes = completionNotes;
+      break;
+    }
+  }
+  DB.set('awf_jobs', jobs);
+
+  closeCompleteModal();
+  renderJobs();
+  renderParts();
+}
+
+// ── Parts Log ──
+function renderParts() {
+  var myJobs = getMyJobs();
+  var tbody = document.getElementById('parts-tbody');
+  var emptyEl = document.getElementById('parts-empty');
+  var rows = '';
+  var hasRows = false;
+
+  for (var i = 0; i < myJobs.length; i++) {
+    var j = myJobs[i];
+    if (!j.partsUsed || j.partsUsed.length === 0) continue;
+    var dateStr = j.completedAt ? formatDateOnly(j.completedAt) : (j.date || '—');
+    for (var p = 0; p < j.partsUsed.length; p++) {
+      var part = j.partsUsed[p];
+      hasRows = true;
+      rows += '<tr>';
+      rows += '<td>' + esc(dateStr) + '</td>';
+      rows += '<td><code style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px">' + esc(j.id || '') + '</code></td>';
+      rows += '<td>' + esc(j.customerName || j.customer || '—') + '</td>';
+      rows += '<td>' + esc(part.itemName || '') + '</td>';
+      rows += '<td style="text-align:center;font-weight:700">' + esc(String(part.qty)) + '</td>';
+      rows += '<td>' + statusBadge(j.status) + '</td>';
+      rows += '</tr>';
+    }
+  }
+
+  tbody.innerHTML = rows;
+  if (!hasRows) {
+    emptyEl.style.display = 'block';
+    tbody.parentElement.parentElement.style.display = 'none';
+  } else {
+    emptyEl.style.display = 'none';
+    tbody.parentElement.parentElement.style.display = '';
+  }
+}
+
+// ── Locations ──
+function cleanPhoneForLink(phone) {
+  if (!phone) return '';
+  var digits = phone.replace(/[^0-9]/g, '');
+  // Convert 03xx to 923xx
+  if (digits.startsWith('0') && digits.length === 11) {
+    digits = '92' + digits.slice(1);
+  } else if (!digits.startsWith('92')) {
+    digits = '92' + digits;
+  }
+  return digits;
+}
+
+function renderLocations() {
+  var myJobs = getMyJobs();
+  var today = todayStr();
+  var todayJobs = myJobs.filter(function(j){ return j.date === today; });
+  todayJobs.sort(function(a, b){ return (a.time || '').localeCompare(b.time || ''); });
+
+  var grid = document.getElementById('loc-grid');
+  var emptyEl = document.getElementById('loc-empty');
+
+  if (todayJobs.length === 0) {
+    grid.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  var html = '';
+  for (var i = 0; i < todayJobs.length; i++) {
+    var j = todayJobs[i];
+    var phone = getJobPhone(j);
+    var address = getJobAddress(j);
+    var phoneLink = cleanPhoneForLink(phone);
+    var mapsQuery = encodeURIComponent((address ? address + ', ' : '') + 'Abbottabad, Pakistan');
+    var timeLabel = j.time ? formatTime12(j.time) : '';
+
+    html += '<div class="loc-card">';
+    html += '<div class="loc-num">' + (i + 1) + '</div>';
+    html += '<div class="loc-body">';
+    html += '<div class="loc-header">';
+    if (timeLabel) html += '<span class="loc-time">' + esc(timeLabel) + '</span>';
+    html += statusBadge(j.status);
+    html += '</div>';
+    html += '<div class="loc-name">' + esc(j.customerName || j.customer || 'Unknown') + '</div>';
+    html += '<div class="loc-type">' + esc(j.type || '') + '</div>';
+    if (address) html += '<div class="loc-address">📍 ' + esc(address) + '</div>';
+    html += '<div class="loc-actions">';
+    if (phone) {
+      html += '<a class="btn-call" href="tel:' + esc(phone) + '">📞 Call</a>';
+      html += '<a class="btn-wa" href="https://wa.me/' + esc(phoneLink) + '" target="_blank">💬 WhatsApp</a>';
+    }
+    html += '<a class="btn-maps" href="https://www.google.com/maps/search/?api=1&query=' + mapsQuery + '" target="_blank">🗺 Google Maps</a>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+// ── Session History ──
+function renderSessions() {
+  var log = DB.get('awf_activity_log');
+  var mySessions = log.filter(function(e){
+    return e.empId === currentEmpId;
+  });
+  // Sort newest first
+  mySessions.sort(function(a, b){
+    return (b.loginTime || '').localeCompare(a.loginTime || '');
+  });
+
+  var tbody = document.getElementById('sessions-tbody');
+  var emptyEl = document.getElementById('sessions-empty');
+
+  if (mySessions.length === 0) {
+    tbody.innerHTML = '';
+    emptyEl.style.display = 'block';
+    tbody.parentElement.parentElement.style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  tbody.parentElement.parentElement.style.display = '';
+
+  var html = '';
+  for (var i = 0; i < mySessions.length; i++) {
+    var s = mySessions[i];
+    html += '<tr>';
+    html += '<td>' + esc(formatDateOnly(s.loginTime)) + '</td>';
+    html += '<td>' + esc(formatTimeOnly(s.loginTime)) + '</td>';
+    html += '<td>' + (s.logoutTime ? esc(formatTimeOnly(s.logoutTime)) : '<span style="color:var(--green);font-weight:600">Active</span>') + '</td>';
+    html += '<td>' + esc(durationMins(s.loginTime, s.logoutTime)) + '</td>';
+    html += '<td>' + esc(s.page || 'Technician') + '</td>';
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+// ── Init ──
+loadSession();
+</script>
+</body>
+</html>

@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abbott Water Filters — Staff Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --navy:#0d2233;
+  --navy-mid:#0f2a3f;
+  --navy-card:#112840;
+  --navy-light:#1a3548;
+  --teal:#1a9bbf;
+  --teal-light:#22b8e0;
+  --teal-dark:#127a96;
+  --silver:#c0cdd8;
+  --white:#eef3f8;
+  --dim:#7a8fa3;
+  --danger:#e05050;
+  --success:#22c55e;
+}
+
+body{
+  font-family:'Outfit','Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--navy);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  position:relative;
+}
+
+/* Animated background */
+.bg-layer{
+  position:fixed;inset:0;pointer-events:none;overflow:hidden;
+}
+.bg-layer::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 60%,rgba(26,155,191,0.07) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 50% at 80% 20%,rgba(26,155,191,0.05) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 60% at 60% 90%,rgba(13,34,51,0.8) 0%,transparent 70%);
+}
+
+/* Floating water drops */
+@keyframes floatDrop{
+  0%{transform:translateY(0) scale(1);opacity:0.15}
+  50%{transform:translateY(-18px) scale(1.05);opacity:0.25}
+  100%{transform:translateY(0) scale(1);opacity:0.15}
+}
+.drop{
+  position:absolute;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+  background:linear-gradient(135deg,var(--teal-light),var(--teal-dark));
+  animation:floatDrop ease-in-out infinite;
+}
+.drop:nth-child(1){width:12px;height:16px;left:8%;top:15%;animation-duration:5s;animation-delay:0s}
+.drop:nth-child(2){width:8px;height:11px;left:92%;top:30%;animation-duration:6.5s;animation-delay:1s;opacity:.1}
+.drop:nth-child(3){width:16px;height:21px;left:85%;top:70%;animation-duration:7s;animation-delay:2s;opacity:.08}
+.drop:nth-child(4){width:6px;height:8px;left:5%;top:75%;animation-duration:4.5s;animation-delay:0.5s;opacity:.12}
+.drop:nth-child(5){width:10px;height:13px;left:50%;top:5%;animation-duration:6s;animation-delay:3s;opacity:.1}
+
+/* Wrapper */
+.wrapper{
+  position:relative;z-index:1;
+  width:100%;max-width:420px;
+  padding:16px;
+}
+
+/* Header */
+.header{text-align:center;margin-bottom:20px}
+.logo-box{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:#fff;border-radius:16px;padding:10px 18px;
+  box-shadow:0 8px 32px rgba(26,155,191,0.18),0 2px 8px rgba(0,0,0,0.3);
+  margin-bottom:12px;
+}
+.logo-box svg{display:block}
+.header-sub{
+  font-size:11px;letter-spacing:0.13em;text-transform:uppercase;
+  color:var(--dim);font-weight:500;
+}
+
+/* Step pips */
+.step-pips{display:flex;justify-content:center;gap:8px;margin-bottom:18px}
+.pip{
+  height:4px;border-radius:2px;
+  transition:all .35s ease;
+}
+.pip-1{width:60px;background:var(--teal)}
+.pip-2{width:28px;background:rgba(26,155,191,0.2)}
+.pip-2.active{width:60px;background:var(--teal)}
+.pip-1.done{background:var(--success);width:28px}
+
+/* Card */
+.card{
+  background:var(--navy-card);
+  border-radius:22px;
+  border:1px solid rgba(26,155,191,0.18);
+  box-shadow:0 24px 64px rgba(0,0,0,0.45),0 0 0 1px rgba(255,255,255,0.04);
+  overflow:hidden;
+}
+
+/* Steps */
+.step{display:none;padding:28px 28px 24px}
+.step.active{display:block}
+
+.step-title{font-size:20px;font-weight:700;color:var(--white);margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--dim);margin-bottom:22px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(26,155,191,0.18),transparent);margin:0 -28px 22px}
+
+/* Input */
+.field-label{
+  display:block;font-size:10.5px;font-weight:700;
+  color:var(--teal);letter-spacing:0.14em;text-transform:uppercase;
+  margin-bottom:7px;
+}
+.field-input{
+  width:100%;
+  background:rgba(255,255,255,0.05);
+  border:1.5px solid rgba(26,155,191,0.22);
+  border-radius:12px;
+  padding:13px 16px;
+  font-size:17px;font-weight:600;
+  color:var(--white);
+  letter-spacing:0.08em;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  text-transform:uppercase;
+  margin-bottom:18px;
+}
+.field-input:focus{
+  border-color:var(--teal);
+  box-shadow:0 0 0 3px rgba(26,155,191,0.13);
+}
+.field-input::placeholder{
+  color:rgba(122,143,163,0.45);
+  font-size:13px;letter-spacing:.04em;font-weight:400;text-transform:none;
+}
+
+/* Preview card */
+.preview{
+  display:flex;align-items:center;gap:14px;
+  background:rgba(26,155,191,0.05);
+  border:1.5px solid rgba(26,155,191,0.12);
+  border-radius:14px;padding:14px 16px;
+  margin-bottom:20px;
+  opacity:0;transform:translateY(6px);
+  transition:opacity .25s,transform .25s,border-color .25s,background .25s;
+  pointer-events:none;
+}
+.preview.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.preview.valid{border-color:rgba(34,197,94,0.35);background:rgba(34,197,94,0.05)}
+.preview.invalid{border-color:rgba(224,80,80,0.35);background:rgba(224,80,80,0.05)}
+
+.p-avatar{
+  width:50px;height:50px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--teal-dark),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:800;color:#fff;
+  box-shadow:0 4px 14px rgba(26,155,191,0.35);
+}
+.p-avatar.err{background:linear-gradient(135deg,#7a2f2f,#c04040)}
+
+.p-name{font-size:15px;font-weight:700;color:var(--white)}
+.p-role{font-size:12px;color:var(--teal);margin-top:2px;font-weight:500}
+.p-status{font-size:11px;margin-top:5px;display:flex;align-items:center;gap:5px}
+.p-status.ok{color:var(--success)}
+.p-status.err{color:var(--danger)}
+.s-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* Buttons */
+.btn{
+  width:100%;padding:15px;border-radius:12px;border:none;
+  font-size:14.5px;font-weight:700;letter-spacing:.04em;
+  cursor:pointer;transition:all .18s;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 60%,var(--teal-light) 100%);
+  color:#fff;box-shadow:0 4px 18px rgba(26,155,191,0.38);
+}
+.btn-primary:hover:not(:disabled){
+  transform:translateY(-1px);
+  box-shadow:0 7px 22px rgba(26,155,191,0.5);
+  filter:brightness(1.06);
+}
+.btn-primary:active:not(:disabled){transform:translateY(0)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none;filter:none}
+
+/* PIN step — employee card */
+.emp-card{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(26,155,191,0.07);
+  border:1px solid rgba(26,155,191,0.18);
+  border-radius:14px;padding:12px 14px;margin-bottom:22px;
+}
+.emp-avatar{
+  width:42px;height:42px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--teal-dark),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#fff;
+}
+.emp-name{font-size:14px;font-weight:700;color:var(--white)}
+.emp-id{font-size:11.5px;color:var(--dim);margin-top:1px}
+.emp-change{
+  margin-left:auto;background:none;border:none;
+  color:var(--teal);font-size:12px;cursor:pointer;
+  padding:5px 10px;border-radius:8px;transition:background .15s;
+  font-weight:600;
+}
+.emp-change:hover{background:rgba(26,155,191,0.12)}
+
+/* PIN dots */
+.pin-dots{display:flex;justify-content:center;gap:18px;margin-bottom:26px}
+.p-dot{
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid rgba(26,155,191,0.35);
+  background:transparent;
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+}
+.p-dot.filled{
+  background:var(--teal);border-color:var(--teal);
+  transform:scale(1.18);
+  box-shadow:0 0 14px rgba(26,155,191,0.65);
+}
+
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  12%{transform:translateX(-9px)}
+  25%{transform:translateX(9px)}
+  37%{transform:translateX(-7px)}
+  50%{transform:translateX(7px)}
+  62%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+  87%{transform:translateX(-3px)}
+}
+.pin-dots.shake{animation:shake .52s ease}
+.pin-dots.shake .p-dot.filled{
+  background:var(--danger);border-color:var(--danger);
+  box-shadow:0 0 14px rgba(224,80,80,0.65);
+}
+
+/* Keypad */
+.keypad{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin-bottom:14px;
+}
+.key{
+  background:rgba(255,255,255,0.065);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;
+  padding:16px 8px;
+  min-height:68px;
+  font-size:22px;font-weight:600;color:var(--white);
+  cursor:pointer;
+  user-select:none;-webkit-user-select:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:all .13s;
+  position:relative;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+.key:hover{
+  background:rgba(26,155,191,0.14);
+  border-color:rgba(26,155,191,0.28);
+  transform:translateY(-1px);
+}
+.key:active{
+  background:rgba(26,155,191,0.28);
+  transform:scale(.94);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.2);
+}
+.key-sub{font-size:8px;color:var(--dim);letter-spacing:.06em;font-weight:500}
+
+.key.del{
+  background:rgba(224,80,80,0.07);
+  border-color:rgba(224,80,80,0.18);
+  color:var(--danger);font-size:18px;
+}
+.key.del:hover{background:rgba(224,80,80,0.14);border-color:rgba(224,80,80,0.3)}
+.key.del:active{background:rgba(224,80,80,0.25)}
+
+.key.blank{
+  background:transparent;border:none;
+  pointer-events:none;cursor:default;
+}
+
+/* Attempts */
+.attempts-wrap{margin-bottom:18px;text-align:center}
+.att-pips{display:flex;justify-content:center;gap:7px;margin-bottom:7px}
+.att-pip{
+  width:32px;height:5px;border-radius:3px;
+  background:rgba(26,155,191,0.28);
+  transition:all .3s;
+}
+.att-pip.fail{background:var(--danger)}
+.att-left{
+  font-size:12px;color:var(--dim);
+  transition:color .3s;
+}
+.att-left.warn{color:var(--danger);font-weight:600}
+
+/* Lockout */
+.lockout{
+  display:none;text-align:center;padding:36px 24px 28px;
+}
+.lockout.active{display:block}
+.lock-icon{font-size:52px;margin-bottom:16px}
+.lock-title{font-size:21px;font-weight:700;color:var(--danger);margin-bottom:10px}
+.lock-desc{font-size:13px;color:var(--dim);line-height:1.65;margin-bottom:24px}
+.lock-emp{color:var(--white);font-weight:700}
+.lock-timer{font-size:42px;font-weight:800;color:var(--white);letter-spacing:-.02em;margin-bottom:4px}
+.lock-timer-label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.12em}
+
+/* Success */
+.success{
+  display:none;text-align:center;padding:40px 24px 32px;
+}
+.success.active{display:block}
+
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-icon{
+  width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(135deg,#16a34a,#22c55e);
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;margin:0 auto 20px;
+  box-shadow:0 8px 30px rgba(34,197,94,0.4);
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+.success-name{font-size:22px;font-weight:800;color:var(--white);margin-bottom:4px}
+.success-role{font-size:13px;color:var(--teal);margin-bottom:20px;font-weight:500}
+.success-msg{font-size:13px;color:var(--dim);line-height:1.6}
+.success-bar{
+  height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--teal-dark),var(--teal));
+  margin-top:22px;width:0;
+  animation:progress 2s linear forwards;
+}
+@keyframes progress{to{width:100%}}
+
+/* Ripple */
+.ripple-el{
+  position:absolute;border-radius:50%;
+  width:80px;height:80px;
+  background:rgba(26,155,191,0.28);
+  transform:scale(0);
+  animation:ripple .4s linear;
+  pointer-events:none;
+  left:50%;top:50%;margin-left:-40px;margin-top:-40px;
+}
+@keyframes ripple{to{transform:scale(2.6);opacity:0}}
+
+/* Hint */
+.hint{
+  text-align:center;font-size:10.5px;
+  color:rgba(122,143,163,0.42);
+  margin-top:10px;letter-spacing:.02em;
+}
+
+/* Activity log */
+.log-fab{
+  position:fixed;bottom:18px;right:18px;z-index:200;
+  background:rgba(17,40,64,0.92);
+  border:1px solid rgba(26,155,191,0.22);
+  border-radius:50px;padding:8px 16px;
+  color:var(--dim);font-size:12px;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+  backdrop-filter:blur(12px);
+  transition:all .15s;font-family:inherit;
+}
+.log-fab:hover{color:var(--white);border-color:rgba(26,155,191,0.4)}
+
+.log-badge{
+  background:var(--teal);color:#fff;
+  font-size:10px;font-weight:700;
+  padding:1px 6px;border-radius:10px;
+  min-width:18px;text-align:center;
+}
+
+.log-panel{
+  position:fixed;bottom:58px;right:18px;z-index:200;
+  background:rgba(17,40,64,0.96);
+  border:1px solid rgba(26,155,191,0.2);
+  border-radius:16px;width:296px;
+  max-height:280px;overflow-y:auto;
+  padding:14px 16px;
+  backdrop-filter:blur(12px);
+  display:none;
+  box-shadow:0 16px 48px rgba(0,0,0,0.4);
+}
+.log-panel.open{display:block}
+.log-panel-title{
+  font-size:10px;font-weight:700;
+  color:var(--teal);letter-spacing:.13em;text-transform:uppercase;
+  margin-bottom:10px;
+}
+.log-item{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:11.5px;
+}
+.log-item:last-child{border:none}
+.l-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.l-dot.success{background:var(--success)}
+.l-dot.fail{background:var(--danger)}
+.l-dot.info{background:var(--teal)}
+.l-msg{flex:1;color:var(--silver);line-height:1.4}
+.l-time{color:var(--dim);font-size:10px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <div class="drop"></div>
+  <div class="drop"></div>
+  <div class="drop"></div>
+  <div class="drop"></div>
+  <div class="drop"></div>
+</div>
+
+<div class="wrapper">
+
+  <!-- Logo header -->
+  <div class="header">
+    <div class="logo-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="108" height="145"
+           role="img" aria-label="Abbott Water Filters">
+        <defs>
+          <!-- Teal gradient: top-left → center-bottom (left half) -->
+          <linearGradient id="g-teal" x1="0" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#3CD8EC"/>
+            <stop offset="100%" stop-color="#0B6F96"/>
+          </linearGradient>
+          <!-- Silver gradient: top-right → center-bottom (right half) -->
+          <linearGradient id="g-silver" x1="200" y1="15" x2="100" y2="188" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#D8E8F0"/>
+            <stop offset="100%" stop-color="#8AABBC"/>
+          </linearGradient>
+          <!-- Chrome outer border -->
+          <linearGradient id="g-chrome" x1="0" y1="0" x2="200" y2="195" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#F0F5F8"/>
+            <stop offset="42%"  stop-color="#C6D4DC"/>
+            <stop offset="100%" stop-color="#7A9AAC"/>
+          </linearGradient>
+          <!-- Water drop gradient -->
+          <linearGradient id="g-drop" x1="85" y1="42" x2="115" y2="145" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#3CD8EC"/>
+            <stop offset="100%" stop-color="#0A4A6E"/>
+          </linearGradient>
+          <!-- Drop outline clip -->
+          <clipPath id="g-drop-clip">
+            <path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z"/>
+          </clipPath>
+          <!-- Clip: inner shield shape -->
+          <clipPath id="g-inner">
+            <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z"/>
+          </clipPath>
+          <!-- Clip: left half only -->
+          <clipPath id="g-left">
+            <rect x="0" y="0" width="100" height="300"/>
+          </clipPath>
+        </defs>
+
+        <!-- ── Outer chrome/silver border: angular hexagonal shield ── -->
+        <path d="M100,5 L54,17 L24,33 L20,128 Q34,172 100,194 Q166,172 180,128 L176,33 L146,17 Z"
+              fill="url(#g-chrome)"/>
+
+        <!-- ── Inner shield: silver base (full shape) ── -->
+        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z"
+              fill="url(#g-silver)"/>
+
+        <!-- ── Inner shield: teal left half ── -->
+        <path d="M100,18 L56,30 L33,45 L29,126 Q43,163 100,185 Q157,163 171,126 L167,45 L144,30 Z"
+              fill="url(#g-teal)" clip-path="url(#g-left)"/>
+
+        <!-- ── Inner A-frame shoulder lines ── -->
+        <path d="M100,18 L56,30 L33,45" fill="none" stroke="rgba(0,40,70,0.22)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M100,18 L144,30 L167,45" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="4" stroke-linecap="round"/>
+
+        <!-- ── Three horizontal teal bars (behind drop) ── -->
+        <rect x="29" y="80"  width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#g-inner)"/>
+        <rect x="29" y="93"  width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#g-inner)"/>
+        <rect x="29" y="106" width="142" height="9" rx="2" fill="#18AECA" clip-path="url(#g-inner)"/>
+
+        <!-- ── Water drop: r=44, circle-centre at shield mid y=101, top y=42, bottom y=145 ── -->
+        <!-- Bars (drawn above) pass behind this drop because it's rendered after them -->
+        <path d="M100,42 C87,58 56,78 56,101 A44,44,0,0,1,144,101 C144,78 113,58 100,42 Z"
+              fill="url(#g-drop)"/>
+        <!-- Depth: dark shadow on bottom-right interior -->
+        <ellipse cx="124" cy="130" rx="23" ry="15" fill="rgba(0,22,45,0.24)"
+                 transform="rotate(25,124,130)" clip-path="url(#g-drop-clip)"/>
+        <!-- Gloss: soft upper-left highlight glow -->
+        <ellipse cx="77" cy="69" rx="17" ry="23" fill="rgba(255,255,255,0.36)"
+                 transform="rotate(-20,77,69)" clip-path="url(#g-drop-clip)"/>
+        <!-- Gloss: bright specular spot upper-left -->
+        <circle cx="79" cy="56" r="8.5" fill="rgba(255,255,255,0.58)" clip-path="url(#g-drop-clip)"/>
+
+        <!-- ── ABBOTT ── -->
+        <text x="100" y="222" text-anchor="middle"
+              font-family="'Arial Black','Franklin Gothic Heavy','Arial',sans-serif"
+              font-weight="900" font-size="37" fill="#0D2D5C">ABBOTT</text>
+
+        <!-- ── WATER FILTERS ── -->
+        <text x="100" y="248" text-anchor="middle"
+              font-family="'Arial Black','Arial',sans-serif"
+              font-weight="700" font-size="15" fill="#0D2D5C" letter-spacing="3.5">WATER FILTERS</text>
+      </svg>
+    </div>
+    <div class="header-sub">Staff Portal &nbsp;·&nbsp; Secure Access</div>
+  </div>
+
+  <!-- Step progress pips -->
+  <div class="step-pips" id="stepPips">
+    <div class="pip pip-1" id="pip1"></div>
+    <div class="pip pip-2" id="pip2"></div>
+  </div>
+
+  <!-- Card -->
+  <div class="card">
+
+    <!-- ── STEP 1: Employee ID ── -->
+    <div class="step active" id="step1">
+      <div class="step-title">Employee Login</div>
+      <div class="step-desc">Enter your Employee ID to continue</div>
+      <div class="divider"></div>
+
+      <label class="field-label" for="empInput">Employee ID</label>
+      <input
+        class="field-input"
+        id="empInput"
+        type="text"
+        placeholder="e.g. EMP-001"
+        maxlength="10"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      >
+
+      <!-- Live preview -->
+      <div class="preview" id="preview">
+        <div class="p-avatar" id="pAvatar"></div>
+        <div>
+          <div class="p-name" id="pName">—</div>
+          <div class="p-role" id="pRole">—</div>
+          <div class="p-status" id="pStatus">
+            <span class="s-dot"></span>
+            <span id="pStatusText"></span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="continueBtn" disabled>
+        Continue to PIN Entry &rarr;
+      </button>
+      <div class="hint">Type your ID &amp; press Enter to continue</div>
+    </div>
+
+    <!-- ── STEP 2: PIN ── -->
+    <div class="step" id="step2">
+
+      <!-- Logged-in-as card -->
+      <div class="emp-card">
+        <div class="emp-avatar" id="eAvatar"></div>
+        <div>
+          <div class="emp-name" id="eName"></div>
+          <div class="emp-id" id="eId"></div>
+        </div>
+        <button class="emp-change" onclick="goStep1()">&#8592; Change</button>
+      </div>
+
+      <div class="step-title">Enter PIN</div>
+      <div class="step-desc">Enter your 4-digit security PIN</div>
+      <div class="divider"></div>
+
+      <!-- PIN dots -->
+      <div class="pin-dots" id="pinDots">
+        <div class="p-dot" id="d0"></div>
+        <div class="p-dot" id="d1"></div>
+        <div class="p-dot" id="d2"></div>
+        <div class="p-dot" id="d3"></div>
+      </div>
+
+      <!-- Attempt indicators -->
+      <div class="attempts-wrap">
+        <div class="att-pips">
+          <div class="att-pip" id="ap0"></div>
+          <div class="att-pip" id="ap1"></div>
+          <div class="att-pip" id="ap2"></div>
+        </div>
+        <div class="att-left" id="attLeft"></div>
+      </div>
+
+      <!-- Number keypad -->
+      <div class="keypad">
+        <button class="key" data-n="1" onclick="tap('1')"><span>1</span><span class="key-sub">&nbsp;</span></button>
+        <button class="key" data-n="2" onclick="tap('2')"><span>2</span><span class="key-sub">ABC</span></button>
+        <button class="key" data-n="3" onclick="tap('3')"><span>3</span><span class="key-sub">DEF</span></button>
+        <button class="key" data-n="4" onclick="tap('4')"><span>4</span><span class="key-sub">GHI</span></button>
+        <button class="key" data-n="5" onclick="tap('5')"><span>5</span><span class="key-sub">JKL</span></button>
+        <button class="key" data-n="6" onclick="tap('6')"><span>6</span><span class="key-sub">MNO</span></button>
+        <button class="key" data-n="7" onclick="tap('7')"><span>7</span><span class="key-sub">PQRS</span></button>
+        <button class="key" data-n="8" onclick="tap('8')"><span>8</span><span class="key-sub">TUV</span></button>
+        <button class="key" data-n="9" onclick="tap('9')"><span>9</span><span class="key-sub">WXYZ</span></button>
+        <button class="key blank"></button>
+        <button class="key" data-n="0" onclick="tap('0')"><span>0</span><span class="key-sub">+</span></button>
+        <button class="key del" onclick="delPin()">&#9003;</button>
+      </div>
+
+      <div class="hint">Keyboard: digits, Backspace, Enter &nbsp;·&nbsp; Esc to change user</div>
+    </div>
+
+    <!-- ── LOCKOUT ── -->
+    <div class="lockout" id="lockout">
+      <div class="lock-icon">&#128274;</div>
+      <div class="lock-title">Account Locked</div>
+      <div class="lock-desc">
+        Too many failed attempts for<br>
+        <span class="lock-emp" id="lockEmpLabel"></span>
+      </div>
+      <div class="lock-timer" id="lockTimer">5:00</div>
+      <div class="lock-timer-label">Time Remaining</div>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div class="success" id="success">
+      <div class="success-icon">&#10003;</div>
+      <div class="success-name" id="sucName"></div>
+      <div class="success-role" id="sucRole"></div>
+      <div class="success-msg">
+        Login successful.<br>Redirecting to dashboard&hellip;
+      </div>
+      <div class="success-bar"></div>
+    </div>
+
+  </div><!-- /card -->
+</div><!-- /wrapper -->
+
+<!-- Activity log FAB -->
+<button class="log-fab" onclick="toggleLog()">
+  &#128203; Activity Log <span class="log-badge" id="logBadge">0</span>
+</button>
+<div class="log-panel" id="logPanel">
+  <div class="log-panel-title">Recent Activity</div>
+  <div id="logList"></div>
+</div>
+
+<script>
+// ─── Demo accounts ───────────────────────────────────────────
+var ACCOUNTS = {
+  'EMP-001': { pin:'1234', name:'Javed Ahmed',  role:'Manager',     shift:'Morning', area:'All Areas',           init:'JA' },
+  'EMP-002': { pin:'2222', name:'Ali Hassan',   role:'Technician',  shift:'Morning', area:'Mandian, Abbottabad', init:'AH' },
+  'EMP-004': { pin:'4444', name:'Sara Malik',   role:'Sales Staff', shift:'Evening', area:'Mandian',             init:'SM' },
+};
+
+var MAX_FAIL = 3;
+var LOCK_SECS = 300;
+
+// ─── State ───────────────────────────────────────────────────
+let empId   = null;
+let pinBuf  = '';
+let fails   = 0;
+let lockInt = null;
+let log     = [];
+
+// ─── Log ─────────────────────────────────────────────────────
+function addLog(type, msg) {
+  var t = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  log.unshift({type, msg, t});
+  if (log.length > 30) log.pop();
+  renderLog();
+  document.getElementById('logBadge').textContent = log.length;
+}
+function renderLog() {
+  document.getElementById('logList').innerHTML = log.map(e =>
+    `<div class="log-item">
+       <div class="l-dot ${e.type}"></div>
+       <div class="l-msg">${e.msg}</div>
+       <div class="l-time">${e.t}</div>
+     </div>`
+  ).join('');
+}
+function toggleLog() {
+  document.getElementById('logPanel').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  var p = document.getElementById('logPanel');
+  var f = document.querySelector('.log-fab');
+  if (!p.contains(e.target) && !f.contains(e.target)) p.classList.remove('open');
+});
+
+// ─── Step 1 ──────────────────────────────────────────────────
+var empInput   = document.getElementById('empInput');
+var preview    = document.getElementById('preview');
+var continueBtn = document.getElementById('continueBtn');
+
+empInput.addEventListener('input', () => {
+  empInput.value = empInput.value.toUpperCase().replace(/[^A-Z0-9\-]/g,'');
+  checkId(empInput.value.trim());
+});
+empInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !continueBtn.disabled) goStep2();
+});
+continueBtn.addEventListener('click', goStep2);
+
+function checkId(val) {
+  if (!val) {
+    preview.className = 'preview';
+    continueBtn.disabled = true;
+    return;
+  }
+  var acc = ACCOUNTS[val];
+  preview.classList.add('show');
+  if (acc) {
+    preview.classList.remove('invalid'); preview.classList.add('valid');
+    document.getElementById('pAvatar').textContent = acc.init;
+    document.getElementById('pAvatar').className = 'p-avatar';
+    document.getElementById('pName').textContent = acc.name;
+    document.getElementById('pRole').textContent = acc.role;
+    document.getElementById('pStatus').className = 'p-status ok';
+    document.getElementById('pStatusText').textContent = 'Valid account — ready to login';
+    continueBtn.disabled = false;
+  } else {
+    preview.classList.remove('valid'); preview.classList.add('invalid');
+    document.getElementById('pAvatar').textContent = '?';
+    document.getElementById('pAvatar').className = 'p-avatar err';
+    document.getElementById('pName').textContent = 'Unknown Employee';
+    document.getElementById('pRole').textContent = '—';
+    document.getElementById('pStatus').className = 'p-status err';
+    document.getElementById('pStatusText').textContent = 'Employee ID not found';
+    continueBtn.disabled = true;
+  }
+}
+
+function goStep2() {
+  var val = empInput.value.trim();
+  var acc = ACCOUNTS[val];
+  if (!acc) return;
+
+  empId  = val;
+  pinBuf = '';
+  fails  = 0;
+
+  document.getElementById('eAvatar').textContent = acc.init;
+  document.getElementById('eName').textContent   = acc.name;
+  document.getElementById('eId').textContent     = val + ' · ' + acc.role;
+
+  refreshDots();
+  refreshAttempts();
+
+  show('step2');
+  document.getElementById('pip1').classList.add('done');
+  document.getElementById('pip2').classList.add('active');
+  addLog('info', `ID verified: ${val} (${acc.name})`);
+}
+
+function goStep1() {
+  empId = null; pinBuf = '';
+  clearInterval(lockInt);
+  document.getElementById('stepPips').style.display = 'flex';
+
+  show('step1');
+  document.getElementById('pip1').classList.remove('done');
+  document.getElementById('pip2').classList.remove('active');
+  empInput.focus();
+}
+
+// ─── Step 2 / PIN ────────────────────────────────────────────
+function tap(d) {
+  if (pinBuf.length >= 4) return;
+  pinBuf += d;
+  refreshDots();
+  addRipple(d);
+  if (pinBuf.length === 4) setTimeout(submit, 220);
+}
+function delPin() {
+  if (!pinBuf.length) return;
+  pinBuf = pinBuf.slice(0,-1);
+  refreshDots();
+}
+function refreshDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d'+i).classList.toggle('filled', i < pinBuf.length);
+  }
+}
+function refreshAttempts() {
+  for (let i = 0; i < MAX_FAIL; i++) {
+    var el = document.getElementById('ap'+i);
+    el.classList.toggle('fail', i < fails);
+  }
+  var left = MAX_FAIL - fails;
+  var el   = document.getElementById('attLeft');
+  if (fails > 0) {
+    el.textContent = `${left} attempt${left !== 1 ? 's' : ''} remaining`;
+    el.className = 'att-left' + (left === 1 ? ' warn' : '');
+  } else {
+    el.textContent = '';
+    el.className = 'att-left';
+  }
+}
+
+function addRipple(d) {
+  var key = document.querySelector(`[data-n="${d}"]`);
+  if (!key) return;
+  var r = document.createElement('div');
+  r.className = 'ripple-el';
+  key.appendChild(r);
+  setTimeout(() => r.remove(), 420);
+}
+
+function submit() {
+  var acc = ACCOUNTS[empId];
+  if (!acc) return;
+
+  if (pinBuf === acc.pin) {
+    addLog('success', `Login OK: ${acc.name} (${empId})`);
+    showSuccess(acc);
+  } else {
+    fails++;
+    addLog('fail', `Wrong PIN for ${empId} — attempt ${fails}`);
+    shake();
+    if (fails >= MAX_FAIL) {
+      setTimeout(lockout, 650);
+    }
+  }
+}
+
+function shake() {
+  var dots = document.getElementById('pinDots');
+  dots.classList.add('shake');
+  setTimeout(() => {
+    dots.classList.remove('shake');
+    pinBuf = '';
+    refreshDots();
+    refreshAttempts();
+  }, 600);
+}
+
+function lockout() {
+  document.getElementById('lockEmpLabel').textContent = empId;
+  show('lockout');
+  document.getElementById('stepPips').style.display = 'none';
+  addLog('fail', `LOCKED: ${empId} after ${MAX_FAIL} failed attempts`);
+
+  let s = LOCK_SECS;
+  var fmt = n => `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
+  document.getElementById('lockTimer').textContent = fmt(s);
+
+  lockInt = setInterval(() => {
+    s--;
+    document.getElementById('lockTimer').textContent = fmt(s);
+    if (s <= 0) {
+      clearInterval(lockInt);
+      addLog('info', 'Lockout expired — please log in again');
+      goStep1();
+    }
+  }, 1000);
+}
+
+function showSuccess(acc) {
+  var destinations = {
+    'Manager':    'step2-manager-dashboard.html',
+    'Technician': 'step3-technician-dashboard.html',
+    'Sales Staff':'step4-sales-dashboard.html'
+  };
+  var dest = destinations[acc.role] || 'step2-manager-dashboard.html';
+  localStorage.setItem('awf_session', JSON.stringify({
+    empId: empId, name: acc.name, role: acc.role,
+    shift: acc.shift || 'Morning', area: acc.area || '',
+    loginTime: new Date().toISOString()
+  }));
+  document.getElementById('sucName').textContent = acc.name;
+  document.getElementById('sucRole').textContent = acc.role;
+  show('success');
+  document.getElementById('stepPips').style.display = 'none';
+  setTimeout(() => { window.location.href = dest; }, 2000);
+}
+
+// ─── Keyboard on PIN step ─────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('step2').classList.contains('active')) return;
+  if (e.key >= '0' && e.key <= '9') { tap(e.key); }
+  else if (e.key === 'Backspace')  { delPin(); }
+  else if (e.key === 'Enter' && pinBuf.length === 4) { submit(); }
+  else if (e.key === 'Escape')     { goStep1(); }
+});
+
+// ─── Utility ─────────────────────────────────────────────────
+function show(id) {
+  ['step1','step2','lockout','success'].forEach(s => {
+    var el = document.getElementById(s);
+    if (el) {
+      el.classList.remove('active');
+      el.style.display = '';
+    }
+  });
+  var target = document.getElementById(id);
+  if (target) {
+    target.classList.add('active');
+  }
+}
+
+// ─── Init ────────────────────────────────────────────────────
+addLog('info', 'System ready — waiting for login');
+empInput.focus();
+</script>
+</body>
+</html>
