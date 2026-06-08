@@ -146,6 +146,19 @@ tbody tr:hover{background:#f8fafc;}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
 .section-header h2{font-size:17px;font-weight:700;color:var(--navy);}
 
+/* MODAL SECTIONS / TOGGLE */
+.modal-section-label{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;}
+.modal-divider{height:1px;background:var(--border);margin:20px 0;}
+.install-toggle-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.toggle-switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:24px;cursor:pointer;transition:.2s;}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle-switch input:checked + .toggle-slider{background:var(--teal);}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(18px);}
+.toggle-label-text{font-size:14px;font-weight:600;color:var(--navy);}
+.toggle-hint{font-size:12px;color:var(--dim);}
+
 /* ── Mobile Responsive ── */
 .hamburger{display:none;align-items:center;justify-content:center;flex-direction:column}
 @media(max-width:768px){
@@ -365,12 +378,15 @@ tbody tr:hover{background:#f8fafc;}
 
 <!-- LOG SALE MODAL -->
 <div class="modal-overlay" id="sale-modal">
-  <div class="modal">
+  <div class="modal" style="max-width:620px">
     <div class="modal-head">
       <div class="modal-title">Log Sale</div>
       <button class="modal-close" onclick="closeSaleModal()">&#x2715;</button>
     </div>
     <div class="modal-body">
+
+      <!-- Sale Details -->
+      <div class="modal-section-label">Sale Details</div>
       <div class="form-grid">
         <div class="form-field full">
           <label class="form-label">Item Sold *</label>
@@ -393,14 +409,82 @@ tbody tr:hover{background:#f8fafc;}
           </select>
         </div>
         <div class="form-field">
-          <label class="form-label">Customer Name</label>
-          <input class="form-input" id="sale-customer" placeholder="Optional">
+          <label class="form-label">Filter Model</label>
+          <select class="form-select" id="sale-model">
+            <option value="">Select model&hellip;</option>
+            <option>Standard 5-Stage RO</option>
+            <option>Ultra 7-Stage RO</option>
+            <option>Basic Sediment</option>
+            <option>Carbon Block</option>
+            <option>UV Sterilizer</option>
+            <option>Whole House Filter</option>
+            <option>Other</option>
+          </select>
         </div>
       </div>
+
+      <!-- Customer Details -->
+      <div class="modal-divider"></div>
+      <div class="modal-section-label">Customer Details</div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label">Customer Name</label>
+          <input class="form-input" id="sale-customer" placeholder="Full name">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Phone (WhatsApp)</label>
+          <input class="form-input" id="sale-phone" type="tel" placeholder="923001234567">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Area</label>
+          <input class="form-input" id="sale-area" placeholder="e.g. Mandian">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Address</label>
+          <input class="form-input" id="sale-address" placeholder="Street, locality">
+        </div>
+      </div>
+
+      <!-- Installation Toggle -->
+      <div class="modal-divider"></div>
+      <div class="install-toggle-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="sale-needs-install" onchange="toggleInstallFields()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label-text">Needs Installation?</span>
+        <span class="toggle-hint">Schedules a technician and tracks filter expiry</span>
+      </div>
+      <div id="install-fields" style="display:none;margin-top:16px;">
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Installation Date</label>
+            <input class="form-input" id="sale-install-date" type="date">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Filter Lifespan</label>
+            <select class="form-select" id="sale-lifespan">
+              <option value="3">3 months</option>
+              <option value="6" selected>6 months</option>
+              <option value="12">12 months</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Assigned Technician</label>
+            <select class="form-select" id="sale-tech">
+              <option value="">Unassigned</option>
+              <option>Ali Hassan</option>
+              <option>Kamran Malik</option>
+              <option>Muhammad Javed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeSaleModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="submitSale()">Save Sale</button>
+      <button class="btn btn-primary" id="sale-submit-btn" onclick="submitSale()">Save Sale</button>
     </div>
   </div>
 </div>
@@ -735,42 +819,148 @@ function filterSales() {
   }
   tbody.innerHTML = html;
 }
+function calcDueDate(installDate, months) {
+  var d = new Date(installDate);
+  d.setMonth(d.getMonth() + parseInt(months));
+  return d.toISOString().split('T')[0];
+}
+function nextId(arr, prefix) {
+  var nums = arr.map(function(x){ return parseInt((x.id||'').replace(/\D/g,'')); }).filter(function(n){ return !isNaN(n); });
+  var next = nums.length ? Math.max.apply(null, nums) + 1 : 1;
+  return prefix + String(next).padStart(3, '0');
+}
+function toggleInstallFields() {
+  var chk = document.getElementById('sale-needs-install');
+  var el = document.getElementById('install-fields');
+  el.style.display = chk.checked ? 'block' : 'none';
+  if (chk.checked && !document.getElementById('sale-install-date').value) {
+    document.getElementById('sale-install-date').value = todayStr();
+  }
+}
 function openSaleModal() {
   document.getElementById('sale-item').value = '';
   document.getElementById('sale-qty').value = '1';
   document.getElementById('sale-price').value = '';
   document.getElementById('sale-payment').value = 'Cash';
+  document.getElementById('sale-model').value = '';
   document.getElementById('sale-customer').value = '';
+  document.getElementById('sale-phone').value = '';
+  document.getElementById('sale-area').value = '';
+  document.getElementById('sale-address').value = '';
+  document.getElementById('sale-needs-install').checked = false;
+  document.getElementById('install-fields').style.display = 'none';
+  document.getElementById('sale-install-date').value = '';
+  document.getElementById('sale-lifespan').value = '6';
+  document.getElementById('sale-tech').value = '';
   document.getElementById('sale-modal').classList.add('open');
 }
 function closeSaleModal() {
   document.getElementById('sale-modal').classList.remove('open');
 }
 async function submitSale() {
-  var item = document.getElementById('sale-item').value.trim();
+  var item         = document.getElementById('sale-item').value.trim();
   if (!item) { alert('Item sold is required.'); return; }
-  var quantity = parseInt(document.getElementById('sale-qty').value) || 1;
-  var unitPrice = parseFloat(document.getElementById('sale-price').value) || 0;
-  var total = quantity * unitPrice;
-  var paymentMethod = document.getElementById('sale-payment').value;
-  var customerName = document.getElementById('sale-customer').value.trim();
-  var entry = {
-    item:           item,
-    quantity:       quantity,
-    unit_price:     unitPrice,
-    total:          total,
-    payment_method: paymentMethod,
-    customer_name:  customerName || null,
-    sold_by:        currentUser.name
-  };
+  var quantity     = parseInt(document.getElementById('sale-qty').value) || 1;
+  var unitPrice    = parseFloat(document.getElementById('sale-price').value) || 0;
+  var total        = quantity * unitPrice;
+  var payMethod    = document.getElementById('sale-payment').value;
+  var filterModel  = document.getElementById('sale-model').value;
+  var custName     = document.getElementById('sale-customer').value.trim();
+  var phone        = document.getElementById('sale-phone').value.trim();
+  var area         = document.getElementById('sale-area').value.trim();
+  var address      = document.getElementById('sale-address').value.trim();
+  var needsInstall = document.getElementById('sale-needs-install').checked;
+  var installDate  = document.getElementById('sale-install-date').value;
+  var lifespan     = parseInt(document.getElementById('sale-lifespan').value) || 6;
+  var technician   = document.getElementById('sale-tech').value;
+
+  if (needsInstall && !installDate) { alert('Please set an installation date.'); return; }
+
+  var btn = document.getElementById('sale-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  var created = [];
+  var errors  = [];
+
+  // 1. Save sale record
   try {
-    await db.from('daily_sales').insert(entry);
-    closeSaleModal();
-    renderSales().catch(function(e){ console.error(e); });
+    await db.from('daily_sales').insert({
+      item:           item,
+      quantity:       quantity,
+      unit_price:     unitPrice,
+      total:          total,
+      payment_method: payMethod,
+      customer_name:  custName || null,
+      sold_by:        currentUser.name
+    });
+    created.push('Sale logged');
   } catch(e) {
-    console.error('Error saving sale:', e);
+    console.error('Sale insert error:', e);
+    btn.disabled = false;
+    btn.textContent = 'Save Sale';
     alert('Error saving sale:\n' + (e.message || e));
+    return;
   }
+
+  // 2. Create customer record if phone given
+  if (phone) {
+    try {
+      var customers = await db.from('customers').select();
+      var instDate  = (needsInstall && installDate) ? installDate : todayStr();
+      await db.from('customers').insert({
+        id:           nextId(customers, 'AWF-'),
+        name:         custName || 'Walk-in Customer',
+        phone:        phone,
+        address:      address || null,
+        area:         area || null,
+        model:        filterModel || item,
+        life:         lifespan,
+        install_date: instDate,
+        due_date:     calcDueDate(instDate, lifespan),
+        technician:   technician || '',
+        notes:        'Walk-in sale by ' + currentUser.name
+      });
+      created.push('Customer added');
+    } catch(e) {
+      console.error('Customer insert error:', e);
+      errors.push('Customer: ' + (e.message || e));
+    }
+  }
+
+  // 3. Schedule installation job if toggle is on
+  if (needsInstall && installDate) {
+    try {
+      var jobs = await db.from('jobs').select();
+      await db.from('jobs').insert({
+        id:             nextId(jobs, 'JOB-'),
+        customer_name:  custName || 'Walk-in Customer',
+        phone:          phone || null,
+        address:        address || null,
+        job_type:       'New Installation',
+        technician:     technician || '',
+        scheduled_date: installDate,
+        scheduled_time: '10:00',
+        labor:          0,
+        parts_cost:     0,
+        notes:          'Scheduled from walk-in sale by ' + currentUser.name,
+        status:         'Scheduled'
+      });
+      created.push('Installation scheduled');
+    } catch(e) {
+      console.error('Job insert error:', e);
+      errors.push('Job: ' + (e.message || e));
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save Sale';
+  closeSaleModal();
+  renderSales().catch(function(e){ console.error(e); });
+
+  var msg = created.map(function(s){ return s + ' ✓'; }).join('\n');
+  if (errors.length) msg += '\n\nWarnings:\n' + errors.join('\n');
+  alert(msg);
 }
 async function deleteSale(id) {
   if (!confirm('Delete this sale entry?')) return;
