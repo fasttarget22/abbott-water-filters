@@ -631,7 +631,7 @@ async function renderReminders() {
     grid.innerHTML = html;
   } catch(e) {
     console.error('Error loading reminders:', e);
-    grid.innerHTML = '<div class="empty-msg">Error loading reminders. Please try again.</div>';
+    grid.innerHTML = '<div class="empty-msg">Error loading reminders: ' + (e.message || e) + '</div>';
     empty.classList.add('hidden');
   }
 }
@@ -679,7 +679,7 @@ async function submitLogResult() {
     renderReminders().catch(function(e){ console.error(e); });
   } catch(e) {
     console.error('Error saving call result:', e);
-    alert('Error saving call result. Please try again.');
+    alert('Error saving call result:\n' + (e.message || e));
   }
 }
 
@@ -762,7 +762,7 @@ async function submitSale() {
     renderSales().catch(function(e){ console.error(e); });
   } catch(e) {
     console.error('Error saving sale:', e);
-    alert('Error saving sale. Please try again.');
+    alert('Error saving sale:\n' + (e.message || e));
   }
 }
 async function deleteSale(id) {
@@ -772,7 +772,7 @@ async function deleteSale(id) {
     renderSales().catch(function(e){ console.error(e); });
   } catch(e) {
     console.error('Error deleting sale:', e);
-    alert('Error deleting sale. Please try again.');
+    alert('Error deleting sale:\n' + (e.message || e));
   }
 }
 

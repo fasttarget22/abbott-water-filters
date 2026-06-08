@@ -749,7 +749,7 @@ async function renderJobs() {
   } catch(e) {
     console.error('Failed to render jobs:', e);
     document.getElementById('jobs-sub').textContent = 'Error loading jobs';
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Failed to load jobs</div><div class="empty-state-sub">Please check your connection and try again</div></div>';
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Failed to load jobs</div><div class="empty-state-sub">' + (e.message || 'Please check your connection and try again') + '</div></div>';
   }
 }
 
@@ -760,7 +760,8 @@ async function startJob(jobId) {
     await renderJobs();
   } catch(e) {
     console.error('Failed to start job:', e);
-    alert('Failed to start job. Please check your connection and try again.');
+    console.error('Start job error:', e.message);
+    alert('Failed to start job:\n' + (e.message || e));
   }
 }
 
@@ -791,7 +792,8 @@ async function openCompleteModal(jobId) {
     document.getElementById('complete-modal').classList.add('open');
   } catch(e) {
     console.error('Failed to open complete modal:', e);
-    alert('Failed to load job details. Please check your connection and try again.');
+    console.error('Complete modal load error:', e.message);
+    alert('Failed to load job details:\n' + (e.message || e));
   }
 }
 
@@ -894,7 +896,8 @@ async function submitComplete() {
     await renderParts();
   } catch(e) {
     console.error('Failed to complete job:', e);
-    errEl.textContent = 'Failed to save. Please check your connection and try again.';
+    console.error('Complete job error:', e.message);
+    errEl.textContent = 'Failed to save: ' + (e.message || e);
     errEl.classList.add('show');
   }
 }

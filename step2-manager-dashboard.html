@@ -1124,7 +1124,8 @@ async function renderDashboard(){
     inventory = await db.from('inventory').select();
     feedback  = await db.from('feedback').select();
   } catch(e) {
-    content.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">Failed to load data. Check your connection.</div>';
+    console.error('Dashboard load error:', e.message);
+    content.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">Failed to load data: ' + (e.message || e) + '</div>';
     return;
   }
 
@@ -1223,7 +1224,8 @@ async function renderCustomers(filter){
   try {
     customers = await db.from('customers').select();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    console.error('Customers load error:', e.message);
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">Failed to load data: ' + (e.message || e) + '</td></tr>';
     return;
   }
   var q = filter.toLowerCase();
@@ -1264,7 +1266,8 @@ async function deleteCustomer(id){
   try {
     await db.from('customers').delete('id', id);
   } catch(e) {
-    alert('Failed to delete customer. Check your connection.');
+    console.error('Delete customer error:', e.message);
+    alert('Failed to delete customer:\n' + (e.message || e));
     return;
   }
   await renderCustomers(document.getElementById('cust-search').value);
@@ -1278,7 +1281,8 @@ async function submitCustomer(e){
   try {
     customers = await db.from('customers').select();
   } catch(err) {
-    alert('Failed to load customers. Check your connection.');
+    console.error('Submit customer load error:', err.message);
+    alert('Failed to load customers:\n' + (err.message || err));
     return;
   }
   var c = {
@@ -1297,7 +1301,8 @@ async function submitCustomer(e){
   try {
     await db.from('customers').insert(c);
   } catch(err) {
-    alert('Failed to save customer. Check your connection.');
+    console.error('Save customer error:', err.message);
+    alert('Failed to save customer:\n' + (err.message || err));
     return;
   }
   closeModal('modal-customer');
@@ -1316,7 +1321,8 @@ async function renderExpiry(){
   try {
     customers = await db.from('customers').select();
   } catch(e) {
-    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Failed to load data. Check your connection.</div>';
+    console.error('Expiry load error:', e.message);
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Failed to load data: ' + (e.message || e) + '</div>';
     return;
   }
 
@@ -1375,7 +1381,8 @@ async function waAllOverdue(){
   try {
     customers = await db.from('customers').select();
   } catch(e) {
-    alert('Failed to load customers. Check your connection.');
+    console.error('waAllOverdue load error:', e.message);
+    alert('Failed to load customers:\n' + (e.message || e));
     return;
   }
   var overdue = customers.filter(c => daysRemaining(c.dueDate) < 0);
@@ -1408,7 +1415,8 @@ async function renderWhatsApp(){
   try {
     customers = await db.from('customers').select();
   } catch(e) {
-    document.getElementById('wa-cust-list').innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">Failed to load customers.</div>';
+    console.error('WhatsApp customers load error:', e.message);
+    document.getElementById('wa-cust-list').innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">Failed to load customers: ' + (e.message || e) + '</div>';
     return;
   }
   document.getElementById('wa-cust-list').innerHTML = customers.map(c=>{
@@ -1480,7 +1488,8 @@ async function sendWA(){
   try {
     customers = await db.from('customers').select();
   } catch(e) {
-    alert('Failed to load customers. Check your connection.');
+    console.error('sendWA load error:', e.message);
+    alert('Failed to load customers:\n' + (e.message || e));
     return;
   }
   var tpl = TEMPLATES[selectedTpl];
@@ -1575,7 +1584,8 @@ async function renderFeedback(){
   try {
     fb = await db.from('feedback').select();
   } catch(e) {
-    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Failed to load data. Check your connection.</div>';
+    console.error('Feedback load error:', e.message);
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Failed to load data: ' + (e.message || e) + '</div>';
     return;
   }
   var total = fb.length;
@@ -1633,7 +1643,8 @@ async function submitFeedback(e){
   try {
     fb = await db.from('feedback').select();
   } catch(err) {
-    alert('Failed to load feedback. Check your connection.');
+    console.error('Submit feedback load error:', err.message);
+    alert('Failed to load feedback:\n' + (err.message || err));
     return;
   }
   var entry = {
@@ -1648,7 +1659,8 @@ async function submitFeedback(e){
   try {
     await db.from('feedback').insert(entry);
   } catch(err) {
-    alert('Failed to save feedback. Check your connection.');
+    console.error('Save feedback error:', err.message);
+    alert('Failed to save feedback:\n' + (err.message || err));
     return;
   }
   closeModal('modal-feedback');
@@ -1689,7 +1701,8 @@ async function renderSchedule(){
   try {
     all = await db.from('jobs').select();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    console.error('Schedule load error:', e.message);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">Failed to load data: ' + (e.message || e) + '</td></tr>';
     return;
   }
   var today = todayStr();
@@ -1756,7 +1769,8 @@ async function markJobDone(id){
   try {
     await db.from('jobs').update({status:'Completed'}, 'id', id);
   } catch(e) {
-    alert('Failed to update job. Check your connection.');
+    console.error('Mark job done error:', e.message);
+    alert('Failed to update job:\n' + (e.message || e));
     return;
   }
   await renderSchedule();
@@ -1768,7 +1782,8 @@ async function cancelJob(id){
   try {
     await db.from('jobs').update({status:'Cancelled'}, 'id', id);
   } catch(e) {
-    alert('Failed to cancel job. Check your connection.');
+    console.error('Cancel job error:', e.message);
+    alert('Failed to cancel job:\n' + (e.message || e));
     return;
   }
   await renderSchedule();
@@ -1780,7 +1795,8 @@ async function submitJob(e){
   try {
     jobs = await db.from('jobs').select();
   } catch(err) {
-    alert('Failed to load jobs. Check your connection.');
+    console.error('Submit job load error:', err.message);
+    alert('Failed to load jobs:\n' + (err.message || err));
     return;
   }
   var job = {
@@ -1800,7 +1816,8 @@ async function submitJob(e){
   try {
     await db.from('jobs').insert(job);
   } catch(err) {
-    alert('Failed to save job. Check your connection.');
+    console.error('Save job error:', err.message);
+    alert('Failed to save job:\n' + (err.message || err));
     return;
   }
   closeModal('modal-schedule');
@@ -1819,7 +1836,8 @@ async function renderInventory(){
   try {
     inv = await db.from('inventory').select();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    console.error('Inventory load error:', e.message);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">Failed to load data: ' + (e.message || e) + '</td></tr>';
     return;
   }
   var ok  = inv.filter(i=>i.quantity>i.reorderLevel).length;
@@ -1888,7 +1906,8 @@ async function addStock(id){
   try {
     inv = await db.from('inventory').select();
   } catch(e) {
-    alert('Failed to load inventory. Check your connection.');
+    console.error('addStock load error:', e.message);
+    alert('Failed to load inventory:\n' + (e.message || e));
     return;
   }
   var item = inv.find(i=>i.id===id);
@@ -1897,7 +1916,8 @@ async function addStock(id){
   try {
     await db.from('inventory').update({quantity: newQty}, 'id', id);
   } catch(e) {
-    alert('Failed to update stock. Check your connection.');
+    console.error('Update stock error:', e.message);
+    alert('Failed to update stock:\n' + (e.message || e));
     return;
   }
   await renderInventory();
@@ -1909,7 +1929,8 @@ async function deleteInvItem(id){
   try {
     await db.from('inventory').delete('id', id);
   } catch(e) {
-    alert('Failed to delete item. Check your connection.');
+    console.error('Delete inventory item error:', e.message);
+    alert('Failed to delete item:\n' + (e.message || e));
     return;
   }
   await renderInventory();
@@ -1922,7 +1943,8 @@ async function submitInventory(e){
   try {
     inv = await db.from('inventory').select();
   } catch(err) {
-    alert('Failed to load inventory. Check your connection.');
+    console.error('Submit inventory load error:', err.message);
+    alert('Failed to load inventory:\n' + (err.message || err));
     return;
   }
   var item = {
@@ -1938,7 +1960,8 @@ async function submitInventory(e){
   try {
     await db.from('inventory').insert(item);
   } catch(err) {
-    alert('Failed to save inventory item. Check your connection.');
+    console.error('Save inventory error:', err.message);
+    alert('Failed to save inventory item:\n' + (err.message || err));
     return;
   }
   closeModal('modal-inventory');
@@ -1958,7 +1981,8 @@ async function renderEmployees(){
     emps = await db.from('employees').select();
     jobs = await db.from('jobs').select();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    console.error('Employees load error:', e.message);
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">Failed to load data: ' + (e.message || e) + '</td></tr>';
     return;
   }
   var thisMonth = new Date().toISOString().slice(0,7);
@@ -2011,7 +2035,8 @@ async function resetPin(id){
     await db.from('employees').update({pin: pin}, 'id', id);
     alert('PIN updated successfully.');
   } catch(e) {
-    alert('Failed to update PIN. Check your connection.');
+    console.error('Reset PIN error:', e.message);
+    alert('Failed to update PIN:\n' + (e.message || e));
   }
 }
 
@@ -2020,7 +2045,8 @@ async function toggleEmployee(id){
   try {
     emps = await db.from('employees').select();
   } catch(err) {
-    alert('Failed to load employees. Check your connection.');
+    console.error('Toggle employee load error:', err.message);
+    alert('Failed to load employees:\n' + (err.message || err));
     return;
   }
   var e = emps.find(x=>x.id===id);
@@ -2030,7 +2056,8 @@ async function toggleEmployee(id){
   try {
     await db.from('employees').update({active: !isActive}, 'id', id);
   } catch(err) {
-    alert('Failed to update employee. Check your connection.');
+    console.error('Toggle employee update error:', err.message);
+    alert('Failed to update employee:\n' + (err.message || err));
     return;
   }
   await renderEmployees();
@@ -2042,7 +2069,8 @@ async function submitEmployee(e){
   try {
     emps = await db.from('employees').select();
   } catch(err) {
-    alert('Failed to load employees. Check your connection.');
+    console.error('Submit employee load error:', err.message);
+    alert('Failed to load employees:\n' + (err.message || err));
     return;
   }
   var emp = {
@@ -2058,7 +2086,8 @@ async function submitEmployee(e){
   try {
     await db.from('employees').insert(emp);
   } catch(err) {
-    alert('Failed to save employee. Check your connection.');
+    console.error('Save employee error:', err.message);
+    alert('Failed to save employee:\n' + (err.message || err));
     return;
   }
   closeModal('modal-employee');
@@ -2184,7 +2213,8 @@ async function shiftHandoff() {
     customers = await db.from('customers').select();
     inventory = await db.from('inventory').select();
   } catch(e) {
-    alert('Failed to load data. Check your connection.');
+    console.error('Shift handoff load error:', e.message);
+    alert('Failed to load data:\n' + (e.message || e));
     return;
   }
 
@@ -2229,7 +2259,8 @@ async function dailySummary() {
     customers = await db.from('customers').select();
     inventory = await db.from('inventory').select();
   } catch(e) {
-    alert('Failed to load data. Check your connection.');
+    console.error('Daily summary load error:', e.message);
+    alert('Failed to load data:\n' + (e.message || e));
     return;
   }
 
@@ -2329,7 +2360,8 @@ async function renderReports() {
     jobs      = await db.from('jobs').select();
     customers = await db.from('customers').select();
   } catch(e) {
-    document.getElementById('rep-stats').innerHTML = '<div style="padding:16px;color:var(--red)">Failed to load data. Check your connection.</div>';
+    console.error('Reports load error:', e.message);
+    document.getElementById('rep-stats').innerHTML = '<div style="padding:16px;color:var(--red)">Failed to load data: ' + (e.message || e) + '</div>';
     return;
   }
 
