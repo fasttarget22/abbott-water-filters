@@ -1,4 +1,4 @@
-var CACHE_NAME = 'awf-v1';
+var CACHE_NAME = 'awf-v2';
 var FILES_TO_CACHE = [
   './step1-login.html',
   './step2-manager-dashboard.html',
