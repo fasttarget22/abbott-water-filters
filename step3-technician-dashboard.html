@@ -379,17 +379,8 @@ tbody tr:hover{background:#f8fafb}
   </div>
 </div>
 
+<script src="supabase-config.js"></script>
 <script>
-// ── DB Helpers ──
-var DB = {
-  get: function(key) {
-    try { return JSON.parse(localStorage.getItem(key)) || []; }
-    catch(e) { return []; }
-  },
-  set: function(key, val) {
-    localStorage.setItem(key, JSON.stringify(val));
-  }
-};
 
 // ── Session State ──
 var currentSession = null;
@@ -467,7 +458,7 @@ function durationMins(loginIso, logoutIso) {
 }
 
 // ── Session Load ──
-function loadSession() {
+async function loadSession() {
   var raw = localStorage.getItem('awf_session');
   if (!raw) { window.location.href = 'step1-login.html'; return; }
   try { currentSession = JSON.parse(raw); } catch(e) { window.location.href = 'step1-login.html'; return; }
@@ -489,31 +480,34 @@ function loadSession() {
   timerInterval = setInterval(updateTimer, 1000);
 
   // Log session to activity log if not already logged
-  logSessionActivity();
+  await logSessionActivity();
 
   // Initial render
-  renderJobs();
-  renderLocations();
-  renderParts();
-  renderSessions();
+  await renderJobs();
+  await renderLocations();
+  await renderParts();
+  await renderSessions();
 }
 
-function logSessionActivity() {
-  var log = DB.get('awf_activity_log');
-  var loginTime = currentSession.loginTime || new Date().toISOString();
-  var exists = log.some(function(e){ return e.sessionId === loginTime && e.empId === currentEmpId; });
-  if (!exists) {
-    log.unshift({
-      id: 'ACT-' + Date.now(),
-      sessionId: loginTime,
-      empId: currentEmpId,
-      empName: currentTechName,
-      role: currentSession.role,
-      loginTime: loginTime,
-      logoutTime: null,
-      page: 'Technician'
-    });
-    DB.set('awf_activity_log', log);
+async function logSessionActivity() {
+  try {
+    var log = await db.from('activity_log').select();
+    var loginTime = currentSession.loginTime || new Date().toISOString();
+    var exists = log.some(function(e){ return e.sessionId === loginTime && e.empId === currentEmpId; });
+    if (!exists) {
+      await db.from('activity_log').insert({
+        id: 'ACT-' + Date.now(),
+        sessionId: loginTime,
+        empId: currentEmpId,
+        empName: currentTechName,
+        role: currentSession.role,
+        loginTime: loginTime,
+        logoutTime: null,
+        page: 'Technician'
+      });
+    }
+  } catch(e) {
+    console.error('Failed to log session activity:', e);
   }
 }
 
@@ -526,25 +520,28 @@ function updateTimer() {
 }
 
 // ── Logout ──
-function logout() {
+async function logout() {
   var logoutTime = new Date().toISOString();
-  // Update activity log
-  var log = DB.get('awf_activity_log');
-  var loginTime = currentSession ? (currentSession.loginTime || '') : '';
-  for (var i = 0; i < log.length; i++) {
-    if (log[i].sessionId === loginTime && log[i].empId === currentEmpId) {
-      log[i].logoutTime = logoutTime;
-      break;
+  try {
+    var loginTime = currentSession ? (currentSession.loginTime || '') : '';
+    // Find the matching activity log entry and update its logoutTime
+    var log = await db.from('activity_log').select();
+    for (var i = 0; i < log.length; i++) {
+      if (log[i].sessionId === loginTime && log[i].empId === currentEmpId) {
+        await db.from('activity_log').update({ logoutTime: logoutTime }, 'id', log[i].id);
+        break;
+      }
     }
+  } catch(e) {
+    console.error('Failed to update activity log on logout:', e);
   }
-  DB.set('awf_activity_log', log);
   if (timerInterval) clearInterval(timerInterval);
   localStorage.removeItem('awf_session');
   window.location.href = 'step1-login.html';
 }
 
 // ── Navigation ──
-function showSection(name, el) {
+async function showSection(name, el) {
   var sections = document.querySelectorAll('.section');
   for (var i = 0; i < sections.length; i++) sections[i].classList.remove('active');
   document.getElementById('sec-' + name).classList.add('active');
@@ -556,24 +553,34 @@ function showSection(name, el) {
   var titles = { jobs:'My Jobs', parts:'Parts Log', locations:'Job Locations', sessions:'Session History' };
   document.getElementById('topbar-title').textContent = titles[name] || '';
 
-  if (name === 'parts') renderParts();
-  if (name === 'sessions') renderSessions();
-  if (name === 'locations') renderLocations();
+  if (name === 'parts') await renderParts();
+  if (name === 'sessions') await renderSessions();
+  if (name === 'locations') await renderLocations();
 }
 
 // ── Customer lookups ──
-function getJobPhone(j) {
+async function getJobPhone(j) {
   if (j.phone) return j.phone;
-  var custs = DB.get('awf_customers');
-  var c = custs.find(function(x){ return x.id === j.customerId; });
-  return c ? (c.phone || '') : '';
+  try {
+    var custs = await db.from('customers').select();
+    var c = custs.find(function(x){ return x.id === j.customerId; });
+    return c ? (c.phone || '') : '';
+  } catch(e) {
+    console.error('Failed to load customers:', e);
+    return '';
+  }
 }
 
-function getJobAddress(j) {
+async function getJobAddress(j) {
   if (j.address) return j.address;
-  var custs = DB.get('awf_customers');
-  var c = custs.find(function(x){ return x.id === j.customerId; });
-  return c ? (c.address || '') : '';
+  try {
+    var custs = await db.from('customers').select();
+    var c = custs.find(function(x){ return x.id === j.customerId; });
+    return c ? (c.address || '') : '';
+  } catch(e) {
+    console.error('Failed to load customers:', e);
+    return '';
+  }
 }
 
 // ── Status badge HTML ──
@@ -599,19 +606,24 @@ function esc(s) {
 }
 
 // ── Job Filter ──
-function setJobFilter(filter, el) {
+async function setJobFilter(filter, el) {
   activeJobFilter = filter;
   var tabs = document.querySelectorAll('.filter-tab');
   for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
   if (el) el.classList.add('active');
-  renderJobs();
+  await renderJobs();
 }
 
-function getMyJobs() {
-  var jobs = DB.get('awf_jobs');
-  return jobs.filter(function(j) {
-    return j.technician && j.technician.trim().toLowerCase() === currentTechName.trim().toLowerCase();
-  });
+async function getMyJobs() {
+  try {
+    var jobs = await db.from('jobs').select();
+    return jobs.filter(function(j) {
+      return j.technician && j.technician.trim().toLowerCase() === currentTechName.trim().toLowerCase();
+    });
+  } catch(e) {
+    console.error('Failed to load jobs:', e);
+    return [];
+  }
 }
 
 function filterJobsByPeriod(jobs, filter) {
@@ -627,109 +639,119 @@ function filterJobsByPeriod(jobs, filter) {
   });
 }
 
-function renderJobs() {
-  var myJobs = getMyJobs();
-  var filtered = filterJobsByPeriod(myJobs, activeJobFilter);
-  // Sort by date then time
-  filtered.sort(function(a, b) {
-    var d = (a.date || '').localeCompare(b.date || '');
-    if (d !== 0) return d;
-    return (a.time || '').localeCompare(b.time || '');
-  });
-
-  var sub = filtered.length + ' job' + (filtered.length !== 1 ? 's' : '');
-  document.getElementById('jobs-sub').textContent = sub;
-
+async function renderJobs() {
   var grid = document.getElementById('jobs-grid');
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📋</div><div class="empty-state-text">No jobs found</div><div class="empty-state-sub">No jobs for this period</div></div>';
-    return;
-  }
+  document.getElementById('jobs-sub').textContent = 'Loading...';
+  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Loading jobs...</div></div>';
+  try {
+    var myJobs = await getMyJobs();
+    var filtered = filterJobsByPeriod(myJobs, activeJobFilter);
+    // Sort by date then time
+    filtered.sort(function(a, b) {
+      var d = (a.date || '').localeCompare(b.date || '');
+      if (d !== 0) return d;
+      return (a.time || '').localeCompare(b.time || '');
+    });
 
-  var html = '';
-  for (var i = 0; i < filtered.length; i++) {
-    var j = filtered[i];
-    var phone = getJobPhone(j);
-    var address = getJobAddress(j);
-    var timeLabel = j.time ? formatTime12(j.time) : '—';
-    var dateLabel = j.date ? formatDate(j.date) : '';
-    var statusClass = 'status-' + (j.status || 'scheduled').toLowerCase().replace(/ /g, '-');
+    var sub = filtered.length + ' job' + (filtered.length !== 1 ? 's' : '');
+    document.getElementById('jobs-sub').textContent = sub;
 
-    html += '<div class="job-card ' + statusClass + '">';
-    html += '<div class="jc-time">' + esc(timeLabel) + '</div>';
-    html += '<div class="jc-date-label">' + esc(dateLabel) + '</div>';
-    html += '<div class="jc-badges">' + typeBadge(j.type) + statusBadge(j.status) + '</div>';
-    html += '<div class="jc-customer">' + esc(j.customerName || j.customer || 'Unknown Customer') + '</div>';
-
-    if (phone) {
-      var cleanPhone = phone.replace(/[^0-9]/g,'');
-      html += '<div class="jc-detail">📞 <a href="tel:' + esc(cleanPhone) + '">' + esc(phone) + '</a></div>';
-    }
-    if (address) {
-      html += '<div class="jc-detail">📍 ' + esc(address) + '</div>';
-    }
-    if (j.notes) {
-      html += '<div class="jc-notes">' + esc(j.notes) + '</div>';
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">📋</div><div class="empty-state-text">No jobs found</div><div class="empty-state-sub">No jobs for this period</div></div>';
+      return;
     }
 
-    if (j.status === 'Completed') {
-      html += '<div class="jc-completed-text">&#10003; Completed</div>';
-      if (j.completionNotes) {
-        html += '<div class="jc-completion-notes"><strong>Notes:</strong> ' + esc(j.completionNotes) + '</div>';
+    var html = '';
+    for (var i = 0; i < filtered.length; i++) {
+      var j = filtered[i];
+      var phone = await getJobPhone(j);
+      var address = await getJobAddress(j);
+      var timeLabel = j.time ? formatTime12(j.time) : '—';
+      var dateLabel = j.date ? formatDate(j.date) : '';
+      var statusClass = 'status-' + (j.status || 'scheduled').toLowerCase().replace(/ /g, '-');
+
+      html += '<div class="job-card ' + statusClass + '">';
+      html += '<div class="jc-time">' + esc(timeLabel) + '</div>';
+      html += '<div class="jc-date-label">' + esc(dateLabel) + '</div>';
+      html += '<div class="jc-badges">' + typeBadge(j.type) + statusBadge(j.status) + '</div>';
+      html += '<div class="jc-customer">' + esc(j.customerName || j.customer || 'Unknown Customer') + '</div>';
+
+      if (phone) {
+        var cleanPhone = phone.replace(/[^0-9]/g,'');
+        html += '<div class="jc-detail">📞 <a href="tel:' + esc(cleanPhone) + '">' + esc(phone) + '</a></div>';
       }
-    } else {
-      html += '<div class="jc-actions">';
-      if (j.status === 'Scheduled') {
-        html += '<button class="btn btn-orange btn-sm" onclick="startJob(\'' + esc(j.id) + '\')">&#9654; Start Job</button>';
+      if (address) {
+        html += '<div class="jc-detail">📍 ' + esc(address) + '</div>';
       }
-      if (j.status === 'In Progress') {
-        html += '<button class="btn btn-primary btn-sm" onclick="openCompleteModal(\'' + esc(j.id) + '\')">&#10003; Complete Job</button>';
+      if (j.notes) {
+        html += '<div class="jc-notes">' + esc(j.notes) + '</div>';
+      }
+
+      if (j.status === 'Completed') {
+        html += '<div class="jc-completed-text">&#10003; Completed</div>';
+        if (j.completionNotes) {
+          html += '<div class="jc-completion-notes"><strong>Notes:</strong> ' + esc(j.completionNotes) + '</div>';
+        }
+      } else {
+        html += '<div class="jc-actions">';
+        if (j.status === 'Scheduled') {
+          html += '<button class="btn btn-orange btn-sm" onclick="startJob(\'' + esc(j.id) + '\')">&#9654; Start Job</button>';
+        }
+        if (j.status === 'In Progress') {
+          html += '<button class="btn btn-primary btn-sm" onclick="openCompleteModal(\'' + esc(j.id) + '\')">&#10003; Complete Job</button>';
+        }
+        html += '</div>';
       }
       html += '</div>';
     }
-    html += '</div>';
+    grid.innerHTML = html;
+  } catch(e) {
+    console.error('Failed to render jobs:', e);
+    document.getElementById('jobs-sub').textContent = 'Error loading jobs';
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Failed to load jobs</div><div class="empty-state-sub">Please check your connection and try again</div></div>';
   }
-  grid.innerHTML = html;
 }
 
 // ── Start Job ──
-function startJob(jobId) {
-  var jobs = DB.get('awf_jobs');
-  for (var i = 0; i < jobs.length; i++) {
-    if (jobs[i].id === jobId) {
-      jobs[i].status = 'In Progress';
-      jobs[i].startedAt = new Date().toISOString();
-      break;
-    }
+async function startJob(jobId) {
+  try {
+    await db.from('jobs').update({ status: 'In Progress', startedAt: new Date().toISOString() }, 'id', jobId);
+    await renderJobs();
+  } catch(e) {
+    console.error('Failed to start job:', e);
+    alert('Failed to start job. Please check your connection and try again.');
   }
-  DB.set('awf_jobs', jobs);
-  renderJobs();
 }
 
 // ── Complete Job Modal ──
-function openCompleteModal(jobId) {
+async function openCompleteModal(jobId) {
   activeCompleteJobId = jobId;
-  var jobs = DB.get('awf_jobs');
-  var job = null;
-  for (var i = 0; i < jobs.length; i++) {
-    if (jobs[i].id === jobId) { job = jobs[i]; break; }
-  }
-  if (!job) return;
+  try {
+    var jobs = await db.from('jobs').select();
+    var job = null;
+    for (var i = 0; i < jobs.length; i++) {
+      if (jobs[i].id === jobId) { job = jobs[i]; break; }
+    }
+    if (!job) return;
 
-  var phone = getJobPhone(job);
-  var address = getJobAddress(job);
-  var summaryHtml = '<div class="job-summary-row">';
-  summaryHtml += '<strong>Customer:</strong> ' + esc(job.customerName || job.customer || '—') + '<br>';
-  summaryHtml += '<strong>Type:</strong> ' + esc(job.type || '—') + '<br>';
-  if (address) summaryHtml += '<strong>Address:</strong> ' + esc(address) + '<br>';
-  if (job.time) summaryHtml += '<strong>Time:</strong> ' + esc(formatTime12(job.time));
-  summaryHtml += '</div>';
-  document.getElementById('modal-job-summary').innerHTML = summaryHtml;
-  document.getElementById('parts-rows').innerHTML = '';
-  document.getElementById('completion-notes').value = '';
-  document.getElementById('modal-error').textContent = '';
-  document.getElementById('modal-error').classList.remove('show');
-  document.getElementById('complete-modal').classList.add('open');
+    var phone = await getJobPhone(job);
+    var address = await getJobAddress(job);
+    var summaryHtml = '<div class="job-summary-row">';
+    summaryHtml += '<strong>Customer:</strong> ' + esc(job.customerName || job.customer || '—') + '<br>';
+    summaryHtml += '<strong>Type:</strong> ' + esc(job.type || '—') + '<br>';
+    if (address) summaryHtml += '<strong>Address:</strong> ' + esc(address) + '<br>';
+    if (job.time) summaryHtml += '<strong>Time:</strong> ' + esc(formatTime12(job.time));
+    summaryHtml += '</div>';
+    document.getElementById('modal-job-summary').innerHTML = summaryHtml;
+    document.getElementById('parts-rows').innerHTML = '';
+    document.getElementById('completion-notes').value = '';
+    document.getElementById('modal-error').textContent = '';
+    document.getElementById('modal-error').classList.remove('show');
+    document.getElementById('complete-modal').classList.add('open');
+  } catch(e) {
+    console.error('Failed to open complete modal:', e);
+    alert('Failed to load job details. Please check your connection and try again.');
+  }
 }
 
 function closeCompleteModal() {
@@ -737,12 +759,17 @@ function closeCompleteModal() {
   activeCompleteJobId = null;
 }
 
-function getInventory() {
-  return DB.get('awf_inventory');
+async function getInventory() {
+  try {
+    return await db.from('inventory').select();
+  } catch(e) {
+    console.error('Failed to load inventory:', e);
+    return [];
+  }
 }
 
-function buildInventoryOptions() {
-  var inv = getInventory();
+async function buildInventoryOptions() {
+  var inv = await getInventory();
   var opts = '<option value="">-- Select Part --</option>';
   for (var i = 0; i < inv.length; i++) {
     var item = inv[i];
@@ -751,11 +778,12 @@ function buildInventoryOptions() {
   return opts;
 }
 
-function addPartRow() {
+async function addPartRow() {
   var container = document.getElementById('parts-rows');
   var row = document.createElement('div');
   row.className = 'part-row';
-  row.innerHTML = '<select class="part-select">' + buildInventoryOptions() + '</select>'
+  var opts = await buildInventoryOptions();
+  row.innerHTML = '<select class="part-select">' + opts + '</select>'
     + '<input type="number" class="part-qty" placeholder="Qty" min="1" value="1">'
     + '<button class="btn-remove-part" onclick="removePartRow(this)">&#x2715;</button>';
   container.appendChild(row);
@@ -765,13 +793,15 @@ function removePartRow(btn) {
   btn.parentElement.remove();
 }
 
-function submitComplete() {
+async function submitComplete() {
   if (!activeCompleteJobId) return;
+  var jobId = activeCompleteJobId;
   var rows = document.querySelectorAll('#parts-rows .part-row');
   var partsUsed = [];
-  var inv = getInventory();
   var errEl = document.getElementById('modal-error');
   errEl.classList.remove('show');
+
+  var inv = await getInventory();
 
   for (var i = 0; i < rows.length; i++) {
     var sel = rows[i].querySelector('.part-select');
@@ -794,39 +824,43 @@ function submitComplete() {
     partsUsed.push({ itemId: itemId, itemName: invItem.name, qty: qty });
   }
 
-  // Deduct from inventory
-  for (var p = 0; p < partsUsed.length; p++) {
-    for (var k = 0; k < inv.length; k++) {
-      if (inv[k].id === partsUsed[p].itemId) {
-        inv[k].quantity = (inv[k].quantity || 0) - partsUsed[p].qty;
-        break;
+  try {
+    var completionNotes = document.getElementById('completion-notes').value.trim();
+
+    // Update job
+    await db.from('jobs').update({
+      status: 'Completed',
+      partsUsed: partsUsed,
+      completionNotes: completionNotes,
+      completedAt: new Date().toISOString()
+    }, 'id', jobId);
+
+    // Deduct from inventory for each part used
+    for (var p = 0; p < partsUsed.length; p++) {
+      var part = partsUsed[p];
+      var newQty = 0;
+      for (var k = 0; k < inv.length; k++) {
+        if (inv[k].id === part.itemId) {
+          newQty = (inv[k].quantity || 0) - part.qty;
+          break;
+        }
       }
+      await db.from('inventory').update({ quantity: newQty }, 'id', part.itemId);
     }
-  }
-  DB.set('awf_inventory', inv);
 
-  // Update job
-  var jobs = DB.get('awf_jobs');
-  var completionNotes = document.getElementById('completion-notes').value.trim();
-  for (var j = 0; j < jobs.length; j++) {
-    if (jobs[j].id === activeCompleteJobId) {
-      jobs[j].status = 'Completed';
-      jobs[j].completedAt = new Date().toISOString();
-      jobs[j].partsUsed = partsUsed;
-      jobs[j].completionNotes = completionNotes;
-      break;
-    }
+    closeCompleteModal();
+    await renderJobs();
+    await renderParts();
+  } catch(e) {
+    console.error('Failed to complete job:', e);
+    errEl.textContent = 'Failed to save. Please check your connection and try again.';
+    errEl.classList.add('show');
   }
-  DB.set('awf_jobs', jobs);
-
-  closeCompleteModal();
-  renderJobs();
-  renderParts();
 }
 
 // ── Parts Log ──
-function renderParts() {
-  var myJobs = getMyJobs();
+async function renderParts() {
+  var myJobs = await getMyJobs();
   var tbody = document.getElementById('parts-tbody');
   var emptyEl = document.getElementById('parts-empty');
   var rows = '';
@@ -873,8 +907,8 @@ function cleanPhoneForLink(phone) {
   return digits;
 }
 
-function renderLocations() {
-  var myJobs = getMyJobs();
+async function renderLocations() {
+  var myJobs = await getMyJobs();
   var today = todayStr();
   var todayJobs = myJobs.filter(function(j){ return j.date === today; });
   todayJobs.sort(function(a, b){ return (a.time || '').localeCompare(b.time || ''); });
@@ -892,8 +926,8 @@ function renderLocations() {
   var html = '';
   for (var i = 0; i < todayJobs.length; i++) {
     var j = todayJobs[i];
-    var phone = getJobPhone(j);
-    var address = getJobAddress(j);
+    var phone = await getJobPhone(j);
+    var address = await getJobAddress(j);
     var phoneLink = cleanPhoneForLink(phone);
     var mapsQuery = encodeURIComponent((address ? address + ', ' : '') + 'Abbottabad, Pakistan');
     var timeLabel = j.time ? formatTime12(j.time) : '';
@@ -922,8 +956,13 @@ function renderLocations() {
 }
 
 // ── Session History ──
-function renderSessions() {
-  var log = DB.get('awf_activity_log');
+async function renderSessions() {
+  var log = [];
+  try {
+    log = await db.from('activity_log').select();
+  } catch(e) {
+    console.error('Failed to load session history:', e);
+  }
   var mySessions = log.filter(function(e){
     return e.empId === currentEmpId;
   });

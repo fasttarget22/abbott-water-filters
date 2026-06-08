@@ -648,23 +648,18 @@ body{
   <div id="logList"></div>
 </div>
 
+<script src="supabase-config.js"></script>
 <script>
-// ─── Demo accounts ───────────────────────────────────────────
-var ACCOUNTS = {
-  'EMP-001': { pin:'1234', name:'Javed Ahmed',  role:'Manager',     shift:'Morning', area:'All Areas',           init:'JA' },
-  'EMP-002': { pin:'2222', name:'Ali Hassan',   role:'Technician',  shift:'Morning', area:'Mandian, Abbottabad', init:'AH' },
-  'EMP-004': { pin:'4444', name:'Sara Malik',   role:'Sales Staff', shift:'Evening', area:'Mandian',             init:'SM' },
-};
-
 var MAX_FAIL = 3;
 var LOCK_SECS = 300;
 
 // ─── State ───────────────────────────────────────────────────
-let empId   = null;
-let pinBuf  = '';
-let fails   = 0;
-let lockInt = null;
-let log     = [];
+var empId         = null;
+var pinBuf        = '';
+var fails         = 0;
+var lockInt       = null;
+var log           = [];
+var employeeCache = null;
 
 // ─── Log ─────────────────────────────────────────────────────
 function addLog(type, msg) {
@@ -712,16 +707,16 @@ function checkId(val) {
     continueBtn.disabled = true;
     return;
   }
-  var acc = ACCOUNTS[val];
+  var validFmt = /^EMP-\d{3}$/.test(val);
   preview.classList.add('show');
-  if (acc) {
+  if (validFmt) {
     preview.classList.remove('invalid'); preview.classList.add('valid');
-    document.getElementById('pAvatar').textContent = acc.init;
+    document.getElementById('pAvatar').textContent = val.slice(-3);
     document.getElementById('pAvatar').className = 'p-avatar';
-    document.getElementById('pName').textContent = acc.name;
-    document.getElementById('pRole').textContent = acc.role;
+    document.getElementById('pName').textContent = 'Employee ' + val;
+    document.getElementById('pRole').textContent = 'Click Continue to verify';
     document.getElementById('pStatus').className = 'p-status ok';
-    document.getElementById('pStatusText').textContent = 'Valid account — ready to login';
+    document.getElementById('pStatusText').textContent = 'Valid format — click Continue to verify';
     continueBtn.disabled = false;
   } else {
     preview.classList.remove('valid'); preview.classList.add('invalid');
@@ -730,31 +725,57 @@ function checkId(val) {
     document.getElementById('pName').textContent = 'Unknown Employee';
     document.getElementById('pRole').textContent = '—';
     document.getElementById('pStatus').className = 'p-status err';
-    document.getElementById('pStatusText').textContent = 'Employee ID not found';
+    document.getElementById('pStatusText').textContent = 'Invalid format — use EMP-001';
     continueBtn.disabled = true;
   }
 }
 
-function goStep2() {
+async function goStep2() {
   var val = empInput.value.trim();
-  var acc = ACCOUNTS[val];
-  if (!acc) return;
+  if (!val) return;
 
-  empId  = val;
-  pinBuf = '';
-  fails  = 0;
+  continueBtn.disabled = true;
+  continueBtn.textContent = 'Verifying…';
 
-  document.getElementById('eAvatar').textContent = acc.init;
-  document.getElementById('eName').textContent   = acc.name;
-  document.getElementById('eId').textContent     = val + ' · ' + acc.role;
+  try {
+    var rows = await db.from('employees').select('id=eq.' + encodeURIComponent(val));
+    if (!rows || rows.length === 0) {
+      preview.classList.remove('valid'); preview.classList.add('invalid');
+      document.getElementById('pAvatar').textContent = '?';
+      document.getElementById('pAvatar').className = 'p-avatar err';
+      document.getElementById('pName').textContent = 'Unknown Employee';
+      document.getElementById('pRole').textContent = '—';
+      document.getElementById('pStatus').className = 'p-status err';
+      document.getElementById('pStatusText').textContent = 'Employee ID not found';
+      continueBtn.disabled = true;
+      continueBtn.textContent = 'Continue';
+      addLog('fail', 'ID not found: ' + val);
+      return;
+    }
+    employeeCache = rows[0];
+    empId  = val;
+    pinBuf = '';
+    fails  = 0;
 
-  refreshDots();
-  refreshAttempts();
+    var initials = (employeeCache.name || val).split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+    document.getElementById('eAvatar').textContent = initials;
+    document.getElementById('eName').textContent   = employeeCache.name;
+    document.getElementById('eId').textContent     = val + ' · ' + (employeeCache.role || '');
 
-  show('step2');
-  document.getElementById('pip1').classList.add('done');
-  document.getElementById('pip2').classList.add('active');
-  addLog('info', `ID verified: ${val} (${acc.name})`);
+    refreshDots();
+    refreshAttempts();
+
+    show('step2');
+    document.getElementById('pip1').classList.add('done');
+    document.getElementById('pip2').classList.add('active');
+    addLog('info', 'ID verified: ' + val + ' (' + employeeCache.name + ')');
+  } catch(err) {
+    addLog('fail', 'Connection error — check your network');
+    document.getElementById('pStatusText').textContent = 'Cannot connect to server. Please try again.';
+  }
+
+  continueBtn.disabled = false;
+  continueBtn.textContent = 'Continue';
 }
 
 function goStep1() {
@@ -782,12 +803,12 @@ function delPin() {
   refreshDots();
 }
 function refreshDots() {
-  for (let i = 0; i < 4; i++) {
+  for (var i = 0; i < 4; i++) {
     document.getElementById('d'+i).classList.toggle('filled', i < pinBuf.length);
   }
 }
 function refreshAttempts() {
-  for (let i = 0; i < MAX_FAIL; i++) {
+  for (var i = 0; i < MAX_FAIL; i++) {
     var el = document.getElementById('ap'+i);
     el.classList.toggle('fail', i < fails);
   }
@@ -811,16 +832,24 @@ function addRipple(d) {
   setTimeout(() => r.remove(), 420);
 }
 
-function submit() {
-  var acc = ACCOUNTS[empId];
-  if (!acc) return;
+async function submit() {
+  if (!employeeCache) return;
 
-  if (pinBuf === acc.pin) {
-    addLog('success', `Login OK: ${acc.name} (${empId})`);
-    showSuccess(acc);
+  if (pinBuf === String(employeeCache.pin)) {
+    addLog('success', 'Login OK: ' + employeeCache.name + ' (' + empId + ')');
+    try {
+      await db.from('activity_log').insert({
+        emp_id: empId,
+        name: employeeCache.name,
+        action: 'Login',
+        detail: 'Successful login from staff portal',
+        timestamp: new Date().toISOString()
+      });
+    } catch(e) { /* non-critical — proceed with login */ }
+    showSuccess(employeeCache);
   } else {
     fails++;
-    addLog('fail', `Wrong PIN for ${empId} — attempt ${fails}`);
+    addLog('fail', 'Wrong PIN for ' + empId + ' — attempt ' + fails);
     shake();
     if (fails >= MAX_FAIL) {
       setTimeout(lockout, 650);
@@ -845,7 +874,7 @@ function lockout() {
   document.getElementById('stepPips').style.display = 'none';
   addLog('fail', `LOCKED: ${empId} after ${MAX_FAIL} failed attempts`);
 
-  let s = LOCK_SECS;
+  var s = LOCK_SECS;
   var fmt = n => `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
   document.getElementById('lockTimer').textContent = fmt(s);
 
@@ -860,23 +889,23 @@ function lockout() {
   }, 1000);
 }
 
-function showSuccess(acc) {
+function showSuccess(emp) {
   var destinations = {
     'Manager':    'step2-manager-dashboard.html',
     'Technician': 'step3-technician-dashboard.html',
     'Sales Staff':'step4-sales-dashboard.html'
   };
-  var dest = destinations[acc.role] || 'step2-manager-dashboard.html';
+  var dest = destinations[emp.role] || 'step2-manager-dashboard.html';
   localStorage.setItem('awf_session', JSON.stringify({
-    empId: empId, name: acc.name, role: acc.role,
-    shift: acc.shift || 'Morning', area: acc.area || '',
+    empId: empId, name: emp.name, role: emp.role,
+    shift: emp.shift || 'Morning', area: emp.area || '',
     loginTime: new Date().toISOString()
   }));
-  document.getElementById('sucName').textContent = acc.name;
-  document.getElementById('sucRole').textContent = acc.role;
+  document.getElementById('sucName').textContent = emp.name;
+  document.getElementById('sucRole').textContent = emp.role;
   show('success');
   document.getElementById('stepPips').style.display = 'none';
-  setTimeout(() => { window.location.href = dest; }, 2000);
+  setTimeout(function(){ window.location.href = dest; }, 2000);
 }
 
 // ─── Keyboard on PIN step ─────────────────────────────────────

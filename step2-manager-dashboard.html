@@ -872,6 +872,7 @@ tbody tr:hover{background:#f8fafb}
   </div>
 </div>
 
+<script src="supabase-config.js"></script>
 <script>
 // ════════════════════════════════════════
 //  CONSTANTS
@@ -898,71 +899,6 @@ var TEMPLATES = [
     msg:`🎉 *SPECIAL OFFER* for you, {customer_name}!\n\nGet your water filter replaced at *20% DISCOUNT*!\n\n✅ Offer valid till: *{date}*\n✅ All filter models included\n✅ Free home service\n\nDon't miss this limited-time offer!\n\n📞 *0348-8115410* | *0335-6590095*\n— *Abbott Water Filters, Abbottabad*`
   }
 ];
-
-// ════════════════════════════════════════
-//  DATA LAYER
-// ════════════════════════════════════════
-var DB = {
-  get(k, def=[]){ try{ return JSON.parse(localStorage.getItem(k)) ?? def }catch{ return def } },
-  set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
-};
-
-function seedIfEmpty(){
-  if(DB.get('awf_seeded_v2', false)) return;
-
-  var customers = [
-    {id:'AWF-001',name:'Muhammad Ali',   phone:'923001234567',address:'45 College Road, Mandian',   area:'Mandian',   filterModel:'RO-5 Stage',       lifespanMonths:6,  installDate:'2025-06-01',technician:'Ali Hassan',  notes:''},
-    {id:'AWF-002',name:'Fatima Bibi',    phone:'923012345678',address:'12 Circular Road, Abbottabad',area:'Abbottabad',filterModel:'UF Filter',          lifespanMonths:12, installDate:'2024-06-08',technician:'Ali Hassan',  notes:'Has well water'},
-    {id:'AWF-003',name:'Ahmed Khan',     phone:'923023456789',address:'78 Havelian Road',            area:'Havelian',  filterModel:'RO-7 Stage',       lifespanMonths:6,  installDate:'2025-12-05',technician:'Kamran Malik', notes:''},
-    {id:'AWF-004',name:'Sara Malik',     phone:'923034567890',address:'23 Cantt Area',               area:'Cantt',     filterModel:'Carbon Block Filter',lifespanMonths:3,  installDate:'2026-03-10',technician:'Ali Hassan',  notes:''},
-    {id:'AWF-005',name:'Bilal Hassan',   phone:'923045678901',address:'67 Mandian Bazar',            area:'Mandian',   filterModel:'RO-5 Stage',       lifespanMonths:6,  installDate:'2025-12-18',technician:'Kamran Malik', notes:'2nd floor access'},
-    {id:'AWF-006',name:'Amna Sheikh',    phone:'923056789012',address:'34 Mirpur Road',              area:'Mirpur',    filterModel:'Alkaline Filter',   lifespanMonths:6,  installDate:'2025-12-21',technician:'Ali Hassan',  notes:''},
-    {id:'AWF-007',name:'Tariq Mehmood', phone:'923067890123',address:'89 Cantt Road',               area:'Cantt',     filterModel:'RO-7 Stage',       lifespanMonths:6,  installDate:'2025-12-28',technician:'Kamran Malik', notes:''},
-    {id:'AWF-008',name:'Zainab Ali',     phone:'923078901234',address:'15 Abbottabad City',          area:'Abbottabad',filterModel:'UV Purifier',       lifespanMonths:12, installDate:'2025-07-06',technician:'Ali Hassan',  notes:''},
-    {id:'AWF-009',name:'Hassan Raza',    phone:'923089012345',address:'56 Havelian Bypass',          area:'Havelian',  filterModel:'RO-5 Stage',       lifespanMonths:6,  installDate:'2026-01-24',technician:'Kamran Malik', notes:''},
-    {id:'AWF-010',name:'Nadia Iqbal',    phone:'923090123456',address:'28 College Road, Mandian',    area:'Mandian',   filterModel:'RO-7 Stage',       lifespanMonths:6,  installDate:'2026-02-08',technician:'Ali Hassan',  notes:''},
-  ];
-  customers.forEach(c => c.dueDate = calcDueDate(c.installDate, c.lifespanMonths));
-  DB.set('awf_customers', customers);
-
-  var today = todayStr();
-  DB.set('awf_jobs', [
-    {id:'JOB-001',customerId:'AWF-003',customerName:'Ahmed Khan',   type:'Filter Replacement',date:today,        time:'10:00',technician:'Ali Hassan', status:'Scheduled',  notes:''},
-    {id:'JOB-002',customerId:'AWF-004',customerName:'Sara Malik',   type:'Filter Replacement',date:today,        time:'14:00',technician:'Kamran Malik',status:'Scheduled',  notes:''},
-    {id:'JOB-003',customerId:'AWF-001',customerName:'Muhammad Ali', type:'Filter Replacement',date:'2026-06-01', time:'11:00',technician:'Ali Hassan', status:'Completed',  notes:''},
-    {id:'JOB-004',customerId:'AWF-005',customerName:'Bilal Hassan', type:'Filter Check',      date:'2026-06-03', time:'09:00',technician:'Kamran Malik',status:'Completed',  notes:''},
-    {id:'JOB-005',customerId:'AWF-002',customerName:'Fatima Bibi',  type:'Filter Replacement',date:'2026-06-05', time:'15:00',technician:'Ali Hassan', status:'Completed',  notes:''},
-  ]);
-
-  DB.set('awf_inventory', [
-    {id:'INV-001',name:'RO Membrane 75GPD',       category:'Membrane',        unit:'Pcs', quantity:3,  reorderLevel:10,unitPrice:2500,supplier:'AquaPure'},
-    {id:'INV-002',name:'Sediment Filter 5 Micron',category:'Filter Cartridge',unit:'Pcs', quantity:15, reorderLevel:10,unitPrice:150, supplier:'FilterPro'},
-    {id:'INV-003',name:'Carbon Block Filter',     category:'Filter Cartridge',unit:'Pcs', quantity:8,  reorderLevel:10,unitPrice:280, supplier:'AquaPure'},
-    {id:'INV-004',name:'GAC Filter',              category:'Filter Cartridge',unit:'Pcs', quantity:12, reorderLevel:10,unitPrice:220, supplier:'FilterPro'},
-    {id:'INV-005',name:'UV Lamp 11W',             category:'UV',              unit:'Pcs', quantity:2,  reorderLevel:5, unitPrice:1200,supplier:'UVTech'},
-    {id:'INV-006',name:'RO Pressure Vessel',      category:'Parts',           unit:'Pcs', quantity:6,  reorderLevel:5, unitPrice:800, supplier:'AquaPure'},
-    {id:'INV-007',name:'TDS Meter Digital',       category:'Equipment',       unit:'Pcs', quantity:4,  reorderLevel:5, unitPrice:350, supplier:'MeterKing'},
-    {id:'INV-008',name:'Alkaline Mineral Balls',  category:'Filter Cartridge',unit:'Pcs', quantity:20, reorderLevel:10,unitPrice:400, supplier:'AlkaLife'},
-  ]);
-
-  DB.set('awf_feedback', [
-    {id:'FB-001',phone:'923348115410',customerName:'Muhammad Ali',  rating:5,type:'Compliment', comment:'Excellent service! Very professional and on time.',date:'2026-06-01'},
-    {id:'FB-002',phone:'923361234567',customerName:'Fatima Bibi',   rating:4,type:'Suggestion', comment:'Good service but arrived 30 minutes late. Please improve punctuality.',date:'2026-06-05'},
-    {id:'FB-003',phone:'923359876543',customerName:'Ahmed Khan',    rating:5,type:'Compliment', comment:'Very happy with the filter quality! Best in Abbottabad.',date:'2026-06-06'},
-    {id:'FB-004',phone:'923351122334',customerName:'Sara Malik',    rating:2,type:'Complaint',  comment:'Technician did not explain the filter maintenance properly.',date:'2026-06-07'},
-    {id:'FB-005',phone:'923341234567',customerName:'Bilal Hassan',  rating:5,type:'Compliment', comment:'Highly recommended! Will definitely call again.',date:'2026-06-08'},
-  ]);
-
-  DB.set('awf_employees', [
-    {id:'EMP-001',name:'Javed Ahmed',  role:'Manager',    phone:'923481115410',shift:'Morning',area:'All Areas',          pin:'1234',active:true},
-    {id:'EMP-002',name:'Ali Hassan',   role:'Technician', phone:'923338115410',shift:'Morning',area:'Mandian, Abbottabad',pin:'2222',active:true},
-    {id:'EMP-003',name:'Kamran Malik', role:'Technician', phone:'923558115410',shift:'Morning',area:'Cantt, Havelian',    pin:'3333',active:true},
-    {id:'EMP-004',name:'Sara Malik',   role:'Sales Staff',phone:'923551122334',shift:'Evening',area:'Mandian',            pin:'4444',active:true},
-  ]);
-
-  DB.set('awf_whatsapp_log', []);
-  DB.set('awf_seeded_v2', true);
-}
 
 // ════════════════════════════════════════
 //  UTILITIES
@@ -1019,31 +955,39 @@ var SECTION_TITLES = {
   whatsapp:'WhatsApp Notifications', feedback:'Customer Feedback',
   schedule:'Job Schedule', inventory:'Inventory', employees:'Employees'
 };
-function navigate(el, id){
+async function navigate(el, id){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   document.getElementById('topbar-title').textContent = SECTION_TITLES[id];
   // Lazy render
-  if(id==='dashboard')  renderDashboard();
-  if(id==='customers')  renderCustomers('');
-  if(id==='expiry')     renderExpiry();
-  if(id==='whatsapp')   renderWhatsApp();
-  if(id==='feedback')   renderFeedback();
-  if(id==='schedule')   { schedActive='today'; renderSchedule(); }
-  if(id==='inventory')  renderInventory();
-  if(id==='employees')  renderEmployees();
+  if(id==='dashboard')  await renderDashboard();
+  if(id==='customers')  await renderCustomers('');
+  if(id==='expiry')     await renderExpiry();
+  if(id==='whatsapp')   await renderWhatsApp();
+  if(id==='feedback')   await renderFeedback();
+  if(id==='schedule')   { schedActive='today'; await renderSchedule(); }
+  if(id==='inventory')  await renderInventory();
+  if(id==='employees')  await renderEmployees();
 }
 
 // ════════════════════════════════════════
 //  DASHBOARD
 // ════════════════════════════════════════
-function renderDashboard(){
-  var customers = DB.get('awf_customers');
-  var jobs      = DB.get('awf_jobs');
-  var inventory = DB.get('awf_inventory');
-  var feedback  = DB.get('awf_feedback');
+async function renderDashboard(){
+  var content = document.getElementById('stat-row');
+  content.innerHTML = '<div style="padding:20px;text-align:center;color:var(--dim)">Loading…</div>';
+  var customers, jobs, inventory, feedback;
+  try {
+    customers = await db.from('customers').select();
+    jobs      = await db.from('jobs').select();
+    inventory = await db.from('inventory').select();
+    feedback  = await db.from('feedback').select();
+  } catch(e) {
+    content.innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">Failed to load data. Check your connection.</div>';
+    return;
+  }
 
   var thisMonth = new Date().toISOString().slice(0,7);
   var overdue   = customers.filter(c => daysRemaining(c.dueDate) < 0);
@@ -1132,8 +1076,17 @@ function renderDashboard(){
 // ════════════════════════════════════════
 //  CUSTOMERS
 // ════════════════════════════════════════
-function renderCustomers(filter=''){
-  var customers = DB.get('awf_customers');
+async function renderCustomers(filter){
+  if(filter === undefined) filter = '';
+  var tbody = document.getElementById('cust-tbody');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--dim)">Loading…</td></tr>';
+  var customers;
+  try {
+    customers = await db.from('customers').select();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    return;
+  }
   var q = filter.toLowerCase();
   var filtered = q ? customers.filter(c =>
     c.name.toLowerCase().includes(q) ||
@@ -1167,18 +1120,28 @@ function renderCustomers(filter=''){
   }).join('') || `<tr><td colspan="9" class="no-data">No customers found</td></tr>`;
 }
 
-function deleteCustomer(id){
+async function deleteCustomer(id){
   if(!confirm('Delete this customer? This cannot be undone.')) return;
-  var customers = DB.get('awf_customers').filter(c => c.id !== id);
-  DB.set('awf_customers', customers);
-  renderCustomers(document.getElementById('cust-search').value);
+  try {
+    await db.from('customers').delete('id', id);
+  } catch(e) {
+    alert('Failed to delete customer. Check your connection.');
+    return;
+  }
+  await renderCustomers(document.getElementById('cust-search').value);
 }
 
-function submitCustomer(e){
+async function submitCustomer(e){
   e.preventDefault();
-  var customers = DB.get('awf_customers');
   var installDate = document.getElementById('f-install').value;
   var lifespanMonths = parseInt(document.getElementById('f-lifespan').value);
+  var customers;
+  try {
+    customers = await db.from('customers').select();
+  } catch(err) {
+    alert('Failed to load customers. Check your connection.');
+    return;
+  }
   var c = {
     id:           nextId(customers, 'AWF-'),
     name:         document.getElementById('f-name').value.trim(),
@@ -1192,19 +1155,31 @@ function submitCustomer(e){
     technician:   document.getElementById('f-tech').value,
     notes:        document.getElementById('f-notes').value.trim(),
   };
-  customers.push(c);
-  DB.set('awf_customers', customers);
+  try {
+    await db.from('customers').insert(c);
+  } catch(err) {
+    alert('Failed to save customer. Check your connection.');
+    return;
+  }
   closeModal('modal-customer');
   document.getElementById('cust-form').reset();
-  renderCustomers('');
+  await renderCustomers('');
   document.getElementById('cust-search').value = '';
 }
 
 // ════════════════════════════════════════
 //  EXPIRY ALERTS
 // ════════════════════════════════════════
-function renderExpiry(){
-  var customers = DB.get('awf_customers');
+async function renderExpiry(){
+  var grid = document.getElementById('expiry-grid');
+  grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--dim)">Loading…</div>';
+  var customers;
+  try {
+    customers = await db.from('customers').select();
+  } catch(e) {
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Failed to load data. Check your connection.</div>';
+    return;
+  }
 
   var overdue   = customers.filter(c => daysRemaining(c.dueDate) < 0).length;
   var thisWeek  = customers.filter(c => { var d=daysRemaining(c.dueDate); return d>=0&&d<=7; }).length;
@@ -1256,8 +1231,14 @@ function renderExpiry(){
   }).join('');
 }
 
-function waAllOverdue(){
-  var customers = DB.get('awf_customers');
+async function waAllOverdue(){
+  var customers;
+  try {
+    customers = await db.from('customers').select();
+  } catch(e) {
+    alert('Failed to load customers. Check your connection.');
+    return;
+  }
   var overdue = customers.filter(c => daysRemaining(c.dueDate) < 0);
   if(!overdue.length){ alert('No overdue customers.'); return; }
   if(!confirm(`Send WhatsApp to ${overdue.length} overdue customers? Each will open in a new tab.`)) return;
@@ -1272,10 +1253,10 @@ function waAllOverdue(){
 // ════════════════════════════════════════
 //  WHATSAPP
 // ════════════════════════════════════════
-let selectedTpl = 0;
-let selectedCusts = new Set();
+var selectedTpl = 0;
+var selectedCusts = new Set();
 
-function renderWhatsApp(){
+async function renderWhatsApp(){
   // Template cards
   document.getElementById('wa-templates').innerHTML = TEMPLATES.map((t,i)=>`
     <div class="wa-tpl ${i===selectedTpl?'selected':''}" onclick="selectTpl(${i})">
@@ -1284,7 +1265,13 @@ function renderWhatsApp(){
     </div>`).join('');
 
   // Customer list
-  var customers = DB.get('awf_customers');
+  var customers;
+  try {
+    customers = await db.from('customers').select();
+  } catch(e) {
+    document.getElementById('wa-cust-list').innerHTML = '<div style="padding:20px;text-align:center;color:var(--red)">Failed to load customers.</div>';
+    return;
+  }
   document.getElementById('wa-cust-list').innerHTML = customers.map(c=>{
     var d = daysRemaining(c.dueDate);
     var si = statusInfo(d);
@@ -1302,10 +1289,10 @@ function renderWhatsApp(){
   renderWALog();
 }
 
-function selectTpl(i){
+async function selectTpl(i){
   selectedTpl = i;
   document.querySelectorAll('.wa-tpl').forEach((el,idx)=>el.classList.toggle('selected',idx===i));
-  updateWAPreview();
+  await updateWAPreview();
 }
 
 function toggleCust(e, id){
@@ -1315,22 +1302,30 @@ function toggleCust(e, id){
   cb.checked = !cb.checked;
   toggleCustCb(id, cb.checked);
 }
-function toggleCustCb(id, checked){
+async function toggleCustCb(id, checked){
   if(checked) selectedCusts.add(id); else selectedCusts.delete(id);
   document.getElementById('wa-send-count').textContent = `${selectedCusts.size} customer${selectedCusts.size!==1?'s':''} selected`;
-  document.getElementById('wa-select-all').checked = selectedCusts.size === DB.get('awf_customers').length;
-  updateWAPreview();
+  try {
+    var allCusts = await db.from('customers').select();
+    document.getElementById('wa-select-all').checked = selectedCusts.size === allCusts.length;
+  } catch(e) { /* ignore */ }
+  await updateWAPreview();
 }
-function waSelectAll(checked){
-  var customers = DB.get('awf_customers');
-  if(checked) customers.forEach(c => selectedCusts.add(c.id));
-  else selectedCusts.clear();
-  renderWhatsApp();
+async function waSelectAll(checked){
+  try {
+    var customers = await db.from('customers').select();
+    if(checked) customers.forEach(c => selectedCusts.add(c.id));
+    else selectedCusts.clear();
+  } catch(e) { selectedCusts.clear(); }
+  await renderWhatsApp();
 }
-function waClear(){ selectedCusts.clear(); renderWhatsApp(); }
+async function waClear(){ selectedCusts.clear(); await renderWhatsApp(); }
 
-function updateWAPreview(){
-  var customers = DB.get('awf_customers');
+async function updateWAPreview(){
+  var customers;
+  try {
+    customers = await db.from('customers').select();
+  } catch(e) { customers = []; }
   var previewCust = selectedCusts.size
     ? customers.find(c => selectedCusts.has(c.id))
     : customers[0];
@@ -1340,9 +1335,15 @@ function updateWAPreview(){
   document.getElementById('wa-preview-bubble').textContent = msg;
 }
 
-function sendWA(){
+async function sendWA(){
   if(!selectedCusts.size){ alert('Select at least one customer.'); return; }
-  var customers = DB.get('awf_customers');
+  var customers;
+  try {
+    customers = await db.from('customers').select();
+  } catch(e) {
+    alert('Failed to load customers. Check your connection.');
+    return;
+  }
   var tpl = TEMPLATES[selectedTpl];
   var toSend = customers.filter(c => selectedCusts.has(c.id));
   if(!confirm(`Send "${tpl.name}" to ${toSend.length} customer(s)?`)) return;
@@ -1354,24 +1355,28 @@ function sendWA(){
     }, i * 350);
   });
   selectedCusts.clear();
-  setTimeout(() => renderWhatsApp(), toSend.length * 350 + 100);
+  setTimeout(async () => await renderWhatsApp(), toSend.length * 350 + 100);
 }
 
 function logWA(e, name, phone, tplName){
   logWASilent(name, phone, tplName);
 }
-function logWASilent(name, phone, tplName){
-  var log = DB.get('awf_whatsapp_log');
-  log.unshift({
+async function logWASilent(name, phone, tplName){
+  var entry = {
     id: 'WA-'+Date.now(),
-    customerName: name, phone, template: tplName,
+    customerName: name, phone: phone, template: tplName,
     sentAt: new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})
-  });
-  DB.set('awf_whatsapp_log', log.slice(0,20));
-  if(document.getElementById('wa-log-tbody')) renderWALog();
+  };
+  try {
+    await db.from('whatsapp_log').insert(entry);
+  } catch(e) { /* silent fail — don't block WA sending */ }
+  if(document.getElementById('wa-log-tbody')) await renderWALog();
 }
-function renderWALog(){
-  var log = DB.get('awf_whatsapp_log');
+async function renderWALog(){
+  var log;
+  try {
+    log = await db.from('whatsapp_log').select();
+  } catch(e) { log = []; }
   document.getElementById('wa-log-tbody').innerHTML = log.map(e=>`
     <tr>
       <td>${e.sentAt}</td>
@@ -1406,7 +1411,7 @@ function loadSession(){
     window.location.href = 'step1-login.html';
   }
 }
-let timerSecs = 0, timerInt;
+var timerSecs = 0, timerInt;
 function startTimer(){
   timerInt = setInterval(()=>{
     timerSecs++;
@@ -1424,8 +1429,16 @@ function logout(){
 // ════════════════════════════════════════
 //  FEEDBACK
 // ════════════════════════════════════════
-function renderFeedback(){
-  var fb = DB.get('awf_feedback');
+async function renderFeedback(){
+  var grid = document.getElementById('fb-grid');
+  grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--dim)">Loading…</div>';
+  var fb;
+  try {
+    fb = await db.from('feedback').select();
+  } catch(e) {
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Failed to load data. Check your connection.</div>';
+    return;
+  }
   var total = fb.length;
   var avg   = total ? (fb.reduce((s,f)=>s+f.rating,0)/total).toFixed(1) : '–';
   var five  = fb.filter(f=>f.rating===5).length;
@@ -1475,10 +1488,16 @@ function renderFeedback(){
   }).join('') || '<div class="no-data" style="grid-column:1/-1">No feedback recorded yet — use "+ Record Feedback" to add the first one.</div>';
 }
 
-function submitFeedback(e){
+async function submitFeedback(e){
   e.preventDefault();
-  var fb = DB.get('awf_feedback');
-  fb.push({
+  var fb;
+  try {
+    fb = await db.from('feedback').select();
+  } catch(err) {
+    alert('Failed to load feedback. Check your connection.');
+    return;
+  }
+  var entry = {
     id:           nextId(fb,'FB-'),
     customerName: document.getElementById('fb-f-name').value.trim(),
     phone:        document.getElementById('fb-f-phone').value.trim(),
@@ -1486,23 +1505,28 @@ function submitFeedback(e){
     type:         document.getElementById('fb-f-type').value,
     comment:      document.getElementById('fb-f-comment').value.trim(),
     date:         todayStr()
-  });
-  DB.set('awf_feedback', fb);
+  };
+  try {
+    await db.from('feedback').insert(entry);
+  } catch(err) {
+    alert('Failed to save feedback. Check your connection.');
+    return;
+  }
   closeModal('modal-feedback');
   document.getElementById('fb-form').reset();
-  renderFeedback();
+  await renderFeedback();
 }
 
 // ════════════════════════════════════════
 //  SCHEDULE
 // ════════════════════════════════════════
-let schedActive = 'today';
+var schedActive = 'today';
 
-function schedFilter(el, key){
+async function schedFilter(el, key){
   schedActive = key;
   document.querySelectorAll('.sched-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  renderSchedule();
+  await renderSchedule();
 }
 
 function openSchedModal(prefill){
@@ -1519,8 +1543,16 @@ function openSchedModal(prefill){
   openModal('modal-schedule');
 }
 
-function renderSchedule(){
-  var all = DB.get('awf_jobs');
+async function renderSchedule(){
+  var tbody = document.getElementById('sched-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--dim)">Loading…</td></tr>';
+  var all;
+  try {
+    all = await db.from('jobs').select();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    return;
+  }
   var today = todayStr();
 
   var tmrw = new Date();
@@ -1531,7 +1563,7 @@ function renderSchedule(){
   wkEnd.setDate(wkEnd.getDate()+7);
   var wkStr = wkEnd.toISOString().split('T')[0];
 
-  let filtered;
+  var filtered;
   if(schedActive==='today')    filtered = all.filter(j=>j.date===today);
   else if(schedActive==='tomorrow') filtered = all.filter(j=>j.date===tmrwStr);
   else if(schedActive==='week') filtered = all.filter(j=>j.date>=today && j.date<=wkStr);
@@ -1580,27 +1612,37 @@ function renderSchedule(){
   }).join('') || '<tr><td colspan="7" class="no-data">No jobs for this period</td></tr>';
 }
 
-function markJobDone(id){
-  var jobs = DB.get('awf_jobs');
-  var j = jobs.find(x=>x.id===id);
-  if(j) j.status = 'Completed';
-  DB.set('awf_jobs', jobs);
-  renderSchedule();
-  renderDashboard();
+async function markJobDone(id){
+  try {
+    await db.from('jobs').update({status:'Completed'}, 'id', id);
+  } catch(e) {
+    alert('Failed to update job. Check your connection.');
+    return;
+  }
+  await renderSchedule();
+  await renderDashboard();
 }
 
-function cancelJob(id){
+async function cancelJob(id){
   if(!confirm('Cancel this job?')) return;
-  var jobs = DB.get('awf_jobs');
-  var j = jobs.find(x=>x.id===id);
-  if(j) j.status = 'Cancelled';
-  DB.set('awf_jobs', jobs);
-  renderSchedule();
+  try {
+    await db.from('jobs').update({status:'Cancelled'}, 'id', id);
+  } catch(e) {
+    alert('Failed to cancel job. Check your connection.');
+    return;
+  }
+  await renderSchedule();
 }
 
-function submitJob(e){
+async function submitJob(e){
   e.preventDefault();
-  var jobs = DB.get('awf_jobs');
+  var jobs;
+  try {
+    jobs = await db.from('jobs').select();
+  } catch(err) {
+    alert('Failed to load jobs. Check your connection.');
+    return;
+  }
   var job = {
     id:           nextId(jobs,'JOB-'),
     customerName: document.getElementById('sj-name').value.trim(),
@@ -1615,19 +1657,31 @@ function submitJob(e){
     notes:        document.getElementById('sj-notes').value.trim(),
     status:       'Scheduled'
   };
-  jobs.push(job);
-  DB.set('awf_jobs', jobs);
+  try {
+    await db.from('jobs').insert(job);
+  } catch(err) {
+    alert('Failed to save job. Check your connection.');
+    return;
+  }
   closeModal('modal-schedule');
   document.getElementById('sched-form').reset();
-  renderSchedule();
-  renderDashboard();
+  await renderSchedule();
+  await renderDashboard();
 }
 
 // ════════════════════════════════════════
 //  INVENTORY
 // ════════════════════════════════════════
-function renderInventory(){
-  var inv = DB.get('awf_inventory');
+async function renderInventory(){
+  var tbody = document.getElementById('inv-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--dim)">Loading…</td></tr>';
+  var inv;
+  try {
+    inv = await db.from('inventory').select();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    return;
+  }
   var ok  = inv.filter(i=>i.quantity>i.reorderLevel).length;
   var low = inv.filter(i=>i.quantity>0&&i.quantity<=i.reorderLevel).length;
   var out = inv.filter(i=>i.quantity===0).length;
@@ -1687,28 +1741,51 @@ function renderInventory(){
     `${inv.length} items · ${low+out} need attention`;
 }
 
-function addStock(id){
+async function addStock(id){
   var qty = parseInt(prompt('How many units to add to stock?'));
   if(!qty || qty<=0) return;
-  var inv  = DB.get('awf_inventory');
+  var inv;
+  try {
+    inv = await db.from('inventory').select();
+  } catch(e) {
+    alert('Failed to load inventory. Check your connection.');
+    return;
+  }
   var item = inv.find(i=>i.id===id);
-  if(item){ item.quantity += qty; }
-  DB.set('awf_inventory', inv);
-  renderInventory();
-  renderDashboard();
+  if(!item) return;
+  var newQty = item.quantity + qty;
+  try {
+    await db.from('inventory').update({quantity: newQty}, 'id', id);
+  } catch(e) {
+    alert('Failed to update stock. Check your connection.');
+    return;
+  }
+  await renderInventory();
+  await renderDashboard();
 }
 
-function deleteInvItem(id){
+async function deleteInvItem(id){
   if(!confirm('Delete this inventory item?')) return;
-  DB.set('awf_inventory', DB.get('awf_inventory').filter(i=>i.id!==id));
-  renderInventory();
-  renderDashboard();
+  try {
+    await db.from('inventory').delete('id', id);
+  } catch(e) {
+    alert('Failed to delete item. Check your connection.');
+    return;
+  }
+  await renderInventory();
+  await renderDashboard();
 }
 
-function submitInventory(e){
+async function submitInventory(e){
   e.preventDefault();
-  var inv = DB.get('awf_inventory');
-  inv.push({
+  var inv;
+  try {
+    inv = await db.from('inventory').select();
+  } catch(err) {
+    alert('Failed to load inventory. Check your connection.');
+    return;
+  }
+  var item = {
     id:           nextId(inv,'INV-'),
     name:         document.getElementById('iv-name').value.trim(),
     category:     document.getElementById('iv-cat').value,
@@ -1717,20 +1794,33 @@ function submitInventory(e){
     reorderLevel: parseInt(document.getElementById('iv-reorder').value)||1,
     unitPrice:    parseInt(document.getElementById('iv-price').value)||0,
     supplier:     document.getElementById('iv-supplier').value.trim(),
-  });
-  DB.set('awf_inventory', inv);
+  };
+  try {
+    await db.from('inventory').insert(item);
+  } catch(err) {
+    alert('Failed to save inventory item. Check your connection.');
+    return;
+  }
   closeModal('modal-inventory');
   document.getElementById('inv-form').reset();
-  renderInventory();
-  renderDashboard();
+  await renderInventory();
+  await renderDashboard();
 }
 
 // ════════════════════════════════════════
 //  EMPLOYEES
 // ════════════════════════════════════════
-function renderEmployees(){
-  var emps = DB.get('awf_employees');
-  var jobs = DB.get('awf_jobs');
+async function renderEmployees(){
+  var tbody = document.getElementById('emp-tbody');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--dim)">Loading…</td></tr>';
+  var emps, jobs;
+  try {
+    emps = await db.from('employees').select();
+    jobs = await db.from('jobs').select();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">Failed to load data. Check your connection.</td></tr>';
+    return;
+  }
   var thisMonth = new Date().toISOString().slice(0,7);
   var activeCount = emps.filter(e=>e.active!==false).length;
 
@@ -1773,32 +1863,49 @@ function renderEmployees(){
   }).join('') || '<tr><td colspan="9" class="no-data">No employees found</td></tr>';
 }
 
-function resetPin(id){
+async function resetPin(id){
   var pin = prompt('Enter new 4-digit PIN for this employee:');
   if(pin===null) return;
   if(!/^\d{4}$/.test(pin)){ alert('PIN must be exactly 4 digits (numbers only).'); return; }
-  var emps = DB.get('awf_employees');
-  var e = emps.find(x=>x.id===id);
-  if(e){ e.pin = pin; }
-  DB.set('awf_employees', emps);
-  alert('PIN updated successfully.');
+  try {
+    await db.from('employees').update({pin: pin}, 'id', id);
+    alert('PIN updated successfully.');
+  } catch(e) {
+    alert('Failed to update PIN. Check your connection.');
+  }
 }
 
-function toggleEmployee(id){
-  var emps = DB.get('awf_employees');
+async function toggleEmployee(id){
+  var emps;
+  try {
+    emps = await db.from('employees').select();
+  } catch(err) {
+    alert('Failed to load employees. Check your connection.');
+    return;
+  }
   var e = emps.find(x=>x.id===id);
   if(!e) return;
   var isActive = e.active !== false;
   if(isActive && !confirm(`Disable ${e.name}? They will not be able to log in.`)) return;
-  e.active = !isActive;
-  DB.set('awf_employees', emps);
-  renderEmployees();
+  try {
+    await db.from('employees').update({active: !isActive}, 'id', id);
+  } catch(err) {
+    alert('Failed to update employee. Check your connection.');
+    return;
+  }
+  await renderEmployees();
 }
 
-function submitEmployee(e){
+async function submitEmployee(e){
   e.preventDefault();
-  var emps = DB.get('awf_employees');
-  emps.push({
+  var emps;
+  try {
+    emps = await db.from('employees').select();
+  } catch(err) {
+    alert('Failed to load employees. Check your connection.');
+    return;
+  }
+  var emp = {
     id:     nextId(emps,'EMP-'),
     name:   document.getElementById('em-name').value.trim(),
     phone:  document.getElementById('em-phone').value.trim(),
@@ -1807,21 +1914,25 @@ function submitEmployee(e){
     area:   document.getElementById('em-area').value.trim(),
     pin:    document.getElementById('em-pin').value,
     active: true,
-  });
-  DB.set('awf_employees', emps);
+  };
+  try {
+    await db.from('employees').insert(emp);
+  } catch(err) {
+    alert('Failed to save employee. Check your connection.');
+    return;
+  }
   closeModal('modal-employee');
   document.getElementById('emp-form').reset();
-  renderEmployees();
+  await renderEmployees();
 }
 
 // ════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════
-window.onload = function(){
-  seedIfEmpty();
+window.onload = async function(){
   loadSession();
   startTimer();
-  renderDashboard();
+  await renderDashboard();
 };
 </script>
 </body>

@@ -259,7 +259,7 @@ tbody tr:hover{background:#f8fafc;}
         </div>
         <div class="table-wrap">
           <div class="table-toolbar">
-            <input class="search-input" type="text" id="cust-search" placeholder="Search name, phone, area..." oninput="renderCustomers()"/>
+            <input class="search-input" type="text" id="cust-search" placeholder="Search name, phone, area..." oninput="renderCustomers().catch(function(e){ console.error(e); })"/>
             <span id="cust-count" style="color:var(--dim);font-size:13px;"></span>
           </div>
           <table>
@@ -355,6 +355,7 @@ tbody tr:hover{background:#f8fafc;}
   </div>
 </div>
 
+<script src="supabase-config.js"></script>
 <script>
 var currentUser = null;
 var currentLogCustomer = null;
@@ -387,12 +388,6 @@ function statusInfo(days) {
   if (days <= 14)return {label:'Due Soon', cls:'due-soon', color:'var(--yellow)'};
   if (days <= 30)return {label:'Upcoming', cls:'upcoming', color:'var(--blue)'};
   return              {label:'Active',   cls:'active',   color:'var(--green)'};
-}
-function lsGet(key) {
-  try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e) { return []; }
-}
-function lsSet(key, val) {
-  localStorage.setItem(key, JSON.stringify(val));
 }
 function calcDuration(loginAt, logoutAt) {
   if (!logoutAt) return '<span class="status-active">Active now</span>';
@@ -446,40 +441,46 @@ function loadSession() {
   logActivityEntry();
 }
 
-function logActivityEntry() {
-  var log = lsGet('awf_activity_log');
-  var sessionId = currentUser.loginTime;
-  var found = false;
-  for (var i = 0; i < log.length; i++) {
-    if (log[i].sessionId === sessionId && log[i].empId === currentUser.empId) {
-      found = true; break;
+async function logActivityEntry() {
+  try {
+    var sessionId = currentUser.loginTime;
+    var log = await db.from('activity_log').select();
+    var found = false;
+    for (var i = 0; i < log.length; i++) {
+      if (log[i].sessionId === sessionId && log[i].empId === currentUser.empId) {
+        found = true; break;
+      }
     }
-  }
-  if (!found) {
-    log.push({
-      id: 'ACT-' + Date.now(),
-      sessionId: sessionId,
-      empId: currentUser.empId,
-      empName: currentUser.name,
-      role: currentUser.role,
-      page: 'Sales',
-      loginAt: currentUser.loginTime,
-      logoutAt: null
-    });
-    lsSet('awf_activity_log', log);
+    if (!found) {
+      await db.from('activity_log').insert({
+        id: 'ACT-' + Date.now(),
+        sessionId: sessionId,
+        empId: currentUser.empId,
+        empName: currentUser.name,
+        role: currentUser.role,
+        page: 'Sales',
+        loginAt: currentUser.loginTime,
+        logoutAt: null
+      });
+    }
+  } catch(e) {
+    console.error('Error logging activity:', e);
   }
 }
 
-function logout() {
-  var log = lsGet('awf_activity_log');
-  var now = new Date().toISOString();
-  for (var i = 0; i < log.length; i++) {
-    if (log[i].sessionId === currentUser.loginTime && log[i].empId === currentUser.empId && !log[i].logoutAt) {
-      log[i].logoutAt = now;
-      break;
+async function logout() {
+  try {
+    var now = new Date().toISOString();
+    var log = await db.from('activity_log').select();
+    for (var i = 0; i < log.length; i++) {
+      if (log[i].sessionId === currentUser.loginTime && log[i].empId === currentUser.empId && !log[i].logoutAt) {
+        await db.from('activity_log').update({ logoutAt: now }, 'id', log[i].id);
+        break;
+      }
     }
+  } catch(e) {
+    console.error('Error logging logout:', e);
   }
-  lsSet('awf_activity_log', log);
   localStorage.removeItem('awf_session');
   window.location.href = 'step1-login.html';
 }
@@ -500,15 +501,15 @@ function showSection(name, el) {
   var sec = document.getElementById('sec-' + name);
   if (sec) sec.classList.add('active');
   document.getElementById('topbar-title').textContent = sectionTitles[name] || name;
-  if (name === 'reminders') renderReminders();
-  if (name === 'daily-sales') renderSales();
-  if (name === 'customers') renderCustomers();
-  if (name === 'my-sessions') renderSessions();
+  if (name === 'reminders') renderReminders().catch(function(e){ console.error(e); });
+  if (name === 'daily-sales') renderSales().catch(function(e){ console.error(e); });
+  if (name === 'customers') renderCustomers().catch(function(e){ console.error(e); });
+  if (name === 'my-sessions') renderSessions().catch(function(e){ console.error(e); });
 }
 
 // ---- SECTION 1: REMINDERS ----
-function getLastCallResult(customerId) {
-  var log = lsGet('awf_call_log');
+async function getLastCallResult(customerId) {
+  var log = await db.from('call_log').select();
   var matches = [];
   for (var i = 0; i < log.length; i++) {
     if (log[i].customerId === customerId) matches.push(log[i]);
@@ -517,8 +518,8 @@ function getLastCallResult(customerId) {
   matches.sort(function(a,b){ return new Date(b.loggedAt) - new Date(a.loggedAt); });
   return matches[0];
 }
-function countCalledToday() {
-  var log = lsGet('awf_call_log');
+async function countCalledToday() {
+  var log = await db.from('call_log').select();
   var today = todayStr();
   var count = 0;
   for (var i = 0; i < log.length; i++) {
@@ -526,68 +527,74 @@ function countCalledToday() {
   }
   return count;
 }
-function renderReminders() {
-  var customers = lsGet('awf_customers');
-  var reminders = [];
-  for (var i = 0; i < customers.length; i++) {
-    var d = daysRemaining(customers[i].dueDate);
-    if (d <= 30) reminders.push({customer: customers[i], days: d});
-  }
-  reminders.sort(function(a,b){ return a.days - b.days; });
-
-  var overdue = 0, thisWeek = 0;
-  for (var k = 0; k < reminders.length; k++) {
-    if (reminders[k].days < 0) overdue++;
-    else if (reminders[k].days <= 7) thisWeek++;
-  }
-  var calledToday = countCalledToday();
-
-  document.getElementById('rem-stats').innerHTML =
-    statCard('Total to Contact', reminders.length, '') +
-    statCard('Overdue', overdue, 'red') +
-    statCard('Due This Week', thisWeek, 'orange') +
-    statCard('Called Today', calledToday, 'green');
-
+async function renderReminders() {
   var grid = document.getElementById('reminders-grid');
   var empty = document.getElementById('reminders-empty');
-  if (!reminders.length) {
-    grid.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
-  }
-  empty.classList.add('hidden');
-  var html = '';
-  for (var r = 0; r < reminders.length; r++) {
-    var cust = reminders[r].customer;
-    var days = reminders[r].days;
-    var info = statusInfo(days);
-    var rcCls = 'rc-' + info.cls;
-    var daysLabel = days < 0 ? Math.abs(days) + ' days overdue' : (days === 0 ? 'Due today' : days + ' days remaining');
-    var phone = cust.phone || '';
-    var waPhone = normalizePhone(phone);
-    var waMsg = encodeURIComponent(buildWaExpiry(cust));
-    var lastCall = getLastCallResult(cust.id);
-    var lastCallHtml = '';
-    if (lastCall) {
-      var crb = 'crb-' + lastCall.result.toLowerCase().replace(/ /g,'-');
-      lastCallHtml = '<div><span class="call-result-badge ' + crb + '">' + lastCall.result + '</span> <span style="font-size:11px;color:var(--dim);">' + (lastCall.loggedAt ? lastCall.loggedAt.slice(0,10) : '') + '</span></div>';
+  try {
+    var customers = await db.from('customers').select();
+    var reminders = [];
+    for (var i = 0; i < customers.length; i++) {
+      var d = daysRemaining(customers[i].dueDate);
+      if (d <= 30) reminders.push({customer: customers[i], days: d});
     }
-    var custJson = escapeJson(JSON.stringify(cust));
-    html += '<div class="reminder-card ' + rcCls + '">' +
-      '<div class="rc-header"><div><div class="rc-name">' + esc(cust.name) + '</div><div class="rc-area">' + esc(cust.area||'') + '</div></div>' +
-      '<span class="badge badge-' + info.cls + '">' + info.label + '</span></div>' +
-      '<div class="rc-model">Filter: ' + esc(cust.filterModel||'—') + '</div>' +
-      '<div class="rc-days" style="color:' + info.color + ';">' + daysLabel + '</div>' +
-      '<div class="rc-phone">📞 ' + esc(phone) + '</div>' +
-      '<div class="rc-actions">' +
-        '<a class="btn-call" href="tel:+' + waPhone + '">📞 Call</a>' +
-        '<a class="btn-wa" href="https://wa.me/' + waPhone + '?text=' + waMsg + '" target="_blank">💬 WhatsApp</a>' +
-        '<button class="btn-log" onclick=\'openLogModal(' + custJson + ')\'>📋 Log Result</button>' +
-      '</div>' +
-      lastCallHtml +
-    '</div>';
+    reminders.sort(function(a,b){ return a.days - b.days; });
+
+    var overdue = 0, thisWeek = 0;
+    for (var k = 0; k < reminders.length; k++) {
+      if (reminders[k].days < 0) overdue++;
+      else if (reminders[k].days <= 7) thisWeek++;
+    }
+    var calledToday = await countCalledToday();
+
+    document.getElementById('rem-stats').innerHTML =
+      statCard('Total to Contact', reminders.length, '') +
+      statCard('Overdue', overdue, 'red') +
+      statCard('Due This Week', thisWeek, 'orange') +
+      statCard('Called Today', calledToday, 'green');
+
+    if (!reminders.length) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    var html = '';
+    for (var r = 0; r < reminders.length; r++) {
+      var cust = reminders[r].customer;
+      var days = reminders[r].days;
+      var info = statusInfo(days);
+      var rcCls = 'rc-' + info.cls;
+      var daysLabel = days < 0 ? Math.abs(days) + ' days overdue' : (days === 0 ? 'Due today' : days + ' days remaining');
+      var phone = cust.phone || '';
+      var waPhone = normalizePhone(phone);
+      var waMsg = encodeURIComponent(buildWaExpiry(cust));
+      var lastCall = await getLastCallResult(cust.id);
+      var lastCallHtml = '';
+      if (lastCall) {
+        var crb = 'crb-' + lastCall.result.toLowerCase().replace(/ /g,'-');
+        lastCallHtml = '<div><span class="call-result-badge ' + crb + '">' + lastCall.result + '</span> <span style="font-size:11px;color:var(--dim);">' + (lastCall.loggedAt ? lastCall.loggedAt.slice(0,10) : '') + '</span></div>';
+      }
+      var custJson = escapeJson(JSON.stringify(cust));
+      html += '<div class="reminder-card ' + rcCls + '">' +
+        '<div class="rc-header"><div><div class="rc-name">' + esc(cust.name) + '</div><div class="rc-area">' + esc(cust.area||'') + '</div></div>' +
+        '<span class="badge badge-' + info.cls + '">' + info.label + '</span></div>' +
+        '<div class="rc-model">Filter: ' + esc(cust.filterModel||'—') + '</div>' +
+        '<div class="rc-days" style="color:' + info.color + ';">' + daysLabel + '</div>' +
+        '<div class="rc-phone">📞 ' + esc(phone) + '</div>' +
+        '<div class="rc-actions">' +
+          '<a class="btn-call" href="tel:+' + waPhone + '">📞 Call</a>' +
+          '<a class="btn-wa" href="https://wa.me/' + waPhone + '?text=' + waMsg + '" target="_blank">💬 WhatsApp</a>' +
+          '<button class="btn-log" onclick=\'openLogModal(' + custJson + ')\'>📋 Log Result</button>' +
+        '</div>' +
+        lastCallHtml +
+      '</div>';
+    }
+    grid.innerHTML = html;
+  } catch(e) {
+    console.error('Error loading reminders:', e);
+    grid.innerHTML = '<div class="empty-msg">Error loading reminders. Please try again.</div>';
+    empty.classList.add('hidden');
   }
-  grid.innerHTML = html;
 }
 function statCard(label, val, colorCls) {
   return '<div class="stat-card"><div class="sc-label">' + label + '</div><div class="sc-val ' + colorCls + '">' + val + '</div></div>';
@@ -611,7 +618,7 @@ function toggleFollowUpDate() {
   var val = document.getElementById('log-result').value;
   document.getElementById('follow-up-row').style.display = val === 'Follow Up Later' ? 'block' : 'none';
 }
-function submitLogResult() {
+async function submitLogResult() {
   if (!currentLogCustomer) return;
   var result = document.getElementById('log-result').value;
   var followUpDate = document.getElementById('log-followup-date').value;
@@ -627,48 +634,57 @@ function submitLogResult() {
     loggedAt: new Date().toISOString(),
     loggedBy: currentUser.name
   };
-  var log = lsGet('awf_call_log');
-  log.push(entry);
-  lsSet('awf_call_log', log);
-  closeLogModal();
-  renderReminders();
+  try {
+    await db.from('call_log').insert(entry);
+    closeLogModal();
+    renderReminders().catch(function(e){ console.error(e); });
+  } catch(e) {
+    console.error('Error saving call result:', e);
+    alert('Error saving call result. Please try again.');
+  }
 }
 
 // ---- SECTION 2: DAILY SALES ----
-function renderSales() {
-  var sales = lsGet('awf_daily_sales');
-  var today = todayStr();
-  var todaySales = [];
-  for (var i = 0; i < sales.length; i++) {
-    if (sales[i].date === today) todaySales.push(sales[i]);
-  }
-  todaySales.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
-  var total = 0;
-  for (var j = 0; j < todaySales.length; j++) total += Number(todaySales[j].total) || 0;
-  document.getElementById('ds-total').textContent = fmtMoney(total);
+async function renderSales() {
   var tbody = document.getElementById('sales-tbody');
   var empty = document.getElementById('sales-empty');
-  if (!todaySales.length) {
-    tbody.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
+  try {
+    var sales = await db.from('daily_sales').select();
+    var today = todayStr();
+    var todaySales = [];
+    for (var i = 0; i < sales.length; i++) {
+      if (sales[i].date === today) todaySales.push(sales[i]);
+    }
+    todaySales.sort(function(a,b){ return (b.time||'').localeCompare(a.time||''); });
+    var total = 0;
+    for (var j = 0; j < todaySales.length; j++) total += Number(todaySales[j].total) || 0;
+    document.getElementById('ds-total').textContent = fmtMoney(total);
+    if (!todaySales.length) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    var html = '';
+    for (var k = 0; k < todaySales.length; k++) {
+      var s = todaySales[k];
+      html += '<tr>' +
+        '<td>' + esc(s.time||'') + '</td>' +
+        '<td>' + esc(s.item||'') + '</td>' +
+        '<td>' + esc(s.quantity||'') + '</td>' +
+        '<td>' + fmtMoney(s.unitPrice||0) + '</td>' +
+        '<td><strong>' + fmtMoney(s.total||0) + '</strong></td>' +
+        '<td>' + esc(s.paymentMethod||'') + '</td>' +
+        '<td>' + esc(s.customerName||'—') + '</td>' +
+        '<td><button class="btn btn-danger btn-sm" onclick="deleteSale(\'' + s.id + '\')">🗑</button></td>' +
+      '</tr>';
+    }
+    tbody.innerHTML = html;
+  } catch(e) {
+    console.error('Error loading sales:', e);
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">Error loading sales. Please try again.</td></tr>';
+    empty.classList.add('hidden');
   }
-  empty.classList.add('hidden');
-  var html = '';
-  for (var k = 0; k < todaySales.length; k++) {
-    var s = todaySales[k];
-    html += '<tr>' +
-      '<td>' + esc(s.time||'') + '</td>' +
-      '<td>' + esc(s.item||'') + '</td>' +
-      '<td>' + esc(s.quantity||'') + '</td>' +
-      '<td>' + fmtMoney(s.unitPrice||0) + '</td>' +
-      '<td><strong>' + fmtMoney(s.total||0) + '</strong></td>' +
-      '<td>' + esc(s.paymentMethod||'') + '</td>' +
-      '<td>' + esc(s.customerName||'—') + '</td>' +
-      '<td><button class="btn btn-danger btn-sm" onclick="deleteSale(\'' + s.id + '\')">🗑</button></td>' +
-    '</tr>';
-  }
-  tbody.innerHTML = html;
 }
 function openSaleModal() {
   document.getElementById('sale-item').value = '';
@@ -681,7 +697,7 @@ function openSaleModal() {
 function closeSaleModal() {
   document.getElementById('sale-modal').classList.remove('open');
 }
-function submitSale() {
+async function submitSale() {
   var item = document.getElementById('sale-item').value.trim();
   if (!item) { alert('Item sold is required.'); return; }
   var quantity = parseInt(document.getElementById('sale-qty').value) || 1;
@@ -701,108 +717,123 @@ function submitSale() {
     time: nowTimeStr(),
     loggedBy: currentUser.name
   };
-  var sales = lsGet('awf_daily_sales');
-  sales.push(entry);
-  lsSet('awf_daily_sales', sales);
-  closeSaleModal();
-  renderSales();
-}
-function deleteSale(id) {
-  if (!confirm('Delete this sale entry?')) return;
-  var sales = lsGet('awf_daily_sales');
-  var updated = [];
-  for (var i = 0; i < sales.length; i++) {
-    if (sales[i].id !== id) updated.push(sales[i]);
+  try {
+    await db.from('daily_sales').insert(entry);
+    closeSaleModal();
+    renderSales().catch(function(e){ console.error(e); });
+  } catch(e) {
+    console.error('Error saving sale:', e);
+    alert('Error saving sale. Please try again.');
   }
-  lsSet('awf_daily_sales', updated);
-  renderSales();
+}
+async function deleteSale(id) {
+  if (!confirm('Delete this sale entry?')) return;
+  try {
+    await db.from('daily_sales').delete('id', id);
+    renderSales().catch(function(e){ console.error(e); });
+  } catch(e) {
+    console.error('Error deleting sale:', e);
+    alert('Error deleting sale. Please try again.');
+  }
 }
 
 // ---- SECTION 3: CUSTOMERS ----
-function renderCustomers() {
-  var customers = lsGet('awf_customers');
-  var q = (document.getElementById('cust-search').value || '').toLowerCase();
-  var filtered = [];
-  for (var i = 0; i < customers.length; i++) {
-    var c = customers[i];
-    if (!q ||
-      (c.name||'').toLowerCase().indexOf(q) > -1 ||
-      (c.phone||'').toLowerCase().indexOf(q) > -1 ||
-      (c.area||'').toLowerCase().indexOf(q) > -1 ||
-      (c.filterModel||'').toLowerCase().indexOf(q) > -1
-    ) {
-      filtered.push(c);
-    }
-  }
-  document.getElementById('cust-count').textContent = filtered.length + ' customer' + (filtered.length !== 1 ? 's' : '');
+async function renderCustomers() {
   var tbody = document.getElementById('cust-tbody');
   var empty = document.getElementById('cust-empty');
-  if (!filtered.length) {
-    tbody.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
+  try {
+    var customers = await db.from('customers').select();
+    var q = (document.getElementById('cust-search').value || '').toLowerCase();
+    var filtered = [];
+    for (var i = 0; i < customers.length; i++) {
+      var c = customers[i];
+      if (!q ||
+        (c.name||'').toLowerCase().indexOf(q) > -1 ||
+        (c.phone||'').toLowerCase().indexOf(q) > -1 ||
+        (c.area||'').toLowerCase().indexOf(q) > -1 ||
+        (c.filterModel||'').toLowerCase().indexOf(q) > -1
+      ) {
+        filtered.push(c);
+      }
+    }
+    document.getElementById('cust-count').textContent = filtered.length + ' customer' + (filtered.length !== 1 ? 's' : '');
+    if (!filtered.length) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    var html = '';
+    for (var j = 0; j < filtered.length; j++) {
+      var cust = filtered[j];
+      var days = daysRemaining(cust.dueDate);
+      var info = statusInfo(days);
+      var waPhone = normalizePhone(cust.phone||'');
+      var waExpiryMsg = encodeURIComponent(buildWaExpiry(cust));
+      var waFeedbackMsg = encodeURIComponent(buildWaFeedback(cust));
+      html += '<tr>' +
+        '<td><span style="font-size:11px;color:var(--dim);">' + esc(cust.id||'') + '</span></td>' +
+        '<td><strong>' + esc(cust.name||'') + '</strong></td>' +
+        '<td>' + esc(cust.phone||'') + '</td>' +
+        '<td>' + esc(cust.filterModel||'—') + '</td>' +
+        '<td>' + fmtDate(cust.installDate) + '</td>' +
+        '<td>' + fmtDate(cust.dueDate) + '</td>' +
+        '<td><span class="badge badge-' + info.cls + '">' + info.label + '</span></td>' +
+        '<td>' + esc(cust.technician||'—') + '</td>' +
+        '<td><div class="td-actions">' +
+          '<a class="btn btn-sm" style="background:var(--green-bg);color:var(--green);" href="https://wa.me/' + waPhone + '?text=' + waExpiryMsg + '" target="_blank">💬 WhatsApp</a>' +
+          '<a class="btn btn-sm btn-ghost" href="https://wa.me/' + waPhone + '?text=' + waFeedbackMsg + '" target="_blank">📋 Feedback</a>' +
+        '</div></td>' +
+      '</tr>';
+    }
+    tbody.innerHTML = html;
+  } catch(e) {
+    console.error('Error loading customers:', e);
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">Error loading customers. Please try again.</td></tr>';
+    empty.classList.add('hidden');
   }
-  empty.classList.add('hidden');
-  var html = '';
-  for (var j = 0; j < filtered.length; j++) {
-    var cust = filtered[j];
-    var days = daysRemaining(cust.dueDate);
-    var info = statusInfo(days);
-    var waPhone = normalizePhone(cust.phone||'');
-    var waExpiryMsg = encodeURIComponent(buildWaExpiry(cust));
-    var waFeedbackMsg = encodeURIComponent(buildWaFeedback(cust));
-    html += '<tr>' +
-      '<td><span style="font-size:11px;color:var(--dim);">' + esc(cust.id||'') + '</span></td>' +
-      '<td><strong>' + esc(cust.name||'') + '</strong></td>' +
-      '<td>' + esc(cust.phone||'') + '</td>' +
-      '<td>' + esc(cust.filterModel||'—') + '</td>' +
-      '<td>' + fmtDate(cust.installDate) + '</td>' +
-      '<td>' + fmtDate(cust.dueDate) + '</td>' +
-      '<td><span class="badge badge-' + info.cls + '">' + info.label + '</span></td>' +
-      '<td>' + esc(cust.technician||'—') + '</td>' +
-      '<td><div class="td-actions">' +
-        '<a class="btn btn-sm" style="background:var(--green-bg);color:var(--green);" href="https://wa.me/' + waPhone + '?text=' + waExpiryMsg + '" target="_blank">💬 WhatsApp</a>' +
-        '<a class="btn btn-sm btn-ghost" href="https://wa.me/' + waPhone + '?text=' + waFeedbackMsg + '" target="_blank">📋 Feedback</a>' +
-      '</div></td>' +
-    '</tr>';
-  }
-  tbody.innerHTML = html;
 }
 
 // ---- SECTION 4: MY SESSIONS ----
-function renderSessions() {
-  var log = lsGet('awf_activity_log');
-  var myLog = [];
-  for (var i = 0; i < log.length; i++) {
-    if (log[i].empId === currentUser.empId) myLog.push(log[i]);
-  }
-  myLog.sort(function(a,b){ return new Date(b.loginAt) - new Date(a.loginAt); });
+async function renderSessions() {
   var tbody = document.getElementById('sessions-tbody');
   var empty = document.getElementById('sessions-empty');
-  if (!myLog.length) {
-    tbody.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
+  try {
+    var log = await db.from('activity_log').select();
+    var myLog = [];
+    for (var i = 0; i < log.length; i++) {
+      if (log[i].empId === currentUser.empId) myLog.push(log[i]);
+    }
+    myLog.sort(function(a,b){ return new Date(b.loginAt) - new Date(a.loginAt); });
+    if (!myLog.length) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    var html = '';
+    for (var j = 0; j < myLog.length; j++) {
+      var entry = myLog[j];
+      var loginDt = entry.loginAt ? new Date(entry.loginAt) : null;
+      var dateStr = loginDt ? loginDt.toLocaleDateString('en-PK') : '—';
+      var loginTime = loginDt ? loginDt.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : '—';
+      var logoutTime = entry.logoutAt ? new Date(entry.logoutAt).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : null;
+      var logoutCell = logoutTime || '<span class="status-active">Active now</span>';
+      var duration = calcDuration(entry.loginAt, entry.logoutAt);
+      html += '<tr>' +
+        '<td>' + dateStr + '</td>' +
+        '<td>' + loginTime + '</td>' +
+        '<td>' + logoutCell + '</td>' +
+        '<td>' + duration + '</td>' +
+        '<td>' + esc(entry.page||'Sales') + '</td>' +
+      '</tr>';
+    }
+    tbody.innerHTML = html;
+  } catch(e) {
+    console.error('Error loading sessions:', e);
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">Error loading sessions. Please try again.</td></tr>';
+    empty.classList.add('hidden');
   }
-  empty.classList.add('hidden');
-  var html = '';
-  for (var j = 0; j < myLog.length; j++) {
-    var entry = myLog[j];
-    var loginDt = entry.loginAt ? new Date(entry.loginAt) : null;
-    var dateStr = loginDt ? loginDt.toLocaleDateString('en-PK') : '—';
-    var loginTime = loginDt ? loginDt.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : '—';
-    var logoutTime = entry.logoutAt ? new Date(entry.logoutAt).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : null;
-    var logoutCell = logoutTime || '<span class="status-active">Active now</span>';
-    var duration = calcDuration(entry.loginAt, entry.logoutAt);
-    html += '<tr>' +
-      '<td>' + dateStr + '</td>' +
-      '<td>' + loginTime + '</td>' +
-      '<td>' + logoutCell + '</td>' +
-      '<td>' + duration + '</td>' +
-      '<td>' + esc(entry.page||'Sales') + '</td>' +
-    '</tr>';
-  }
-  tbody.innerHTML = html;
 }
 
 // ---- HELPERS ----
@@ -824,7 +855,7 @@ document.getElementById('sale-modal').addEventListener('click', function(e) {
 
 // ---- INIT ----
 loadSession();
-renderReminders();
+renderReminders().catch(function(e){ console.error(e); });
 </script>
 </body>
 </html>
