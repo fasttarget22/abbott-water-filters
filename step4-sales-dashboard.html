@@ -119,9 +119,7 @@ tbody tr:hover{background:#f8fafc;}
 .empty-msg{text-align:center;padding:40px;color:var(--dim);font-size:14px;}
 
 /* DAILY SALES */
-.daily-summary{background:var(--navy);color:var(--white);border-radius:10px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
-.ds-label{font-size:13px;opacity:.7;}
-.ds-amount{font-size:28px;font-weight:800;color:var(--teal2);}
+.section-sub{font-size:13px;color:var(--dim);margin-top:2px;font-weight:400;}
 
 /* SESSIONS TABLE */
 .status-active{color:var(--green);font-weight:700;}
@@ -266,20 +264,30 @@ tbody tr:hover{background:#f8fafc;}
       <!-- SECTION 2: DAILY SALES -->
       <div id="sec-daily-sales" class="section">
         <div class="section-header">
-          <h2>Daily Sales Log</h2>
+          <div>
+            <h2>Daily Sales Log</h2>
+            <div class="section-sub" id="ds-date-label"></div>
+          </div>
           <button class="btn btn-primary" onclick="openSaleModal()">+ Log Sale</button>
         </div>
-        <div class="daily-summary">
-          <div>
-            <div class="ds-label">Total Revenue Today</div>
-            <div class="ds-amount" id="ds-total">Rs 0</div>
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="sc-label">Total Revenue Today</div>
+            <div class="sc-val green" id="ds-total">Rs 0</div>
           </div>
-          <div style="font-size:32px;opacity:.3;">💰</div>
+          <div class="stat-card">
+            <div class="sc-label">Sales Today</div>
+            <div class="sc-val" id="ds-count">0</div>
+          </div>
         </div>
         <div class="table-wrap">
+          <div class="table-toolbar">
+            <input class="search-input" type="text" id="sales-search" placeholder="Search item, customer, payment..." oninput="filterSales()">
+            <span id="sales-count" style="color:var(--dim);font-size:13px;white-space:nowrap;"></span>
+          </div>
           <table>
             <thead><tr>
-              <th>Time</th><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Payment</th><th>Customer</th><th>Action</th>
+              <th>Time</th><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Payment</th><th>Customer</th><th></th>
             </tr></thead>
             <tbody id="sales-tbody"></tbody>
           </table>
@@ -401,6 +409,7 @@ tbody tr:hover{background:#f8fafc;}
 <script>
 var currentUser = null;
 var currentLogCustomer = null;
+var todaySalesCache = [];
 
 // ---- UTILITIES ----
 function todayStr() {
@@ -673,40 +682,58 @@ async function renderSales() {
   try {
     var sales = await db.from('daily_sales').select();
     var today = todayStr();
-    var todaySales = [];
+    todaySalesCache = [];
     for (var i = 0; i < sales.length; i++) {
-      if ((sales[i].sold_at || '').startsWith(today)) todaySales.push(sales[i]);
+      if ((sales[i].sold_at || '').startsWith(today)) todaySalesCache.push(sales[i]);
     }
-    todaySales.sort(function(a,b){ return (b.sold_at||'').localeCompare(a.sold_at||''); });
+    todaySalesCache.sort(function(a,b){ return (b.sold_at||'').localeCompare(a.sold_at||''); });
     var total = 0;
-    for (var j = 0; j < todaySales.length; j++) total += Number(todaySales[j].total) || 0;
+    for (var j = 0; j < todaySalesCache.length; j++) total += Number(todaySalesCache[j].total) || 0;
     document.getElementById('ds-total').textContent = fmtMoney(total);
-    if (!todaySales.length) {
-      tbody.innerHTML = '';
-      empty.classList.remove('hidden');
-      return;
-    }
-    empty.classList.add('hidden');
-    var html = '';
-    for (var k = 0; k < todaySales.length; k++) {
-      var s = todaySales[k];
-      html += '<tr>' +
-        '<td>' + (s.sold_at ? new Date(s.sold_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : '') + '</td>' +
-        '<td>' + esc(s.item||'') + '</td>' +
-        '<td>' + esc(s.quantity||'') + '</td>' +
-        '<td>' + fmtMoney(s.unit_price||0) + '</td>' +
-        '<td><strong>' + fmtMoney(s.total||0) + '</strong></td>' +
-        '<td>' + esc(s.payment_method||'') + '</td>' +
-        '<td>' + esc(s.customer_name||'—') + '</td>' +
-        '<td><button class="btn btn-danger btn-sm" onclick="deleteSale(\'' + s.id + '\')">🗑</button></td>' +
-      '</tr>';
-    }
-    tbody.innerHTML = html;
+    document.getElementById('ds-count').textContent = todaySalesCache.length;
+    var dl = document.getElementById('ds-date-label');
+    if (dl) dl.textContent = new Date().toLocaleDateString('en-PK', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    var srch = document.getElementById('sales-search');
+    if (srch) srch.value = '';
+    filterSales();
   } catch(e) {
     console.error('Error loading sales:', e);
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">Error loading sales. Please try again.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--dim);">Error loading sales. Please try again.</td></tr>';
     empty.classList.add('hidden');
   }
+}
+function filterSales() {
+  var tbody = document.getElementById('sales-tbody');
+  var empty = document.getElementById('sales-empty');
+  var countEl = document.getElementById('sales-count');
+  var q = ((document.getElementById('sales-search') || {}).value || '').toLowerCase().trim();
+  var rows = q ? todaySalesCache.filter(function(s) {
+    return (s.item||'').toLowerCase().indexOf(q) >= 0 ||
+           (s.customer_name||'').toLowerCase().indexOf(q) >= 0 ||
+           (s.payment_method||'').toLowerCase().indexOf(q) >= 0;
+  }) : todaySalesCache;
+  if (countEl) countEl.textContent = rows.length + ' of ' + todaySalesCache.length + ' sale' + (todaySalesCache.length !== 1 ? 's' : '');
+  if (!rows.length) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  var html = '';
+  for (var k = 0; k < rows.length; k++) {
+    var s = rows[k];
+    html += '<tr>' +
+      '<td style="color:var(--dim);font-size:12px;">' + (s.sold_at ? new Date(s.sold_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : '') + '</td>' +
+      '<td><strong>' + esc(s.item||'') + '</strong></td>' +
+      '<td>' + esc(s.quantity||'') + '</td>' +
+      '<td>' + fmtMoney(s.unit_price||0) + '</td>' +
+      '<td><strong style="color:var(--green);">' + fmtMoney(s.total||0) + '</strong></td>' +
+      '<td>' + esc(s.payment_method||'') + '</td>' +
+      '<td style="color:var(--dim);">' + esc(s.customer_name||'—') + '</td>' +
+      '<td><button class="btn btn-danger btn-sm" onclick="deleteSale(\'' + s.id + '\')" title="Delete sale">&#x1F5D1;</button></td>' +
+    '</tr>';
+  }
+  tbody.innerHTML = html;
 }
 function openSaleModal() {
   document.getElementById('sale-item').value = '';
@@ -733,7 +760,7 @@ async function submitSale() {
     unit_price:     unitPrice,
     total:          total,
     payment_method: paymentMethod,
-    customer_name:  customerName,
+    customer_name:  customerName || null,
     sold_by:        currentUser.name
   };
   try {
