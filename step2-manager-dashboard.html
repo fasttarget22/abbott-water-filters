@@ -408,7 +408,7 @@ tbody tr:hover{background:#f8fafb}
     <div class="tb-user">
       <div class="tb-avatar" id="tb-initials">JA</div>
       <div>
-        <div style="font-weight:600;font-size:13px;color:var(--navy)" id="tb-name">Javed Ahmed</div>
+        <div style="font-weight:600;font-size:13px;color:var(--navy)" id="tb-name">Muhammad Javed</div>
         <div style="font-size:11px;color:var(--dim)" id="tb-role">Manager</div>
       </div>
     </div>
@@ -751,7 +751,7 @@ tbody tr:hover{background:#f8fafb}
             <select class="form-select" id="f-tech">
               <option>Ali Hassan</option>
               <option>Kamran Malik</option>
-              <option>Javed Ahmed</option>
+              <option>Muhammad Javed</option>
             </select>
           </div>
           <div class="form-field full">
@@ -976,7 +976,7 @@ tbody tr:hover{background:#f8fafb}
             <select class="form-select" id="sj-tech" required>
               <option>Ali Hassan</option>
               <option>Kamran Malik</option>
-              <option>Javed Ahmed</option>
+              <option>Muhammad Javed</option>
             </select>
           </div>
           <div class="form-field">
@@ -1542,7 +1542,7 @@ function loadSession(){
       window.location.href = 'step1-login.html';
       return;
     }
-    document.getElementById('tb-name').textContent = sess.name || 'Javed Ahmed';
+    document.getElementById('tb-name').textContent = sess.name || 'Muhammad Javed';
     document.getElementById('tb-role').textContent = sess.role || 'Manager';
     var init = (sess.name||'JA').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('tb-initials').textContent = init;
