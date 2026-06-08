@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a9bbf">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Abbott Water Filters — Manager Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -57,6 +62,11 @@ nav{flex:1;padding:12px 0;overflow-y:auto}
 .btn-handoff:hover{background:rgba(26,155,191,.2)}
 .btn-daily{background:rgba(13,34,51,.07);color:var(--navy);border:1px solid rgba(13,34,51,.18)}
 .btn-daily:hover{background:rgba(13,34,51,.14)}
+.notif-wrap{position:relative;display:inline-flex}
+.btn-notif{background:rgba(0,0,0,.04);color:var(--dim);border:1px solid var(--border);font-size:16px;padding:6px 10px;line-height:1}
+.btn-notif:hover{background:rgba(26,155,191,.1);color:var(--teal);border-color:rgba(26,155,191,.3)}
+.btn-notif.active{color:var(--teal);border-color:rgba(26,155,191,.4);background:rgba(26,155,191,.08)}
+.notif-badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;border-radius:50%;width:17px;height:17px;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--white);line-height:1}
 
 #content{flex:1;overflow-y:auto;padding:24px}
 .section{display:none}
@@ -362,6 +372,10 @@ tbody tr:hover{background:#f8fafb}
       </div>
     </div>
     <div class="tb-timer" id="tb-timer">00:00</div>
+    <div class="notif-wrap">
+      <button id="btn-notif" class="btn btn-notif btn-sm" onclick="toggleNotifications()" title="Enable push notifications">🔔</button>
+      <span id="notif-badge" class="notif-badge">0</span>
+    </div>
     <button class="btn btn-handoff btn-sm" onclick="shiftHandoff()" title="Generate shift handoff message for WhatsApp">📋 Handoff</button>
     <button class="btn btn-daily btn-sm" onclick="dailySummary()" title="Generate daily summary report for WhatsApp">📊 Daily</button>
     <button class="btn btn-logout btn-sm" onclick="logout()">&#9889; Logout</button>
@@ -2012,6 +2026,111 @@ async function submitEmployee(e){
 }
 
 // ════════════════════════════════════════
+//  PUSH NOTIFICATIONS
+// ════════════════════════════════════════
+var notifInterval  = null;
+var notifBadgeCount = 0;
+
+function updateNotifBtn(active) {
+  var btn = document.getElementById('btn-notif');
+  if (!btn) return;
+  if (active) {
+    btn.classList.add('active');
+    btn.title = 'Notifications ON — click to pause';
+  } else {
+    btn.classList.remove('active');
+    btn.title = 'Enable push notifications';
+  }
+}
+
+async function toggleNotifications() {
+  if (typeof Notification === 'undefined') {
+    alert('Your browser does not support notifications.');
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    alert('Notifications are blocked. Please enable them in your browser settings, then refresh the page.');
+    return;
+  }
+  if (Notification.permission === 'default') {
+    var perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+  }
+  // Toggle on/off
+  if (notifInterval) {
+    clearInterval(notifInterval);
+    notifInterval = null;
+    updateNotifBtn(false);
+  } else {
+    startNotificationChecker();
+    updateNotifBtn(true);
+  }
+}
+
+function startNotificationChecker() {
+  checkNotifications();
+  notifInterval = setInterval(checkNotifications, 60000);
+}
+
+async function checkNotifications() {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+
+  var today = todayStr();
+  var notified = {};
+  try { notified = JSON.parse(localStorage.getItem('awf_notified') || '{}'); } catch(e) {}
+
+  var customers, inventory;
+  try {
+    customers = await db.from('customers').select();
+    inventory = await db.from('inventory').select();
+  } catch(e) { return; }
+
+  var newAlerts = 0;
+
+  // Customers whose filter is due today
+  customers.forEach(function(c) {
+    var key = 'due_' + (c.id||c.name) + '_' + today;
+    if ((c.dueDate || '').startsWith(today) && !notified[key]) {
+      sendNotif('⏰ Filter due today: ' + c.name);
+      notified[key] = true;
+      newAlerts++;
+    }
+  });
+
+  // Low stock items
+  inventory.forEach(function(i) {
+    var key = 'stock_' + (i.id||i.name) + '_' + today;
+    if ((i.quantity || 0) <= (i.reorderLevel || i.reorder_level || 0) && !notified[key]) {
+      sendNotif('📦 Low stock: ' + (i.name || i.item) + ' (' + (i.quantity || 0) + ' left)');
+      notified[key] = true;
+      newAlerts++;
+    }
+  });
+
+  localStorage.setItem('awf_notified', JSON.stringify(notified));
+
+  if (newAlerts > 0) {
+    notifBadgeCount += newAlerts;
+    var badge = document.getElementById('notif-badge');
+    if (badge) {
+      badge.textContent = notifBadgeCount;
+      badge.style.display = 'flex';
+    }
+  }
+}
+
+function sendNotif(body) {
+  var n = new Notification('Abbott Water Filters', {
+    body: body,
+    icon: 'icon-192.png'
+  });
+  n.onclick = function() {
+    window.focus();
+    n.close();
+  };
+}
+
+// ════════════════════════════════════════
 //  SHIFT HANDOFF & DAILY SUMMARY
 // ════════════════════════════════════════
 async function shiftHandoff() {
@@ -2339,7 +2458,13 @@ window.onload = async function(){
   loadSession();
   startTimer();
   await renderDashboard();
+  // Auto-start notifications if permission already granted
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    startNotificationChecker();
+    updateNotifBtn(true);
+  }
 };
 </script>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('./sw.js');}</script>
 </body>
 </html>
