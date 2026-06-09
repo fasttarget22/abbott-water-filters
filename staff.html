@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a9bbf">
 <title>Abbott Water Filters — Staff Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -81,5 +83,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div style="margin-top:16px;font-size:11px;color:#8aafbf;text-align:center">A <strong style="color:#1a9bbf;font-weight:700">Shinkor</strong> Digital Solution &nbsp;&middot;&nbsp; <a href="tel:+923174886655" style="color:#8aafbf;text-decoration:none">+92 317 488 6655</a></div>
 </div>
 
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js');}</script>
 </body>
 </html>

@@ -1,13 +1,16 @@
-var CACHE_NAME = 'awf-v2';
+var CACHE_NAME = 'awf-v3';
 var FILES_TO_CACHE = [
-  './step1-login.html',
-  './step2-manager-dashboard.html',
-  './step3-technician-dashboard.html',
-  './step4-sales-dashboard.html',
-  './supabase-config.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  '/index.html',
+  '/shop.html',
+  '/staff.html',
+  '/step1-login.html',
+  '/step2-manager-dashboard.html',
+  '/step3-technician-dashboard.html',
+  '/step4-sales-dashboard.html',
+  '/supabase-config.js',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', function(evt) {
