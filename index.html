@@ -3,54 +3,208 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Abbott Water Filters</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>Abbott Water Filters — Abbottabad</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Outfit','Segoe UI',system-ui,sans-serif;background:#0d2233;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.wrap{text-align:center;max-width:440px;width:100%}
-.logo-box{background:#fff;border-radius:16px;padding:12px 20px;display:inline-flex;margin-bottom:20px;box-shadow:0 8px 32px rgba(26,155,191,.18)}
-h1{font-size:26px;font-weight:900;color:#fff;margin-bottom:6px}
-p{font-size:14px;color:rgba(192,205,216,.7);margin-bottom:28px;line-height:1.6}
-.btns{display:flex;flex-direction:column;gap:12px}
-.btn-shop{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 24px;background:linear-gradient(135deg,#127a96,#1a9bbf);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;text-decoration:none;font-family:inherit;box-shadow:0 4px 18px rgba(26,155,191,.38);transition:all .18s}
-.btn-shop:hover{filter:brightness(1.08);transform:translateY(-2px)}
-.btn-staff{display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 24px;background:rgba(255,255,255,.07);color:rgba(192,205,216,.85);border:1.5px solid rgba(255,255,255,.12);border-radius:14px;font-size:14px;font-weight:600;text-decoration:none;font-family:inherit;transition:all .18s}
-.btn-staff:hover{background:rgba(255,255,255,.12);color:#fff}
+:root{
+  --navy:#0d2233;--navy2:#112840;--navy3:#1a3548;
+  --teal:#1a9bbf;--teal2:#22b8e0;--teal3:#127a96;
+  --bg:#f0f4f8;--white:#fff;--border:#e2e8ef;
+  --dim:#5a7080;--txt:#0d2233;
+}
+body{font-family:'Outfit','Segoe UI',system-ui,sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+
+/* ── TOP BAR ── */
+.topbar{background:rgba(0,0,0,.22);border-bottom:1px solid rgba(255,255,255,.06);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.topbar-contacts{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.topbar-contact{display:flex;align-items:center;gap:6px;font-size:12.5px;color:rgba(192,205,216,.75);font-weight:500;text-decoration:none;transition:color .15s}
+.topbar-contact:hover{color:var(--teal2)}
+.topbar-addr{font-size:11.5px;color:rgba(192,205,216,.45)}
+
+/* ── HERO ── */
+.hero{padding:56px 24px 52px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(26,155,191,.12) 0%,transparent 70%);pointer-events:none}
+.hero-inner{max-width:680px;margin:0 auto;position:relative}
+.logo-box{background:var(--white);border-radius:18px;padding:14px 22px;display:inline-flex;margin-bottom:24px;box-shadow:0 10px 40px rgba(26,155,191,.2),0 2px 8px rgba(0,0,0,.3)}
+.hero-eyebrow{font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--teal2);font-weight:700;margin-bottom:14px}
+.hero h1{font-size:clamp(26px,5vw,42px);font-weight:900;line-height:1.2;margin-bottom:14px;color:var(--white)}
+.hero h1 span{color:var(--teal2)}
+.hero-sub{font-size:clamp(14px,2vw,16.5px);color:rgba(192,205,216,.75);line-height:1.7;margin-bottom:32px;max-width:520px;margin-left:auto;margin-right:auto}
+.cta-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.btn-shop-now{display:inline-flex;align-items:center;justify-content:center;gap:11px;padding:18px 40px;background:linear-gradient(135deg,var(--teal3) 0%,var(--teal) 60%,var(--teal2) 100%);color:var(--white);text-decoration:none;border-radius:16px;font-size:17px;font-weight:800;letter-spacing:.01em;box-shadow:0 6px 24px rgba(26,155,191,.45),0 2px 8px rgba(0,0,0,.2);transition:all .2s;font-family:inherit}
+.btn-shop-now:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(26,155,191,.6);filter:brightness(1.07)}
+.btn-shop-now:active{transform:translateY(-1px)}
+.cta-hint{font-size:12px;color:rgba(192,205,216,.45);display:flex;align-items:center;gap:6px}
+.cta-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);opacity:.6}
+
+/* ── WHY US ── */
+.section{padding:52px 24px}
+.section-inner{max-width:960px;margin:0 auto}
+.section-label{text-align:center;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:10px}
+.section-title{text-align:center;font-size:clamp(20px,3vw,28px);font-weight:800;color:var(--white);margin-bottom:36px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.feature-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px 20px;text-align:center;transition:background .2s,border-color .2s}
+.feature-card:hover{background:rgba(26,155,191,.1);border-color:rgba(26,155,191,.3)}
+.feature-icon{font-size:36px;margin-bottom:12px;display:block}
+.feature-title{font-size:15px;font-weight:700;color:var(--white);margin-bottom:6px}
+.feature-desc{font-size:13px;color:rgba(192,205,216,.62);line-height:1.6}
+
+/* ── CONTACT STRIP ── */
+.contact-strip{background:rgba(26,155,191,.1);border-top:1px solid rgba(26,155,191,.2);border-bottom:1px solid rgba(26,155,191,.2);padding:32px 24px}
+.contact-strip-inner{max-width:860px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;align-items:center}
+.contact-item{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.contact-icon{font-size:26px}
+.contact-label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal2);font-weight:700}
+.contact-val{font-size:15px;font-weight:700;color:var(--white)}
+.contact-val a{color:var(--white);text-decoration:none}
+.contact-val a:hover{color:var(--teal2)}
+.contact-addr{font-size:13px;color:rgba(192,205,216,.7);line-height:1.5}
+
+/* ── CTA BOTTOM ── */
+.cta-bottom{padding:52px 24px;text-align:center}
+.cta-bottom-inner{max-width:560px;margin:0 auto}
+.cta-bottom h2{font-size:clamp(20px,3vw,28px);font-weight:800;color:var(--white);margin-bottom:10px}
+.cta-bottom p{font-size:14px;color:rgba(192,205,216,.65);margin-bottom:28px;line-height:1.65}
+
+/* ── FOOTER ── */
+.site-footer{background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.06);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.footer-copy{font-size:11.5px;color:rgba(192,205,216,.3)}
+.footer-staff-link{font-size:11px;color:rgba(192,205,216,.2);text-decoration:none;transition:color .2s;padding:4px 8px;border-radius:5px}
+.footer-staff-link:hover{color:rgba(192,205,216,.5)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:520px){
+  .topbar{justify-content:center}
+  .topbar-addr{display:none}
+  .hero{padding:40px 16px 36px}
+  .section{padding:36px 16px}
+  .contact-strip{padding:24px 16px}
+  .cta-bottom{padding:36px 16px}
+  .site-footer{flex-direction:column;align-items:center;text-align:center}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="logo-box">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="72" height="97">
-      <defs>
-        <linearGradient id="i-lt" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38d8f0"/><stop offset="50%" stop-color="#1892b8"/><stop offset="100%" stop-color="#0b5c7a"/></linearGradient>
-        <linearGradient id="i-rs" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0eef6"/><stop offset="50%" stop-color="#a8c6d4"/><stop offset="100%" stop-color="#6a8898"/></linearGradient>
-        <linearGradient id="i-bg" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stop-color="#f0f8fc"/><stop offset="100%" stop-color="#d0e6f0"/></linearGradient>
-        <linearGradient id="i-am" x1="0.1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#28d2ec"/><stop offset="100%" stop-color="#094860"/></linearGradient>
-        <linearGradient id="i-dr" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#60def8"/><stop offset="100%" stop-color="#073050"/></linearGradient>
-        <clipPath id="i-cl"><rect x="0" y="0" width="100" height="268"/></clipPath>
-        <clipPath id="i-cr"><rect x="100" y="0" width="100" height="268"/></clipPath>
-      </defs>
-      <path clip-path="url(#i-cl)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#i-lt)"/>
-      <path clip-path="url(#i-cr)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#i-rs)"/>
-      <path d="M67,20 L133,20 L155,52 L151,124 L121,154 L100,165 L79,154 L49,124 L45,52 Z" fill="url(#i-bg)"/>
-      <rect x="49" y="91" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.9"/>
-      <rect x="49" y="99" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.85"/>
-      <rect x="49" y="107" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.75"/>
-      <path d="M96,28 L104,28 L134,148 L117,148 L100,52 L83,148 L66,148 Z" fill="url(#i-am)"/>
-      <path d="M100,108 C96,116 87,126 87,136 A13,13 0 0 0 113,136 C113,126 104,116 100,108 Z" fill="url(#i-dr)"/>
-      <ellipse cx="93" cy="122" rx="4" ry="6.5" fill="rgba(255,255,255,0.42)" transform="rotate(-22,93,122)"/>
-      <text x="100" y="212" text-anchor="middle" font-family="'Arial Black',sans-serif" font-weight="900" font-size="40" fill="#0D1E42">ABBOTT</text>
-      <text x="100" y="246" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="700" font-size="16" fill="#0D1E42" letter-spacing="2">WATER FILTERS</text>
-    </svg>
+
+<!-- ── TOP BAR ── -->
+<div class="topbar">
+  <div class="topbar-contacts">
+    <a class="topbar-contact" href="tel:03488115410">📞 0348-8115410</a>
+    <a class="topbar-contact" href="tel:03356590095">📞 0335-6590095</a>
   </div>
-  <h1>Abbott Water Filters</h1>
-  <p>Abbottabad's trusted water purification experts.<br>Order online or access the staff portal below.</p>
-  <div class="btns">
-    <a class="btn-shop" href="shop.html">🛒 Visit Our Online Shop</a>
-    <a class="btn-staff" href="step1-login.html">Staff Portal Login →</a>
+  <div class="topbar-addr">📍 Kamran Plaza, College Road Mandian, Abbottabad</div>
+</div>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="logo-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="90" height="121" role="img" aria-label="Abbott Water Filters">
+        <defs>
+          <linearGradient id="h-lt" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38d8f0"/><stop offset="50%" stop-color="#1892b8"/><stop offset="100%" stop-color="#0b5c7a"/></linearGradient>
+          <linearGradient id="h-rs" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0eef6"/><stop offset="50%" stop-color="#a8c6d4"/><stop offset="100%" stop-color="#6a8898"/></linearGradient>
+          <linearGradient id="h-bg" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stop-color="#f0f8fc"/><stop offset="100%" stop-color="#d0e6f0"/></linearGradient>
+          <linearGradient id="h-am" x1="0.1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#28d2ec"/><stop offset="100%" stop-color="#094860"/></linearGradient>
+          <linearGradient id="h-dr" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#60def8"/><stop offset="100%" stop-color="#073050"/></linearGradient>
+          <clipPath id="h-cl"><rect x="0" y="0" width="100" height="268"/></clipPath>
+          <clipPath id="h-cr"><rect x="100" y="0" width="100" height="268"/></clipPath>
+        </defs>
+        <path clip-path="url(#h-cl)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#h-lt)"/>
+        <path clip-path="url(#h-cr)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#h-rs)"/>
+        <path d="M67,20 L133,20 L155,52 L151,124 L121,154 L100,165 L79,154 L49,124 L45,52 Z" fill="url(#h-bg)"/>
+        <rect x="49" y="91" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.9"/>
+        <rect x="49" y="99" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.85"/>
+        <rect x="49" y="107" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.75"/>
+        <path d="M96,28 L104,28 L134,148 L117,148 L100,52 L83,148 L66,148 Z" fill="url(#h-am)"/>
+        <path d="M100,108 C96,116 87,126 87,136 A13,13 0 0 0 113,136 C113,126 104,116 100,108 Z" fill="url(#h-dr)"/>
+        <ellipse cx="93" cy="122" rx="4" ry="6.5" fill="rgba(255,255,255,0.42)" transform="rotate(-22,93,122)"/>
+        <text x="100" y="212" text-anchor="middle" font-family="'Arial Black','Franklin Gothic Heavy',sans-serif" font-weight="900" font-size="40" fill="#0D1E42">ABBOTT</text>
+        <text x="100" y="246" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="700" font-size="16" fill="#0D1E42" letter-spacing="2">WATER FILTERS</text>
+      </svg>
+    </div>
+    <div class="hero-eyebrow">Abbottabad &nbsp;·&nbsp; Est. Water Purification Experts</div>
+    <h1>Abbottabad's Trusted<br><span>Water Purification</span> Experts</h1>
+    <p class="hero-sub">Browse our genuine filter parts and systems. Order online for home delivery — our GPS-tracked team comes straight to your door.</p>
+    <div class="cta-wrap">
+      <a class="btn-shop-now" href="shop.html">🛒 Shop Now</a>
+      <div class="cta-hint">
+        <div class="cta-dot"></div>
+        Free delivery in Abbottabad &nbsp;·&nbsp; GPS-guided technicians
+        <div class="cta-dot"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── WHY CHOOSE US ── -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-label">Why Choose Us</div>
+    <div class="section-title">Pure Water. Expert Service.</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🔧</span>
+        <div class="feature-title">Free Installation</div>
+        <div class="feature-desc">Our certified technician installs and tests your filter system at no extra charge.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">✅</span>
+        <div class="feature-title">Certified Filters</div>
+        <div class="feature-desc">Genuine RO membranes, UV systems, and filter cartridges — all tested and approved.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📍</span>
+        <div class="feature-title">GPS-Tracked Delivery</div>
+        <div class="feature-desc">Share your location at checkout. Our team navigates directly to you — no wrong turns.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📱</span>
+        <div class="feature-title">WhatsApp Support</div>
+        <div class="feature-desc">Order confirmation and 24-hour support on WhatsApp. We're always available.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONTACT STRIP ── -->
+<div class="contact-strip">
+  <div class="contact-strip-inner">
+    <div class="contact-item">
+      <span class="contact-icon">📞</span>
+      <div class="contact-label">Call / WhatsApp</div>
+      <div class="contact-val">
+        <a href="tel:03488115410">0348-8115410</a><br>
+        <a href="tel:03356590095">0335-6590095</a>
+      </div>
+    </div>
+    <div class="contact-item">
+      <span class="contact-icon">📍</span>
+      <div class="contact-label">Our Location</div>
+      <div class="contact-addr">Kamran Plaza, Near Bhai Sweets<br>College Road Mandian, Abbottabad</div>
+    </div>
+    <div class="contact-item">
+      <span class="contact-icon">⏰</span>
+      <div class="contact-label">Service Hours</div>
+      <div class="contact-val" style="font-size:13.5px">Mon – Sat: 9am – 7pm</div>
+    </div>
   </div>
 </div>
+
+<!-- ── BOTTOM CTA ── -->
+<section class="cta-bottom">
+  <div class="cta-bottom-inner">
+    <h2>Ready for cleaner water?</h2>
+    <p>Browse our full catalogue, add to cart, and place your order in minutes. We handle the rest.</p>
+    <a class="btn-shop-now" href="shop.html">🛒 Shop Now</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="footer-copy">&copy; 2026 Abbott Water Filters, Abbottabad. All rights reserved.</div>
+  <a class="footer-staff-link" href="staff.html">Staff?</a>
+</footer>
+
 </body>
 </html>
