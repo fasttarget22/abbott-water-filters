@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abbott Water Filters — Online Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0d2233;--navy2:#112840;--navy3:#1a3548;
+  --teal:#1a9bbf;--teal2:#22b8e0;--teal3:#127a96;
+  --bg:#f0f4f8;--white:#fff;--border:#e2e8ef;
+  --txt:#0d2233;--dim:#5a7080;
+  --red:#dc2626;--green:#16a34a;
+  --red-bg:#fee2e2;--green-bg:#dcfce7;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+body{font-family:'Outfit','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* ── HEADER ── */
+.site-header{background:var(--navy);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header-inner{max-width:1200px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:12px}
+.header-logo-box{background:#fff;border-radius:10px;padding:5px 10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.header-title-wrap{flex:1;min-width:0}
+.header-title{font-size:16px;font-weight:800;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-subtitle{font-size:10.5px;color:rgba(192,205,216,.55);letter-spacing:.06em;margin-top:1px}
+.cart-btn{display:flex;align-items:center;gap:7px;background:rgba(26,155,191,.18);border:1.5px solid rgba(26,155,191,.38);border-radius:50px;padding:8px 16px;color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;flex-shrink:0}
+.cart-btn:hover{background:rgba(26,155,191,.32);border-color:rgba(26,155,191,.6)}
+.cart-badge{background:var(--teal2);color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;transition:background .2s}
+.cart-badge.has-items{background:#e05050}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,var(--navy2) 0%,#1a3a52 55%,var(--navy) 100%);padding:36px 20px;text-align:center;border-bottom:2px solid rgba(26,155,191,.22)}
+.hero-inner{max-width:680px;margin:0 auto}
+.hero h1{font-size:clamp(20px,4vw,32px);font-weight:900;color:#fff;margin-bottom:10px;line-height:1.28}
+.hero p{font-size:14.5px;color:rgba(192,205,216,.78);margin-bottom:20px;line-height:1.65}
+.hero-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.hero-badge{background:rgba(26,155,191,.16);border:1px solid rgba(26,155,191,.28);border-radius:50px;padding:5px 13px;font-size:12px;font-weight:600;color:#cde8f0}
+
+/* ── PRODUCTS ── */
+.products-section{max-width:1200px;margin:0 auto;padding:28px 20px}
+.products-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.products-header h2{font-size:21px;font-weight:800;color:var(--navy)}
+.products-count{font-size:13px;color:var(--dim)}
+.cat-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.cat-btn{padding:6px 15px;border-radius:50px;border:1.5px solid var(--border);background:var(--white);font-size:12.5px;font-weight:600;color:var(--dim);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.cat-btn:hover{border-color:var(--teal);color:var(--teal)}
+.cat-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.product-card{background:var(--white);border-radius:16px;border:1.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.product-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.11)}
+.product-icon-wrap{background:linear-gradient(135deg,#e6f4f9,#cce7f5);padding:26px 20px;display:flex;align-items:center;justify-content:center;font-size:48px;min-height:100px}
+.product-body{padding:14px;flex:1;display:flex;flex-direction:column}
+.product-cat{font-size:10.5px;font-weight:700;color:var(--teal3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.product-name{font-size:14.5px;font-weight:700;color:var(--navy);margin-bottom:5px;line-height:1.35}
+.product-supplier{font-size:11.5px;color:var(--dim);margin-bottom:10px}
+.product-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;gap:6px}
+.product-price{font-size:17px;font-weight:800;color:var(--navy)}
+.product-price span{font-size:11.5px;font-weight:500;color:var(--dim)}
+.in-stock-badge{font-size:10.5px;font-weight:700;background:var(--green-bg);color:var(--green);padding:3px 9px;border-radius:20px}
+.product-add-row{display:flex;align-items:center;gap:8px;margin-top:11px}
+.qty-selector{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
+.qty-btn{background:var(--bg);border:none;width:32px;height:34px;font-size:17px;font-weight:700;color:var(--navy);cursor:pointer;transition:background .12s;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.qty-btn:hover{background:#e2e8ef}
+.qty-input{width:38px;height:34px;border:none;border-left:1.5px solid var(--border);border-right:1.5px solid var(--border);text-align:center;font-size:13.5px;font-weight:700;color:var(--navy);outline:none;font-family:inherit;background:var(--white)}
+.add-to-cart-btn{flex:1;padding:9px 12px;background:linear-gradient(135deg,var(--teal3),var(--teal));color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;font-family:inherit}
+.add-to-cart-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.add-to-cart-btn:active{transform:scale(.97)}
+.add-to-cart-btn.added{background:linear-gradient(135deg,#16a34a,#22c55e)}
+.products-loading{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--dim)}
+.spin{width:38px;height:38px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--teal);animation:spin 1s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.products-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--dim)}
+
+/* ── CART PANEL ── */
+.cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none}
+.cart-overlay.open{display:block;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.cart-panel{position:fixed;right:0;top:0;bottom:0;width:min(420px,100vw);background:var(--white);z-index:501;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.14)}
+.cart-panel.open{transform:translateX(0)}
+.cart-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;flex-shrink:0}
+.cart-head-title{font-size:16px;font-weight:800}
+.cart-close{background:rgba(255,255,255,.1);border:none;border-radius:8px;padding:5px 10px;font-size:18px;color:#fff;cursor:pointer;font-family:inherit;transition:background .15s}
+.cart-close:hover{background:rgba(255,255,255,.2)}
+.cart-items{flex:1;overflow-y:auto;padding:14px}
+.cart-empty{text-align:center;padding:56px 20px;color:var(--dim)}
+.cart-empty-icon{font-size:48px;margin-bottom:10px}
+.cart-item{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--border)}
+.cart-item:last-child{border:none}
+.ci-icon{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,#e6f4f9,#cce7f5);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-cat{font-size:11px;color:var(--dim)}
+.ci-price{font-size:12.5px;font-weight:700;color:var(--teal3);margin-top:2px}
+.ci-controls{display:flex;align-items:center;gap:7px;margin-top:7px}
+.ci-qty-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:8px;overflow:hidden}
+.ci-qty-btn{background:var(--bg);border:none;width:28px;height:28px;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.ci-qty-btn:hover{background:#e2e8ef}
+.ci-qty{width:30px;height:28px;border:none;border-left:1.5px solid var(--border);border-right:1.5px solid var(--border);text-align:center;font-size:12.5px;font-weight:700;color:var(--navy);outline:none;font-family:inherit;background:var(--white)}
+.ci-remove{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:3px;border-radius:5px;transition:background .13s}
+.ci-remove:hover{background:var(--red-bg)}
+.cart-footer{padding:14px 20px;border-top:1px solid var(--border);background:#f8fafb;flex-shrink:0}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cart-total-label{font-size:13.5px;font-weight:600;color:var(--dim)}
+.cart-total-val{font-size:21px;font-weight:900;color:var(--navy)}
+.checkout-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--teal3),var(--teal));color:#fff;border:none;border-radius:11px;font-size:14.5px;font-weight:800;cursor:pointer;transition:all .18s;font-family:inherit;box-shadow:0 4px 14px rgba(26,155,191,.38)}
+.checkout-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+/* ── CHECKOUT MODAL ── */
+.co-overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:600;display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+.co-overlay.open{display:flex}
+.co-modal{background:var(--white);border-radius:20px;width:100%;max-width:580px;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.28);animation:popUp .3s cubic-bezier(.34,1.56,.64,1);margin:auto}
+@keyframes popUp{from{opacity:0;transform:scale(.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.co-head{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;border-radius:20px 20px 0 0;flex-shrink:0}
+.co-title{font-size:17px;font-weight:800}
+.co-close{background:rgba(255,255,255,.12);border:none;border-radius:8px;padding:5px 10px;font-size:18px;color:#fff;cursor:pointer;transition:background .15s;font-family:inherit}
+.co-close:hover{background:rgba(255,255,255,.22)}
+.co-body{padding:18px 22px;overflow-y:auto}
+.co-section{margin-bottom:18px}
+.co-section-title{font-size:11.5px;font-weight:800;color:var(--teal3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:11px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:11px}
+.field label{font-size:10.5px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.field input,.field select,.field textarea{padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .2s;color:var(--txt);background:#fff}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,155,191,.1)}
+.field textarea{resize:vertical;min-height:64px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.checkbox-wrap{display:flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(26,155,191,.05);border:1.5px solid rgba(26,155,191,.14);border-radius:10px;cursor:pointer;margin-bottom:11px}
+.checkbox-wrap input[type=checkbox]{width:17px;height:17px;accent-color:var(--teal);cursor:pointer;flex-shrink:0}
+.checkbox-label{font-size:13.5px;font-weight:600;color:var(--navy)}
+.checkbox-sub{font-size:11px;color:var(--dim);margin-top:1px}
+.oi-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.oi-item:last-child{border:none}
+.oi-name{color:var(--navy);font-weight:600}
+.oi-qty-label{font-size:11px;color:var(--dim)}
+.oi-price{font-weight:700;color:var(--teal3)}
+.order-total-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:rgba(26,155,191,.06);border-radius:9px;margin-top:8px}
+.ot-label{font-size:13px;font-weight:700;color:var(--dim)}
+.ot-val{font-size:20px;font-weight:900;color:var(--navy)}
+
+/* ── GPS SECTION ── */
+.gps-section{background:linear-gradient(135deg,rgba(13,34,51,.03),rgba(26,155,191,.07));border:2px solid rgba(26,155,191,.24);border-radius:14px;padding:16px;margin-bottom:18px}
+.gps-why{display:flex;align-items:flex-start;gap:10px;background:rgba(26,155,191,.07);border-radius:9px;padding:10px 12px;margin-bottom:13px}
+.gps-why-icon{font-size:20px;flex-shrink:0}
+.gps-why-text{font-size:12.5px;color:var(--navy);line-height:1.55;font-weight:500}
+.gps-why-text strong{color:var(--teal3)}
+.gps-capture-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--navy2),var(--navy));color:#fff;border:2px solid rgba(26,155,191,.38);border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:9px;letter-spacing:.01em}
+.gps-capture-btn:hover:not(.loading):not(.success){background:linear-gradient(135deg,#1a3548,#0d2233);border-color:rgba(26,155,191,.65)}
+.gps-capture-btn.loading{opacity:.7;cursor:not-allowed}
+.gps-capture-btn.success{background:linear-gradient(135deg,#16a34a,#22c55e);border-color:rgba(34,197,94,.4);cursor:default}
+.gps-capture-btn.error{background:linear-gradient(135deg,#991b1b,#dc2626);border-color:rgba(220,38,38,.4)}
+.gps-result{display:none;margin-top:11px}
+.gps-result.show{display:block}
+.gps-coords{font-size:12px;color:var(--green);font-weight:600;background:var(--green-bg);border:1px solid rgba(22,163,74,.18);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.gps-map-link{display:inline-flex;align-items:center;gap:6px;background:rgba(26,155,191,.1);color:var(--teal3);border:1px solid rgba(26,155,191,.22);border-radius:8px;padding:7px 14px;font-size:12.5px;font-weight:700;text-decoration:none;transition:background .15s}
+.gps-map-link:hover{background:rgba(26,155,191,.2)}
+.gps-error-msg{font-size:12.5px;color:var(--red);background:var(--red-bg);border:1px solid rgba(220,38,38,.18);border-radius:8px;padding:10px 12px;line-height:1.55;margin-bottom:8px}
+.gps-retry-btn{padding:8px 16px;background:var(--red-bg);color:var(--red);border:1.5px solid rgba(220,38,38,.28);border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.gps-retry-btn:hover{background:#fecaca}
+.co-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;background:#f8fafb;border-radius:0 0 20px 20px;flex-shrink:0}
+.place-order-btn{flex:1;padding:14px;background:linear-gradient(135deg,var(--teal3),var(--teal));color:#fff;border:none;border-radius:11px;font-size:14.5px;font-weight:800;cursor:pointer;transition:all .18s;font-family:inherit;box-shadow:0 4px 14px rgba(26,155,191,.32)}
+.place-order-btn:disabled{background:#c0cdd8;color:#8a9aaa;cursor:not-allowed;box-shadow:none}
+.place-order-btn:not(:disabled):hover{filter:brightness(1.08);transform:translateY(-1px)}
+.cancel-order-btn{padding:14px 18px;background:none;border:1.5px solid var(--border);border-radius:11px;font-size:13.5px;font-weight:700;color:var(--dim);cursor:pointer;font-family:inherit;transition:all .15s}
+.cancel-order-btn:hover{background:var(--border)}
+
+/* ── SUCCESS OVERLAY ── */
+.success-overlay{position:fixed;inset:0;background:var(--bg);z-index:700;display:none;align-items:center;justify-content:center;padding:20px}
+.success-overlay.open{display:flex}
+.success-card{background:var(--white);border-radius:24px;padding:38px 28px;max-width:480px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.14);animation:popUp .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-icon{width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,#16a34a,#22c55e);display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto 18px;box-shadow:0 8px 30px rgba(34,197,94,.38);animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+.success-title{font-size:25px;font-weight:900;color:var(--navy);margin-bottom:6px}
+.success-order-num{font-size:15px;color:var(--teal3);font-weight:700;background:rgba(26,155,191,.07);border:1px solid rgba(26,155,191,.18);border-radius:8px;padding:7px 16px;display:inline-block;margin-bottom:14px}
+.success-msg{font-size:13.5px;color:var(--dim);line-height:1.65;margin-bottom:22px}
+.success-wa-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;border:none;border-radius:12px;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(37,211,102,.32);text-decoration:none;margin-bottom:10px;transition:all .18s}
+.success-wa-btn:hover{filter:brightness(1.08)}
+.success-back-btn{width:100%;padding:13px;background:none;border:1.5px solid var(--border);border-radius:12px;font-size:13.5px;font-weight:700;color:var(--dim);cursor:pointer;font-family:inherit;transition:all .15s}
+.success-back-btn:hover{background:var(--bg)}
+
+/* ── FOOTER ── */
+.site-footer{background:var(--navy);color:rgba(192,205,216,.8);padding:28px 20px;margin-top:48px;text-align:center}
+.footer-inner{max-width:560px;margin:0 auto}
+.footer-logo-box{background:#fff;border-radius:9px;padding:6px 12px;display:inline-flex;margin-bottom:12px}
+.footer-name{font-size:15px;font-weight:800;color:#fff;margin-bottom:4px}
+.footer-contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:10px 0;font-size:13px}
+.footer-contact{display:flex;align-items:center;gap:5px;color:rgba(192,205,216,.82)}
+.footer-hr{border:none;border-top:1px solid rgba(255,255,255,.08);margin:14px 0}
+.footer-copy{font-size:11px;color:rgba(192,205,216,.35)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--navy);color:#fff;padding:11px 22px;border-radius:50px;font-size:13px;font-weight:600;z-index:900;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.22);pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .header-inner{padding:9px 12px}
+  .header-title{font-size:13.5px}
+  .cart-btn{padding:7px 11px;font-size:12.5px}
+  .hero{padding:24px 14px}
+  .products-section{padding:20px 12px}
+  .products-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+  .product-icon-wrap{padding:18px;font-size:38px;min-height:82px}
+  .product-body{padding:11px}
+  .co-overlay{padding:0;align-items:flex-end}
+  .co-modal{border-radius:18px 18px 0 0;margin:0;max-height:95vh;overflow:hidden;display:flex;flex-direction:column}
+  .co-head{border-radius:18px 18px 0 0}
+  .co-body{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .co-foot{border-radius:0}
+  .field-row{grid-template-columns:1fr}
+  .cart-panel{width:100vw}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-logo-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="44" height="59" role="img" aria-label="Abbott Water Filters">
+        <defs>
+          <linearGradient id="sh-lt" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38d8f0"/><stop offset="50%" stop-color="#1892b8"/><stop offset="100%" stop-color="#0b5c7a"/></linearGradient>
+          <linearGradient id="sh-rs" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0eef6"/><stop offset="50%" stop-color="#a8c6d4"/><stop offset="100%" stop-color="#6a8898"/></linearGradient>
+          <linearGradient id="sh-bg" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stop-color="#f0f8fc"/><stop offset="100%" stop-color="#d0e6f0"/></linearGradient>
+          <linearGradient id="sh-am" x1="0.1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#28d2ec"/><stop offset="100%" stop-color="#094860"/></linearGradient>
+          <linearGradient id="sh-dr" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#60def8"/><stop offset="100%" stop-color="#073050"/></linearGradient>
+          <clipPath id="sh-cl"><rect x="0" y="0" width="100" height="268"/></clipPath>
+          <clipPath id="sh-cr"><rect x="100" y="0" width="100" height="268"/></clipPath>
+        </defs>
+        <path clip-path="url(#sh-cl)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#sh-lt)"/>
+        <path clip-path="url(#sh-cr)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#sh-rs)"/>
+        <path d="M67,20 L133,20 L155,52 L151,124 L121,154 L100,165 L79,154 L49,124 L45,52 Z" fill="url(#sh-bg)"/>
+        <rect x="49" y="91" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.9"/>
+        <rect x="49" y="99" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.85"/>
+        <rect x="49" y="107" width="102" height="4.5" rx="2.2" fill="#16a0be" opacity="0.75"/>
+        <path d="M96,28 L104,28 L134,148 L117,148 L100,52 L83,148 L66,148 Z" fill="url(#sh-am)"/>
+        <path d="M100,108 C96,116 87,126 87,136 A13,13 0 0 0 113,136 C113,126 104,116 100,108 Z" fill="url(#sh-dr)"/>
+        <ellipse cx="93" cy="122" rx="4" ry="6.5" fill="rgba(255,255,255,0.42)" transform="rotate(-22,93,122)"/>
+        <text x="100" y="212" text-anchor="middle" font-family="'Arial Black','Franklin Gothic Heavy',sans-serif" font-weight="900" font-size="40" fill="#0D1E42">ABBOTT</text>
+        <text x="100" y="246" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="700" font-size="16" fill="#0D1E42" letter-spacing="2">WATER FILTERS</text>
+      </svg>
+    </div>
+    <div class="header-title-wrap">
+      <div class="header-title">Abbott Water Filters — Online Shop</div>
+      <div class="header-subtitle">Abbottabad &nbsp;·&nbsp; Genuine Parts &nbsp;·&nbsp; GPS Delivery</div>
+    </div>
+    <button class="cart-btn" id="cartBtn" onclick="openCart()">
+      🛒 <span id="cartBtnText">Cart</span>
+      <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Pure Water,<br>Delivered to Your Door</h1>
+    <p>Order genuine RO filter parts and accessories online.<br>Share your GPS location at checkout — our technician navigates directly to you.</p>
+    <div class="hero-badges">
+      <span class="hero-badge">💧 Genuine Parts</span>
+      <span class="hero-badge">📍 GPS-Tracked Delivery</span>
+      <span class="hero-badge">📱 WhatsApp Confirmation</span>
+      <span class="hero-badge">🔧 Expert Installation</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRODUCTS ══ -->
+<section class="products-section">
+  <div class="products-header">
+    <h2>Our Products</h2>
+    <span class="products-count" id="productsCount"></span>
+  </div>
+  <div id="catFilters" class="cat-filters"></div>
+  <div id="productsGrid" class="products-grid">
+    <div class="products-loading"><div class="spin"></div>Loading products…</div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><div class="footer-logo-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 268" width="38" height="51" role="img">
+        <defs>
+          <linearGradient id="ft-lt" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38d8f0"/><stop offset="50%" stop-color="#1892b8"/><stop offset="100%" stop-color="#0b5c7a"/></linearGradient>
+          <linearGradient id="ft-rs" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0eef6"/><stop offset="50%" stop-color="#a8c6d4"/><stop offset="100%" stop-color="#6a8898"/></linearGradient>
+          <linearGradient id="ft-bg" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stop-color="#f0f8fc"/><stop offset="100%" stop-color="#d0e6f0"/></linearGradient>
+          <linearGradient id="ft-am" x1="0.1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#28d2ec"/><stop offset="100%" stop-color="#094860"/></linearGradient>
+          <linearGradient id="ft-dr" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#60def8"/><stop offset="100%" stop-color="#073050"/></linearGradient>
+          <clipPath id="ft-cl"><rect x="0" y="0" width="100" height="268"/></clipPath>
+          <clipPath id="ft-cr"><rect x="100" y="0" width="100" height="268"/></clipPath>
+        </defs>
+        <path clip-path="url(#ft-cl)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#ft-lt)"/>
+        <path clip-path="url(#ft-cr)" d="M60,8 L140,8 L168,46 L164,128 L128,162 L100,176 L72,162 L36,128 L32,46 Z" fill="url(#ft-rs)"/>
+        <path d="M67,20 L133,20 L155,52 L151,124 L121,154 L100,165 L79,154 L49,124 L45,52 Z" fill="url(#ft-bg)"/>
+        <path d="M96,28 L104,28 L134,148 L117,148 L100,52 L83,148 L66,148 Z" fill="url(#ft-am)"/>
+        <path d="M100,108 C96,116 87,126 87,136 A13,13 0 0 0 113,136 C113,126 104,116 100,108 Z" fill="url(#ft-dr)"/>
+        <text x="100" y="212" text-anchor="middle" font-family="'Arial Black',sans-serif" font-weight="900" font-size="40" fill="#0D1E42">ABBOTT</text>
+        <text x="100" y="246" text-anchor="middle" font-family="'Arial Black',Arial,sans-serif" font-weight="700" font-size="16" fill="#0D1E42" letter-spacing="2">WATER FILTERS</text>
+      </svg>
+    </div></div>
+    <div class="footer-name">Abbott Water Filters</div>
+    <div class="footer-contacts">
+      <span class="footer-contact">📞 0348-8115410</span>
+      <span class="footer-contact">📞 0335-6590095</span>
+      <span class="footer-contact">📍 Abbottabad, KPK</span>
+    </div>
+    <hr class="footer-hr">
+    <div class="footer-copy">&copy; 2026 Abbott Water Filters. All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- ══ CART OVERLAY + PANEL ══ -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-head">
+    <div class="cart-head-title">🛒 Shopping Cart</div>
+    <button class="cart-close" onclick="closeCart()">&#x2715;</button>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>Your cart is empty.<br>Browse products above!</div></div>
+  </div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-val">Rs <span id="cartTotal">0</span></span>
+    </div>
+    <button class="checkout-btn" onclick="openCheckout()">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- ══ CHECKOUT MODAL ══ -->
+<div class="co-overlay" id="coOverlay">
+  <div class="co-modal">
+    <div class="co-head">
+      <div class="co-title">📦 Place Your Order</div>
+      <button class="co-close" onclick="closeCheckout()">&#x2715;</button>
+    </div>
+    <div class="co-body" id="coBody">
+
+      <!-- Order Summary -->
+      <div class="co-section">
+        <div class="co-section-title">🛒 Order Summary</div>
+        <div id="orderItemsList"></div>
+        <div class="order-total-row">
+          <span class="ot-label">Total Amount</span>
+          <span class="ot-val">Rs <span id="orderTotalDisplay">0</span></span>
+        </div>
+      </div>
+
+      <!-- Customer Info -->
+      <div class="co-section">
+        <div class="co-section-title">👤 Your Information</div>
+        <div class="field">
+          <label>Full Name *</label>
+          <input type="text" id="co-name" placeholder="e.g. Muhammad Ali Khan" autocomplete="name">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Phone / WhatsApp *</label>
+            <input type="tel" id="co-phone" placeholder="923xxxxxxxxx" maxlength="13" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label>Filter Model Preference</label>
+            <select id="co-model">
+              <option value="">Not sure / Advise me</option>
+              <option>RO-5 Stage</option>
+              <option>RO-7 Stage</option>
+              <option>RO-9 Stage</option>
+              <option>UF Filter</option>
+              <option>UV Purifier</option>
+              <option>Carbon Block Filter</option>
+              <option>Sediment Filter</option>
+              <option>Alkaline Filter</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Full Address *</label>
+          <input type="text" id="co-address" placeholder="House #, Street, Mohalla…" autocomplete="street-address">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Area / Zone *</label>
+            <input type="text" id="co-area" placeholder="e.g. Mandian, Cantt, Jinnahabad…">
+          </div>
+          <div class="field">
+            <label>Delivery / Install Date *</label>
+            <input type="date" id="co-date">
+          </div>
+        </div>
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="co-install">
+          <div>
+            <div class="checkbox-label">🔧 Needs Installation?</div>
+            <div class="checkbox-sub">Technician will visit to install and test</div>
+          </div>
+        </label>
+        <div class="field">
+          <label>Notes / Special Instructions</label>
+          <textarea id="co-notes" placeholder="Landmarks, gate colour, special requests…"></textarea>
+        </div>
+      </div>
+
+      <!-- GPS Section -->
+      <div class="gps-section">
+        <div class="gps-why">
+          <div class="gps-why-icon">📍</div>
+          <div class="gps-why-text">
+            <strong>GPS helps our technician find you without calling for directions.</strong>
+            No more "turn left at the big tree" — your pin is saved and our team navigates straight to you.
+          </div>
+        </div>
+        <button class="gps-capture-btn" id="gpsCaptureBtn" onclick="captureGPS()">
+          📍 Share My Location (Required)
+        </button>
+        <div class="gps-result" id="gpsResult"></div>
+      </div>
+
+    </div>
+    <div class="co-foot">
+      <button class="cancel-order-btn" onclick="closeCheckout()">Cancel</button>
+      <button class="place-order-btn" id="placeOrderBtn" onclick="placeOrder()" disabled>
+        🔒 Capture GPS First
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SUCCESS OVERLAY ══ -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Order Placed!</div>
+    <div class="success-order-num" id="successOrderNum">JOB-001</div>
+    <div class="success-msg" id="successMsg">Your order has been received. Our team will contact you shortly.</div>
+    <a class="success-wa-btn" id="successWaBtn" href="#" target="_blank">
+      <span style="font-size:22px">💬</span> Open WhatsApp Confirmation
+    </a>
+    <button class="success-back-btn" onclick="backToShop()">← Continue Shopping</button>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<script src="supabase-config.js"></script>
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+var cart = [];
+var allProducts = [];
+var activeCat = 'All';
+var gpsLat = null;
+var gpsLng = null;
+var gpsAccuracy = null;
+var orderPlacing = false;
+
+// ── localStorage ───────────────────────────────────────────────────────
+function saveCart() {
+  localStorage.setItem('awf_shop_cart', JSON.stringify(cart));
+}
+function loadCart() {
+  try { cart = JSON.parse(localStorage.getItem('awf_shop_cart')) || []; }
+  catch(e) { cart = []; }
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────
+function nextId(arr, prefix) {
+  var nums = arr.map(function(r) {
+    return parseInt((r.id || '').replace(prefix, ''));
+  }).filter(function(n) { return !isNaN(n); });
+  var max = nums.length ? Math.max.apply(null, nums) : 0;
+  return prefix + String(max + 1).padStart(3, '0');
+}
+function calcDueDate(installDate, months) {
+  var d = new Date(installDate);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+function tomorrowStr() {
+  var d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+}
+function fmtPrice(n) {
+  return Number(n || 0).toLocaleString('en-PK');
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function catIcon(cat) {
+  var m = {
+    'Filter Cartridge':'🔵','Membrane':'💧','Housing':'🏠',
+    'Fittings':'🔩','Tubing':'〰️','Tank':'🪣',
+    'Tools':'🔧','UV':'☀️','Parts':'⚙️','Equipment':'📟','Other':'📦'
+  };
+  return m[cat] || '💧';
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function() { t.classList.remove('show'); }, 2800);
+}
+
+// ── Products ───────────────────────────────────────────────────────────
+async function loadProducts() {
+  try {
+    var data = await db.from('inventory').select('select=*&stock=gt.0&order=category.asc,name.asc');
+    allProducts = data || [];
+    renderCategoryFilters();
+    renderProducts();
+    var c = allProducts.length;
+    document.getElementById('productsCount').textContent = c + ' product' + (c !== 1 ? 's' : '') + ' available';
+  } catch(e) {
+    document.getElementById('productsGrid').innerHTML =
+      '<div class="products-empty"><div style="font-size:40px;margin-bottom:12px">⚠️</div>' +
+      '<div>Could not load products. Please check your connection and refresh.</div></div>';
+    console.error('loadProducts error:', e);
+  }
+}
+
+function renderCategoryFilters() {
+  var cats = ['All'];
+  allProducts.forEach(function(p) {
+    if (p.category && cats.indexOf(p.category) === -1) cats.push(p.category);
+  });
+  document.getElementById('catFilters').innerHTML = cats.map(function(c) {
+    return '<button class="cat-btn' + (c === activeCat ? ' active' : '') + '" onclick="filterCat(\'' +
+      c.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">' + escHtml(c) + '</button>';
+  }).join('');
+}
+
+function filterCat(cat) {
+  activeCat = cat;
+  renderCategoryFilters();
+  renderProducts();
+}
+
+function renderProducts() {
+  var filtered = activeCat === 'All' ? allProducts : allProducts.filter(function(p) { return p.category === activeCat; });
+  if (!filtered.length) {
+    document.getElementById('productsGrid').innerHTML =
+      '<div class="products-empty"><div style="font-size:40px;margin-bottom:10px">📭</div><div>No products in this category.</div></div>';
+    return;
+  }
+  document.getElementById('productsGrid').innerHTML = filtered.map(function(p) {
+    var inCart = !!cart.find(function(c) { return c.id === p.id; });
+    return '<div class="product-card">' +
+      '<div class="product-icon-wrap">' + catIcon(p.category) + '</div>' +
+      '<div class="product-body">' +
+        '<div class="product-cat">' + escHtml(p.category || 'Parts') + '</div>' +
+        '<div class="product-name">' + escHtml(p.name) + '</div>' +
+        '<div class="product-supplier">Supplier: ' + escHtml(p.supplier || '—') + '</div>' +
+        '<div class="product-footer">' +
+          '<div class="product-price">Rs ' + fmtPrice(p.unit_price) + ' <span>/ ' + escHtml(p.unit || 'pcs') + '</span></div>' +
+          '<span class="in-stock-badge">✓ In Stock</span>' +
+        '</div>' +
+        '<div class="product-add-row">' +
+          '<div class="qty-selector">' +
+            '<button class="qty-btn" onclick="changeQty(\'' + p.id + '\',-1)">−</button>' +
+            '<input class="qty-input" id="qty-' + p.id + '" type="number" value="1" min="1" max="10" readonly>' +
+            '<button class="qty-btn" onclick="changeQty(\'' + p.id + '\',1)">+</button>' +
+          '</div>' +
+          '<button class="add-to-cart-btn' + (inCart ? ' added' : '') + '" id="addBtn-' + p.id + '" onclick="addToCart(\'' + p.id + '\')">' +
+            (inCart ? '✓ In Cart' : '+ Add to Cart') +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function changeQty(pid, delta) {
+  var input = document.getElementById('qty-' + pid);
+  if (!input) return;
+  var v = Math.min(10, Math.max(1, parseInt(input.value) + delta));
+  input.value = v;
+}
+
+function addToCart(pid) {
+  var p = allProducts.find(function(x) { return x.id === pid; });
+  if (!p) return;
+  var qEl = document.getElementById('qty-' + pid);
+  var qty = qEl ? (parseInt(qEl.value) || 1) : 1;
+  var existing = cart.find(function(c) { return c.id === pid; });
+  if (existing) {
+    existing.qty = Math.min(10, existing.qty + qty);
+  } else {
+    cart.push({ id:p.id, name:p.name, category:p.category, unit_price:p.unit_price, supplier:p.supplier, unit:p.unit, qty:qty });
+  }
+  saveCart();
+  updateCartBadge();
+  renderCartItems();
+  showToast('✓ Added: ' + p.name);
+  var btn = document.getElementById('addBtn-' + pid);
+  if (btn) { btn.classList.add('added'); btn.textContent = '✓ In Cart'; }
+}
+
+// ── Cart ───────────────────────────────────────────────────────────────
+function cartTotal() {
+  return cart.reduce(function(s, c) { return s + (+c.unit_price || 0) * c.qty; }, 0);
+}
+function updateCartBadge() {
+  var count = cart.reduce(function(s, c) { return s + c.qty; }, 0);
+  var badge = document.getElementById('cartBadge');
+  badge.textContent = count;
+  badge.classList.toggle('has-items', count > 0);
+  document.getElementById('cartBtnText').textContent = count > 0 ? 'Cart (' + count + ')' : 'Cart';
+}
+function openCart() {
+  document.getElementById('cartPanel').classList.add('open');
+  document.getElementById('cartOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCart() {
+  document.getElementById('cartPanel').classList.remove('open');
+  document.getElementById('cartOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderCartItems() {
+  var el = document.getElementById('cartItems');
+  var footer = document.getElementById('cartFooter');
+  if (!cart.length) {
+    el.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>Your cart is empty.<br>Browse products above!</div></div>';
+    footer.style.display = 'none';
+    return;
+  }
+  footer.style.display = 'block';
+  el.innerHTML = cart.map(function(item) {
+    return '<div class="cart-item">' +
+      '<div class="ci-icon">' + catIcon(item.category) + '</div>' +
+      '<div class="ci-info">' +
+        '<div class="ci-name">' + escHtml(item.name) + '</div>' +
+        '<div class="ci-cat">' + escHtml(item.category || '') + '</div>' +
+        '<div class="ci-price">Rs ' + fmtPrice(item.unit_price) + ' × ' + item.qty + ' = Rs ' + fmtPrice(+item.unit_price * item.qty) + '</div>' +
+        '<div class="ci-controls">' +
+          '<div class="ci-qty-wrap">' +
+            '<button class="ci-qty-btn" onclick="cartChangeQty(\'' + item.id + '\',-1)">−</button>' +
+            '<input class="ci-qty" value="' + item.qty + '" readonly>' +
+            '<button class="ci-qty-btn" onclick="cartChangeQty(\'' + item.id + '\',1)">+</button>' +
+          '</div>' +
+          '<button class="ci-remove" onclick="removeFromCart(\'' + item.id + '\')">🗑</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('cartTotal').textContent = fmtPrice(cartTotal());
+}
+function cartChangeQty(id, delta) {
+  var item = cart.find(function(c) { return c.id === id; });
+  if (!item) return;
+  item.qty = Math.min(10, Math.max(1, item.qty + delta));
+  saveCart(); updateCartBadge(); renderCartItems();
+}
+function removeFromCart(id) {
+  cart = cart.filter(function(c) { return c.id !== id; });
+  saveCart(); updateCartBadge(); renderCartItems(); renderProducts();
+  showToast('Removed from cart');
+}
+
+// ── Checkout ───────────────────────────────────────────────────────────
+function openCheckout() {
+  if (!cart.length) { showToast('Your cart is empty!'); return; }
+  closeCart();
+  document.getElementById('co-date').value = tomorrowStr();
+  renderOrderSummary();
+  document.getElementById('coOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCheckout() {
+  document.getElementById('coOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderOrderSummary() {
+  document.getElementById('orderItemsList').innerHTML = cart.map(function(item) {
+    return '<div class="oi-item">' +
+      '<div><span class="oi-name">' + escHtml(item.name) + '</span> <span class="oi-qty-label">× ' + item.qty + '</span></div>' +
+      '<div class="oi-price">Rs ' + fmtPrice(+item.unit_price * item.qty) + '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('orderTotalDisplay').textContent = fmtPrice(cartTotal());
+}
+
+// ── GPS ────────────────────────────────────────────────────────────────
+function captureGPS() {
+  var btn = document.getElementById('gpsCaptureBtn');
+  var result = document.getElementById('gpsResult');
+  if (!navigator.geolocation) {
+    result.classList.add('show');
+    result.innerHTML = '<div class="gps-error-msg">⚠️ Your browser does not support GPS. Please try Chrome or Firefox.</div>';
+    return;
+  }
+  btn.className = 'gps-capture-btn loading';
+  btn.innerHTML = '⏳ Getting your location…';
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      gpsLat = pos.coords.latitude;
+      gpsLng = pos.coords.longitude;
+      gpsAccuracy = Math.round(pos.coords.accuracy);
+      btn.className = 'gps-capture-btn success';
+      btn.innerHTML = '✅ Location Captured: ' + gpsLat.toFixed(5) + ', ' + gpsLng.toFixed(5) + ' (±' + gpsAccuracy + 'm)';
+      var mapsUrl = 'https://www.google.com/maps?q=' + gpsLat + ',' + gpsLng;
+      result.classList.add('show');
+      result.innerHTML =
+        '<div class="gps-coords">✅ Accuracy: ±' + gpsAccuracy + 'm &nbsp;|&nbsp; ' +
+        gpsLat.toFixed(6) + ', ' + gpsLng.toFixed(6) + '</div>' +
+        '<a class="gps-map-link" href="' + mapsUrl + '" target="_blank">🗺 Preview on Google Maps →</a>';
+      var orderBtn = document.getElementById('placeOrderBtn');
+      orderBtn.disabled = false;
+      orderBtn.innerHTML = '📦 Place Order';
+    },
+    function(err) {
+      btn.className = 'gps-capture-btn error';
+      btn.innerHTML = '❌ Location Not Captured';
+      var msg = err.code === 1
+        ? '📵 Location access was denied. Tap the location icon in your browser address bar and choose Allow, then tap Try Again.'
+        : err.code === 2
+          ? '📡 Location unavailable. Move to a spot with better signal and try again.'
+          : '⏱ Location request timed out. Please try again.';
+      result.classList.add('show');
+      result.innerHTML = '<div class="gps-error-msg">' + msg +
+        '<br><br><strong>GPS helps us deliver to you accurately — no wrong turns, no calls asking for directions.</strong></div>' +
+        '<button class="gps-retry-btn" onclick="retryGPS()">🔄 Try Again</button>';
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function retryGPS() {
+  var btn = document.getElementById('gpsCaptureBtn');
+  var result = document.getElementById('gpsResult');
+  btn.className = 'gps-capture-btn';
+  btn.innerHTML = '📍 Share My Location (Required)';
+  result.classList.remove('show');
+  result.innerHTML = '';
+  gpsLat = null; gpsLng = null;
+  document.getElementById('placeOrderBtn').disabled = true;
+  document.getElementById('placeOrderBtn').innerHTML = '🔒 Capture GPS First';
+}
+
+// ── Place Order ────────────────────────────────────────────────────────
+async function placeOrder() {
+  if (orderPlacing) return;
+  if (!gpsLat || !gpsLng) { showToast('Please capture your GPS location first!'); return; }
+
+  var name    = document.getElementById('co-name').value.trim();
+  var phone   = document.getElementById('co-phone').value.trim().replace(/[^0-9]/g,'');
+  var address = document.getElementById('co-address').value.trim();
+  var area    = document.getElementById('co-area').value.trim();
+  var model   = document.getElementById('co-model').value;
+  var date    = document.getElementById('co-date').value;
+  var install = document.getElementById('co-install').checked;
+  var notes   = document.getElementById('co-notes').value.trim();
+
+  if (!name)    { showToast('Please enter your full name'); document.getElementById('co-name').focus(); return; }
+  if (!phone)   { showToast('Please enter your WhatsApp number'); document.getElementById('co-phone').focus(); return; }
+  if (phone.length < 11 || phone.length > 13) { showToast('Phone must be 11-13 digits, e.g. 923xxxxxxxxx'); document.getElementById('co-phone').focus(); return; }
+  if (!address) { showToast('Please enter your address'); document.getElementById('co-address').focus(); return; }
+  if (!area)    { showToast('Please enter your area/zone'); document.getElementById('co-area').focus(); return; }
+  if (!date)    { showToast('Please select delivery date'); document.getElementById('co-date').focus(); return; }
+
+  orderPlacing = true;
+  var btn = document.getElementById('placeOrderBtn');
+  btn.innerHTML = '⏳ Placing Order…';
+  btn.disabled = true;
+
+  try {
+    var itemsList = cart.map(function(c) { return c.name + ' ×' + c.qty; }).join(', ');
+    var totalPKR = cartTotal();
+
+    // 1. Create customer record
+    var customers = await db.from('customers').select();
+    var custId = nextId(customers, 'AWF-');
+    var custNote = 'Online order — GPS shared by customer' + (notes ? '. ' + notes : '');
+    await db.from('customers').insert({
+      id:           custId,
+      name:         name,
+      phone:        phone,
+      address:      address,
+      area:         area,
+      model:        model || 'Not specified',
+      life:         6,
+      install_date: date,
+      due_date:     calcDueDate(date, 6),
+      latitude:     gpsLat,
+      longitude:    gpsLng,
+      notes:        custNote
+    });
+
+    // 2. Create job record
+    var jobs = await db.from('jobs').select();
+    var jobId = nextId(jobs, 'JOB-');
+    var jobType = install ? 'New Installation' : 'Delivery';
+    var jobNote = 'ONLINE ORDER: ' + itemsList + (notes ? ' | Note: ' + notes : '') + ' | GPS captured by customer';
+    await db.from('jobs').insert({
+      id:             jobId,
+      customer_name:  name,
+      phone:          phone,
+      address:        address + ', ' + area,
+      job_type:       jobType,
+      scheduled_date: date,
+      scheduled_time: '10:00',
+      status:         'Scheduled',
+      latitude:       gpsLat,
+      longitude:      gpsLng,
+      parts_cost:     totalPKR,
+      notes:          jobNote
+    });
+
+    // 3. Build WhatsApp message
+    var mapsUrl = 'https://www.google.com/maps?q=' + gpsLat + ',' + gpsLng;
+    var waText =
+      'Hi Abbott Water Filters! New online order:\n' +
+      '📦 Order #' + jobId + '\n' +
+      '👤 ' + name + '\n' +
+      '📱 ' + phone + '\n' +
+      '📍 GPS: ' + mapsUrl + '\n' +
+      '🏠 ' + address + ', ' + area + '\n' +
+      '📅 ' + date + '\n' +
+      '🛒 Items: ' + itemsList + '\n' +
+      '💰 Total: Rs ' + fmtPrice(totalPKR) + '\n' +
+      'Please confirm!';
+    var waUrl = 'https://wa.me/923488115410?text=' + encodeURIComponent(waText);
+
+    // 4. Show success
+    document.getElementById('successOrderNum').textContent = jobId;
+    document.getElementById('successMsg').innerHTML =
+      'Thank you, <strong>' + escHtml(name) + '</strong>! Your order has been received.<br>' +
+      'Our team will contact you at <strong>' + escHtml(phone) + '</strong> to confirm.';
+    document.getElementById('successWaBtn').href = waUrl;
+    closeCheckout();
+    document.getElementById('successOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // 5. Clear cart and refresh
+    cart = [];
+    saveCart();
+    updateCartBadge();
+    renderCartItems();
+    renderProducts();
+
+    // Auto-open WhatsApp
+    setTimeout(function() { window.open(waUrl, '_blank'); }, 1000);
+
+  } catch(e) {
+    console.error('placeOrder error:', e);
+    showToast('❌ Order failed: ' + (e.message || 'Please try again'));
+    btn.innerHTML = '📦 Place Order';
+    btn.disabled = false;
+  }
+
+  orderPlacing = false;
+}
+
+function backToShop() {
+  document.getElementById('successOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+loadCart();
+updateCartBadge();
+renderCartItems();
+loadProducts();
+</script>
+</body>
+</html>
