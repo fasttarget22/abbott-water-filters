@@ -376,6 +376,9 @@ tbody tr:hover{background:#f8fafb}
     <div class="nav-item" data-section="reports" onclick="navigate(this,'reports')">
       <span class="nav-icon">📈</span> Reports
     </div>
+    <div class="nav-item" data-section="filter-models" onclick="navigate(this,'filter-models')">
+      <span class="nav-icon">💧</span> Filter Models
+    </div>
   </nav>
   <div class="sb-footer">
     <div style="font-size:10px;color:rgba(180,200,216,.55);line-height:1.65;text-align:center">
@@ -675,6 +678,29 @@ tbody tr:hover{background:#f8fafb}
       </div>
     </section>
 
+    <!-- ── Filter Models ── -->
+    <section id="sec-filter-models" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Filter Models</div>
+          <div class="section-sub">Manage filter model types and default lifespans</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddModelModal()">+ Add Model</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Default Lifespan</th><th>Order</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="fm-tbody">
+            <tr><td colspan="5" class="no-data">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -707,29 +733,14 @@ tbody tr:hover{background:#f8fafb}
           </div>
           <div class="form-field">
             <label class="form-label">Filter Model *</label>
-            <select class="form-select" id="f-model" required>
+            <select class="form-select" id="f-model" required onchange="onFilterModelChange('f-model','f-lifespan')">
               <option value="">Select model…</option>
-              <option>RO-5 Stage</option>
-              <option>RO-7 Stage</option>
-              <option>RO-9 Stage</option>
-              <option>UF Filter</option>
-              <option>UV Purifier</option>
-              <option>Carbon Block Filter</option>
-              <option>Sediment Filter</option>
-              <option>Alkaline Filter</option>
             </select>
           </div>
           <div class="form-field">
-            <label class="form-label">Filter Lifespan *</label>
-            <select class="form-select" id="f-lifespan" required>
-              <option value="">Select…</option>
-              <option value="3">3 months</option>
-              <option value="6">6 months</option>
-              <option value="9">9 months</option>
-              <option value="12">12 months</option>
-              <option value="18">18 months</option>
-              <option value="24">24 months</option>
-            </select>
+            <label class="form-label">Filter Lifespan (months) *</label>
+            <input class="form-input" id="f-lifespan" type="number" min="1" max="36" required placeholder="e.g. 6">
+            <small style="color:var(--dim);font-size:11px;margin-top:4px;display:block">Default for selected model, but you can change it</small>
           </div>
           <div class="form-field">
             <label class="form-label">Install Date *</label>
@@ -1013,6 +1024,42 @@ tbody tr:hover{background:#f8fafb}
   </div>
 </div>
 
+<!-- ── Modal: Filter Model ── -->
+<div class="modal-overlay" id="modal-filter-model" onclick="closeModalOuter(event,'modal-filter-model')">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="fm-modal-title">Add Filter Model</div>
+      <button class="modal-close" onclick="closeModal('modal-filter-model')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <form id="fm-form" onsubmit="submitFilterModel(event)">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label class="form-label">Model Name *</label>
+            <input class="form-input" id="fm-name" required placeholder="e.g. 7 Stage RO">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Default Lifespan (months) *</label>
+            <input class="form-input" id="fm-life" type="number" min="1" max="24" required placeholder="6">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Display Order</label>
+            <input class="form-input" id="fm-order" type="number" min="0" placeholder="0">
+          </div>
+          <div class="form-field full" style="display:flex;align-items:center;gap:10px;padding-top:4px">
+            <input type="checkbox" id="fm-active" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--teal)">
+            <label for="fm-active" class="form-label" style="margin:0;cursor:pointer">Active (visible in dropdowns)</label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-filter-model')">Cancel</button>
+      <button class="btn btn-primary" id="fm-modal-btn" onclick="document.getElementById('fm-form').requestSubmit()">Add Model</button>
+    </div>
+  </div>
+</div>
+
 <script src="supabase-config.js"></script>
 <script>
 // ════════════════════════════════════════
@@ -1095,7 +1142,7 @@ var SECTION_TITLES = {
   dashboard:'Dashboard Overview', customers:'All Customers', expiry:'Expiry Alerts',
   whatsapp:'WhatsApp Notifications', feedback:'Customer Feedback',
   schedule:'Job Schedule', inventory:'Inventory', employees:'Employees',
-  reports:'Revenue Reports'
+  reports:'Revenue Reports', 'filter-models':'Filter Models'
 };
 async function navigate(el, id){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1110,9 +1157,10 @@ async function navigate(el, id){
   if(id==='whatsapp')   await renderWhatsApp();
   if(id==='feedback')   await renderFeedback();
   if(id==='schedule')   { schedActive='today'; await renderSchedule(); }
-  if(id==='inventory')  await renderInventory();
-  if(id==='employees')  await renderEmployees();
-  if(id==='reports')    await renderReports();
+  if(id==='inventory')      await renderInventory();
+  if(id==='employees')      await renderEmployees();
+  if(id==='reports')        await renderReports();
+  if(id==='filter-models')  await renderFilterModels();
 }
 
 // ════════════════════════════════════════
@@ -1576,6 +1624,7 @@ var jobEditId  = null;
 var invEditId  = null;
 var fbEditId   = null;
 var empEditId  = null;
+var fmEditId   = null;
 
 async function populateTechDropdowns(selectedValue){
   var emps;
@@ -1593,7 +1642,7 @@ async function populateTechDropdowns(selectedValue){
 }
 
 // ── Open-add wrappers (reset edit state before opening) ──
-function openAddCustomerModal(){
+async function openAddCustomerModal(){
   custEditId = null;
   document.getElementById('cust-modal-title').textContent = 'Add New Customer';
   document.getElementById('cust-modal-btn').textContent   = 'Save Customer';
@@ -1601,6 +1650,7 @@ function openAddCustomerModal(){
   document.getElementById('cust-gps-row').style.display = 'none';
   document.getElementById('f-gps-display').value = '';
   populateTechDropdowns('');
+  await loadFilterModels('f-model', '');
   openModal('modal-customer');
 }
 function openAddFbModal(){
@@ -1641,7 +1691,6 @@ async function editCustomer(id){
   document.getElementById('f-phone').value   = c.phone||'';
   document.getElementById('f-address').value = c.address||'';
   document.getElementById('f-area').value    = c.area||'';
-  document.getElementById('f-model').value   = c.model||'';
   document.getElementById('f-lifespan').value= c.life||'';
   document.getElementById('f-install').value = c.install_date||'';
   document.getElementById('f-tech').value    = c.technician||'';
@@ -1657,6 +1706,8 @@ async function editCustomer(id){
   document.getElementById('cust-modal-title').textContent = 'Edit Customer';
   document.getElementById('cust-modal-btn').textContent   = 'Update Customer';
   populateTechDropdowns(c.technician||'');
+  await loadFilterModels('f-model', c.model||'');
+  document.getElementById('f-lifespan').value = c.life||'';
   openModal('modal-customer');
 }
 
@@ -2847,6 +2898,105 @@ async function renderReports() {
       '<td><strong>PKR '+a.revenue.toLocaleString()+'</strong></td>' +
     '</tr>';
   }).join('') : '<tr><td colspan="4" class="no-data">No data for selected period</td></tr>';
+}
+
+// ════════════════════════════════════════
+//  FILTER MODELS
+// ════════════════════════════════════════
+async function renderFilterModels() {
+  var tbody = document.getElementById('fm-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--dim)">Loading…</td></tr>';
+  var models;
+  try {
+    models = await db.from('filter_models').select('select=*&order=display_order.asc');
+  } catch(e) {
+    console.error('Filter models load error:', e.message);
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--red)">Failed to load: ' + (e.message || e) + '</td></tr>';
+    return;
+  }
+  if (!models || !models.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="no-data">No filter models yet. Click "+ Add Model" to create one.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = models.map(function(m) {
+    var statusCls = m.active ? 'active' : 'overdue';
+    var statusLbl = m.active ? 'Active' : 'Inactive';
+    return '<tr>' +
+      '<td><strong>' + m.name + '</strong></td>' +
+      '<td>' + m.default_life + ' months</td>' +
+      '<td>' + (m.display_order || 0) + '</td>' +
+      '<td><span class="badge badge-' + statusCls + '">' + statusLbl + '</span></td>' +
+      '<td><div class="td-actions">' +
+        '<button class="btn btn-ghost btn-sm" onclick="editFilterModel(' + m.id + ')">✏️ Edit</button>' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteFilterModel(' + m.id + ')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function openAddModelModal() {
+  fmEditId = null;
+  document.getElementById('fm-modal-title').textContent = 'Add Filter Model';
+  document.getElementById('fm-modal-btn').textContent   = 'Add Model';
+  document.getElementById('fm-form').reset();
+  document.getElementById('fm-active').checked = true;
+  openModal('modal-filter-model');
+}
+
+async function editFilterModel(id) {
+  var models;
+  try {
+    models = await db.from('filter_models').select('select=*&id=eq.' + id);
+  } catch(e) {
+    alert('Failed to load model: ' + (e.message || e));
+    return;
+  }
+  var m = models && models[0];
+  if (!m) return;
+  fmEditId = m.id;
+  document.getElementById('fm-modal-title').textContent = 'Edit Filter Model';
+  document.getElementById('fm-modal-btn').textContent   = 'Update Model';
+  document.getElementById('fm-name').value  = m.name || '';
+  document.getElementById('fm-life').value  = m.default_life || '';
+  document.getElementById('fm-order').value = m.display_order || 0;
+  document.getElementById('fm-active').checked = m.active !== false;
+  openModal('modal-filter-model');
+}
+
+async function deleteFilterModel(id) {
+  if (!confirm('Delete this filter model? This cannot be undone.')) return;
+  try {
+    await db.from('filter_models').delete('id', id);
+  } catch(e) {
+    alert('Failed to delete: ' + (e.message || e));
+    return;
+  }
+  await renderFilterModels();
+}
+
+async function submitFilterModel(e) {
+  e.preventDefault();
+  var data = {
+    name:          document.getElementById('fm-name').value.trim(),
+    default_life:  parseInt(document.getElementById('fm-life').value) || 6,
+    display_order: parseInt(document.getElementById('fm-order').value) || 0,
+    active:        document.getElementById('fm-active').checked,
+  };
+  if (!data.name) { alert('Model name is required.'); return; }
+  try {
+    if (fmEditId) {
+      await db.from('filter_models').update(data, 'id', fmEditId);
+    } else {
+      await db.from('filter_models').insert(data);
+    }
+  } catch(e) {
+    alert('Failed to save: ' + (e.message || e));
+    return;
+  }
+  fmEditId = null;
+  closeModal('modal-filter-model');
+  document.getElementById('fm-form').reset();
+  await renderFilterModels();
 }
 
 // ── Sidebar toggle (mobile) ──

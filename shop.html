@@ -369,14 +369,6 @@ body{font-family:'Outfit','Segoe UI',system-ui,sans-serif;background:var(--bg);c
             <label>Filter Model Preference</label>
             <select id="co-model">
               <option value="">Not sure / Advise me</option>
-              <option>RO-5 Stage</option>
-              <option>RO-7 Stage</option>
-              <option>RO-9 Stage</option>
-              <option>UF Filter</option>
-              <option>UV Purifier</option>
-              <option>Carbon Block Filter</option>
-              <option>Sediment Filter</option>
-              <option>Alkaline Filter</option>
             </select>
           </div>
         </div>
@@ -668,11 +660,14 @@ function removeFromCart(id) {
 }
 
 // ── Checkout ───────────────────────────────────────────────────────────
-function openCheckout() {
+async function openCheckout() {
   if (!cart.length) { showToast('Your cart is empty!'); return; }
   closeCart();
   document.getElementById('co-date').value = tomorrowStr();
   renderOrderSummary();
+  await loadFilterModels('co-model', '');
+  var firstOpt = document.getElementById('co-model').options[0];
+  if (firstOpt) firstOpt.textContent = 'Not sure / Advise me';
   document.getElementById('coOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }

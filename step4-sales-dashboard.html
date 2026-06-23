@@ -410,15 +410,8 @@ tbody tr:hover{background:#f8fafc;}
         </div>
         <div class="form-field">
           <label class="form-label">Filter Model</label>
-          <select class="form-select" id="sale-model">
-            <option value="">Select model&hellip;</option>
-            <option>Standard 5-Stage RO</option>
-            <option>Ultra 7-Stage RO</option>
-            <option>Basic Sediment</option>
-            <option>Carbon Block</option>
-            <option>UV Sterilizer</option>
-            <option>Whole House Filter</option>
-            <option>Other</option>
+          <select class="form-select" id="sale-model" onchange="onFilterModelChange('sale-model','sale-lifespan')">
+            <option value="">Select model…</option>
           </select>
         </div>
       </div>
@@ -462,12 +455,9 @@ tbody tr:hover{background:#f8fafc;}
             <input class="form-input" id="sale-install-date" type="date">
           </div>
           <div class="form-field">
-            <label class="form-label">Filter Lifespan</label>
-            <select class="form-select" id="sale-lifespan">
-              <option value="3">3 months</option>
-              <option value="6" selected>6 months</option>
-              <option value="12">12 months</option>
-            </select>
+            <label class="form-label">Filter Lifespan (months)</label>
+            <input class="form-input" id="sale-lifespan" type="number" min="1" max="36" placeholder="e.g. 6">
+            <small style="color:var(--dim);font-size:11px;margin-top:4px;display:block">Default for selected model, but you can change it</small>
           </div>
           <div class="form-field full">
             <label class="form-label">Assigned Technician</label>
@@ -837,12 +827,11 @@ function toggleInstallFields() {
     document.getElementById('sale-install-date').value = todayStr();
   }
 }
-function openSaleModal() {
+async function openSaleModal() {
   document.getElementById('sale-item').value = '';
   document.getElementById('sale-qty').value = '1';
   document.getElementById('sale-price').value = '';
   document.getElementById('sale-payment').value = 'Cash';
-  document.getElementById('sale-model').value = '';
   document.getElementById('sale-customer').value = '';
   document.getElementById('sale-phone').value = '';
   document.getElementById('sale-area').value = '';
@@ -850,8 +839,9 @@ function openSaleModal() {
   document.getElementById('sale-needs-install').checked = false;
   document.getElementById('install-fields').style.display = 'none';
   document.getElementById('sale-install-date').value = '';
-  document.getElementById('sale-lifespan').value = '6';
+  document.getElementById('sale-lifespan').value = '';
   document.getElementById('sale-tech').value = '';
+  await loadFilterModels('sale-model', '');
   document.getElementById('sale-modal').classList.add('open');
 }
 function closeSaleModal() {

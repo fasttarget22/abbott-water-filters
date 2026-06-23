@@ -19,6 +19,39 @@ testSupabase();
 var SUPABASE_URL = 'https://isqlqmhueoiwnlcsvsfg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_hPu0RIbvCd_DBCM4s2lH2g_U6CONZdr';
 
+async function loadFilterModels(selectElementId, selectedValue) {
+  var sel = document.getElementById(selectElementId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  var models;
+  try {
+    models = await db.from('filter_models').select('select=*&active=eq.true&order=display_order.asc');
+  } catch(e) {
+    console.error('[loadFilterModels] error:', e);
+    sel.innerHTML = '<option value="">Select model…</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">Select model…</option>';
+  models.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m.name;
+    opt.textContent = m.name;
+    opt.setAttribute('data-default-life', m.default_life);
+    if (selectedValue && m.name === selectedValue) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function onFilterModelChange(modelSelectId, lifespanInputId) {
+  var sel = document.getElementById(modelSelectId);
+  if (!sel) return;
+  var opt = sel.options[sel.selectedIndex];
+  if (opt && opt.getAttribute('data-default-life')) {
+    var el = document.getElementById(lifespanInputId);
+    if (el) el.value = opt.getAttribute('data-default-life');
+  }
+}
+
 var db = {
   from: function(table) {
     var baseUrl = SUPABASE_URL + '/rest/v1/' + table;
