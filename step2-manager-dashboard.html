@@ -11,6 +11,7 @@
 <title>Abbott Water Filters — Manager Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -260,6 +261,34 @@ tbody tr:hover{background:#f8fafb}
 .flex{display:flex} .items-center{align-items:center} .gap-8{gap:8px} .gap-12{gap:12px} .mb-16{margin-bottom:16px}
 .no-data{text-align:center;padding:30px;color:var(--dim);font-size:13px}
 
+/* ── Invoice / PO / Cash Report ── */
+.inv-status-paid{background:var(--green-bg);color:var(--green)}
+.inv-status-pending{background:var(--red-bg);color:var(--red)}
+.inv-status-partial{background:var(--orange-bg);color:var(--orange)}
+.po-status-draft{background:var(--yellow-bg);color:var(--yellow)}
+.po-status-sent{background:var(--blue-bg);color:var(--blue)}
+.po-status-received{background:var(--green-bg);color:var(--green)}
+.po-status-cancelled{background:var(--red-bg);color:var(--red)}
+.items-tbl{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}
+.items-tbl th{background:#f8fafb;padding:6px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+.items-tbl td{padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.items-tbl tr:last-child td{border:none}
+.item-input{padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;outline:none;width:100%}
+.item-input:focus{border-color:var(--teal)}
+.btn-add-row{background:rgba(26,155,191,.07);color:var(--teal);border:1.5px dashed rgba(26,155,191,.3);border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px}
+.btn-add-row:hover{background:rgba(26,155,191,.14)}
+.btn-rm-row{background:var(--red-bg);color:var(--red);border:none;border-radius:5px;padding:4px 8px;cursor:pointer;font-size:13px;font-weight:700}
+.btn-rm-row:hover{background:#fecaca}
+.period-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.period-tab{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;color:var(--dim);cursor:pointer;transition:all .15s;white-space:nowrap}
+.period-tab:hover{border-color:var(--teal);color:var(--teal)}
+.period-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.totals-box{background:#f8fafb;border-radius:10px;border:1px solid var(--border);padding:14px 16px;max-width:260px;margin-left:auto}
+.totals-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:var(--dim)}
+.totals-row.grand{font-size:15px;font-weight:800;color:var(--navy);margin-top:8px;border-top:2px solid var(--border);padding-top:8px}
+.cr-date-wrap{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.growth-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.ph-modal-head{font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 /* ── Reports ── */
 .period-select{padding:8px 16px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);color:var(--txt);font-family:'Outfit',inherit;font-size:13px;font-weight:600;cursor:pointer;outline:none;transition:border-color .2s}
 .period-select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,155,191,.1)}
@@ -378,6 +407,15 @@ tbody tr:hover{background:#f8fafb}
     </div>
     <div class="nav-item" data-section="filter-models" onclick="navigate(this,'filter-models')">
       <span class="nav-icon">💧</span> Filter Models
+    </div>
+    <div class="nav-item" data-section="invoices" onclick="navigate(this,'invoices')">
+      <span class="nav-icon">🧾</span> Invoices
+    </div>
+    <div class="nav-item" data-section="cash-report" onclick="navigate(this,'cash-report')">
+      <span class="nav-icon">💵</span> Cash Report
+    </div>
+    <div class="nav-item" data-section="purchase-orders" onclick="navigate(this,'purchase-orders')">
+      <span class="nav-icon">📋</span> Purchase Orders
     </div>
   </nav>
   <div class="sb-footer">
@@ -657,6 +695,15 @@ tbody tr:hover{background:#f8fafb}
         </div>
       </div>
 
+      <!-- Customer Growth chart -->
+      <div class="charts-grid" style="margin-top:16px">
+        <div class="chart-card wide">
+          <div class="chart-title">📈 Customer Growth — New Customers per Month (Last 12 Months)</div>
+          <div class="chart-wrap"><canvas id="chart-growth"></canvas></div>
+        </div>
+      </div>
+      <div class="growth-stats" style="margin-top:14px" id="growth-stats"></div>
+
       <!-- Top areas table -->
       <div class="card" style="margin-top:16px">
         <div class="chart-title" style="margin-bottom:14px">📍 Top Areas by Revenue</div>
@@ -697,6 +744,98 @@ tbody tr:hover{background:#f8fafb}
           <tbody id="fm-tbody">
             <tr><td colspan="5" class="no-data">Loading…</td></tr>
           </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECTION: Invoices ── -->
+    <section id="sec-invoices" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Invoices</div>
+          <div class="section-sub" id="inv-hdr-sub">Loading…</div>
+        </div>
+        <button class="btn btn-primary" onclick="openInvoiceModal()">+ Create Invoice</button>
+      </div>
+      <div class="stat-row" id="invoice-stat-row"></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Invoice #</th><th>Customer</th><th>Date</th><th>Total</th><th>Paid</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="invoice-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECTION: Cash Report ── -->
+    <section id="sec-cash-report" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Cash Report</div>
+          <div class="section-sub">Revenue breakdown by period</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="downloadCashReportPDF()">⬇ PDF</button>
+          <button class="btn btn-ghost btn-sm" onclick="waCashReport()">💬 WhatsApp Owner</button>
+        </div>
+      </div>
+      <div class="period-tabs" id="cr-period-tabs">
+        <div class="period-tab active" onclick="setCashPeriod(this,'today')">Today</div>
+        <div class="period-tab" onclick="setCashPeriod(this,'yesterday')">Yesterday</div>
+        <div class="period-tab" onclick="setCashPeriod(this,'week')">This Week</div>
+        <div class="period-tab" onclick="setCashPeriod(this,'month')">This Month</div>
+        <div class="period-tab" onclick="setCashPeriod(this,'custom')">Custom</div>
+      </div>
+      <div class="cr-date-wrap" id="cr-custom-range" style="display:none">
+        <label class="form-label" style="margin:0">From:</label>
+        <input class="form-input" id="cr-from" type="date" style="width:150px" onchange="renderCashReport()">
+        <label class="form-label" style="margin:0">To:</label>
+        <input class="form-input" id="cr-to" type="date" style="width:150px" onchange="renderCashReport()">
+      </div>
+      <div class="stat-row" id="cr-stat-row"></div>
+      <div class="charts-grid" id="cr-charts-grid">
+        <div class="chart-card wide">
+          <div class="chart-title" id="cr-chart-title">📊 Hourly Revenue</div>
+          <div class="chart-wrap"><canvas id="chart-cash-main"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📂 By Job Type</div>
+          <div class="chart-wrap"><canvas id="chart-cash-type"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">💳 By Payment Method</div>
+          <div class="chart-wrap"><canvas id="chart-cash-method"></canvas></div>
+        </div>
+      </div>
+      <div class="widget-grid" style="margin-top:14px">
+        <div class="widget">
+          <div class="widget-title">🏆 Top Customers</div>
+          <div id="cr-top-customers"></div>
+        </div>
+        <div class="widget">
+          <div class="widget-title">📦 Top Items Sold</div>
+          <div id="cr-top-items"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION: Purchase Orders ── -->
+    <section id="sec-purchase-orders" class="section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Purchase Orders</div>
+          <div class="section-sub" id="po-sub">Supplier orders and stock replenishment</div>
+        </div>
+        <button class="btn btn-primary" onclick="openPOModal()">+ Create PO</button>
+      </div>
+      <div class="stat-row" id="po-stat-row"></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>PO #</th><th>Supplier</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="po-tbody"></tbody>
         </table>
       </div>
     </section>
@@ -1060,7 +1199,188 @@ tbody tr:hover{background:#f8fafb}
   </div>
 </div>
 
+<!-- ══ Modal: Create Invoice ══ -->
+<div class="modal-overlay" id="modal-invoice" onclick="closeModalOuter(event,'modal-invoice')">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-head">
+      <div class="modal-title" id="inv-modal-title2">Create Invoice</div>
+      <button class="modal-close" onclick="closeModal('modal-invoice')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label">Customer Name *</label>
+          <input class="form-input" id="inv-f-customer" list="inv-cust-list" placeholder="Type to search…" oninput="autoFillCustomer()">
+          <datalist id="inv-cust-list"></datalist>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Customer Phone</label>
+          <input class="form-input" id="inv-f-phone" placeholder="923xxxxxxxxx">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Customer Address</label>
+          <input class="form-input" id="inv-f-address" placeholder="Street, area">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Invoice Date</label>
+          <input class="form-input" id="inv-f-date" type="date">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Payment Status</label>
+          <select class="form-select" id="inv-f-status">
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Payment Method</label>
+          <select class="form-select" id="inv-f-method">
+            <option value="Cash">Cash</option>
+            <option value="Card">Card</option>
+            <option value="Online Transfer">Online Transfer</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Amount Paid (Rs)</label>
+          <input class="form-input" id="inv-f-paid" type="number" min="0" placeholder="0" oninput="updateInvTotals()">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Discount %</label>
+          <input class="form-input" id="inv-f-disc" type="number" min="0" max="100" placeholder="0" value="0" oninput="updateInvTotals()">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Tax %</label>
+          <input class="form-input" id="inv-f-tax" type="number" min="0" max="100" placeholder="0" value="0" oninput="updateInvTotals()">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Filter Install Date</label>
+          <input class="form-input" id="inv-f-install" type="date">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Filter Expiry Date</label>
+          <input class="form-input" id="inv-f-expiry" type="date">
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" id="inv-f-notes" placeholder="Any notes…"></textarea>
+        </div>
+      </div>
+      <!-- Items table -->
+      <div style="margin-top:12px">
+        <label class="form-label">Items *</label>
+        <table class="items-tbl" id="inv-items-tbl">
+          <thead><tr><th>Description</th><th style="width:60px">Qty</th><th style="width:110px">Unit Price</th><th style="width:90px">Total</th><th style="width:32px"></th></tr></thead>
+          <tbody id="inv-items-body"></tbody>
+        </table>
+        <button type="button" class="btn-add-row" onclick="addInvItemRow()">+ Add Item</button>
+      </div>
+      <!-- Totals -->
+      <div class="totals-box" id="inv-totals-box" style="margin-top:12px">
+        <div class="totals-row"><span>Subtotal</span><span id="inv-t-sub">Rs 0</span></div>
+        <div class="totals-row" id="inv-t-disc-row" style="display:none"><span>Discount</span><span id="inv-t-disc">- Rs 0</span></div>
+        <div class="totals-row" id="inv-t-tax-row" style="display:none"><span>Tax</span><span id="inv-t-tax">+ Rs 0</span></div>
+        <div class="totals-row grand"><span>Grand Total</span><span id="inv-t-grand">Rs 0</span></div>
+        <div class="totals-row" id="inv-t-bal-row" style="display:none;color:var(--red)"><span>Balance Due</span><span id="inv-t-bal">Rs 0</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-invoice')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitInvoice()">Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Payment History ══ -->
+<div class="modal-overlay" id="modal-payment-history" onclick="closeModalOuter(event,'modal-payment-history')">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head">
+      <div class="modal-title" id="ph-modal-title">Payment History</div>
+      <button class="modal-close" onclick="closeModal('modal-payment-history')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="stat-row" id="ph-stat-row" style="margin-bottom:14px"></div>
+      <div class="tbl-wrap" style="margin-bottom:14px">
+        <table>
+          <thead><tr><th>Date</th><th>Invoice #</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+          <tbody id="ph-tbody"></tbody>
+        </table>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:14px">
+        <div class="ph-modal-head">+ Record New Payment</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">Amount (Rs) *</label>
+            <input class="form-input" id="ph-amount" type="number" min="1" placeholder="0">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Method</label>
+            <select class="form-select" id="ph-method">
+              <option>Cash</option><option>Card</option><option>Online Transfer</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label class="form-label">Notes</label>
+            <input class="form-input" id="ph-notes" placeholder="Optional note">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="recordPayment()">Save Payment</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-payment-history')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Purchase Order ══ -->
+<div class="modal-overlay" id="modal-po" onclick="closeModalOuter(event,'modal-po')">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-head">
+      <div class="modal-title" id="po-modal-title">Create Purchase Order</div>
+      <button class="modal-close" onclick="closeModal('modal-po')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label">Supplier *</label>
+          <input class="form-input" id="po-f-supplier" placeholder="Supplier name">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="po-f-status">
+            <option value="Draft">Draft</option>
+            <option value="Sent">Sent</option>
+            <option value="Received">Received</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" id="po-f-notes" style="min-height:48px" placeholder="Order notes…"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label class="form-label">Items *</label>
+        <table class="items-tbl" id="po-items-tbl">
+          <thead><tr><th>Item Name</th><th style="width:70px">Qty</th><th style="width:110px">Cost/Unit</th><th style="width:90px">Total</th><th style="width:32px"></th></tr></thead>
+          <tbody id="po-items-body"></tbody>
+        </table>
+        <button type="button" class="btn-add-row" onclick="addPOItemRow()">+ Add Item</button>
+      </div>
+      <div class="totals-box" style="margin-top:10px">
+        <div class="totals-row grand"><span>Total Cost</span><span id="po-total">Rs 0</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-po')">Cancel</button>
+      <button class="btn btn-primary" id="po-modal-btn" onclick="submitPO()">Create PO</button>
+    </div>
+  </div>
+</div>
+
 <script src="supabase-config.js"></script>
+<script src="invoice.js"></script>
 <script>
 // ════════════════════════════════════════
 //  CONSTANTS
@@ -1142,7 +1462,8 @@ var SECTION_TITLES = {
   dashboard:'Dashboard Overview', customers:'All Customers', expiry:'Expiry Alerts',
   whatsapp:'WhatsApp Notifications', feedback:'Customer Feedback',
   schedule:'Job Schedule', inventory:'Inventory', employees:'Employees',
-  reports:'Revenue Reports', 'filter-models':'Filter Models'
+  reports:'Revenue Reports', 'filter-models':'Filter Models',
+  invoices:'Invoices', 'cash-report':'Cash Report', 'purchase-orders':'Purchase Orders'
 };
 async function navigate(el, id){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1159,8 +1480,11 @@ async function navigate(el, id){
   if(id==='schedule')   { schedActive='today'; await renderSchedule(); }
   if(id==='inventory')      await renderInventory();
   if(id==='employees')      await renderEmployees();
-  if(id==='reports')        await renderReports();
-  if(id==='filter-models')  await renderFilterModels();
+  if(id==='reports')          await renderReports();
+  if(id==='filter-models')    await renderFilterModels();
+  if(id==='invoices')         await renderInvoices();
+  if(id==='cash-report')      await renderCashReport();
+  if(id==='purchase-orders')  await renderPurchaseOrders();
 }
 
 // ════════════════════════════════════════
@@ -1187,6 +1511,12 @@ async function renderDashboard(){
   var jobsDone  = jobs.filter(j => j.status==='Completed' && j.scheduled_date.startsWith(thisMonth));
   var lowStock  = inventory.filter(i => i.stock <= i.reorder_level);
 
+  var invoices = [];
+  try { invoices = await db.from('invoices').select(); } catch(e2) { invoices = []; }
+  var pendingDues = invoices
+    .filter(function(inv){ return inv.payment_status !== 'Paid'; })
+    .reduce(function(s, inv){ return s + (parseFloat(inv.grand_total)||0) - (parseFloat(inv.amount_paid)||0); }, 0);
+
   document.getElementById('stat-row').innerHTML = `
     <div class="stat-card">
       <div class="stat-icon">👥</div>
@@ -1212,6 +1542,11 @@ async function renderDashboard(){
       <div class="stat-icon">📦</div>
       <div class="stat-label">Low Stock Items</div>
       <div class="stat-val" style="color:var(--yellow)">${lowStock.length}</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer" onclick="navigate(document.querySelector('[data-section=invoices]'),'invoices')">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">Pending Dues</div>
+      <div class="stat-val text-red">Rs ${pendingDues.toLocaleString()}</div>
     </div>`;
 
   // Urgent widget — top 5 overdue sorted by most overdue
@@ -1311,6 +1646,7 @@ async function renderCustomers(filter){
         <a href="${waLink(c.phone, fillTemplate(TEMPLATES[0].msg, c))}" target="_blank">
           <button class="btn btn-ghost btn-sm" title="WhatsApp">💬</button>
         </a>
+        <button class="btn btn-ghost btn-sm" onclick="openPaymentHistory('${c.id}','${c.name}')" title="Payment History">💳</button>
         <button class="btn btn-ghost btn-sm" onclick="editCustomer('${c.id}')" title="Edit">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')" title="Delete">🗑</button>
       </div></td>
@@ -2712,7 +3048,7 @@ async function dailySummary() {
 var reportCharts = {};
 
 function destroyCharts() {
-  ['revenue','tech','status'].forEach(function(k){
+  ['revenue','tech','status','growth'].forEach(function(k){
     if(reportCharts[k]){ reportCharts[k].destroy(); reportCharts[k]=null; }
   });
 }
@@ -2898,6 +3234,63 @@ async function renderReports() {
       '<td><strong>PKR '+a.revenue.toLocaleString()+'</strong></td>' +
     '</tr>';
   }).join('') : '<tr><td colspan="4" class="no-data">No data for selected period</td></tr>';
+
+  // ── Customer Growth Chart ─────────────────────────────
+  var growthLabels = [], growthData = [];
+  var now2 = new Date();
+  var sixMonthsAgo = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  for (var gi = 11; gi >= 0; gi--) {
+    var gd = new Date(now2.getFullYear(), now2.getMonth() - gi, 1);
+    var ym2 = gd.toISOString().slice(0, 7);
+    growthLabels.push(gd.toLocaleString('default', {month:'short'}) + ' ' + gd.getFullYear().toString().slice(2));
+    var count = customers.filter(function(c){
+      return (c.created_at || c.install_date || '').startsWith(ym2);
+    }).length;
+    growthData.push(count);
+  }
+
+  var thisMonthNew = growthData[growthData.length - 1];
+  var totalActive = customers.filter(function(c){ return daysRemaining(c.due_date) >= 0; }).length;
+  var lostCusts = customers.filter(function(c){
+    var d = new Date(c.install_date || 0);
+    return (now2 - d) > (180 * 86400000) && daysRemaining(c.due_date) < -30;
+  }).length;
+
+  var gsEl = document.getElementById('growth-stats');
+  if (gsEl) gsEl.innerHTML =
+    '<div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Total Customers</div><div class="stat-val" style="color:var(--teal)">'+customers.length+'</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">✨</div><div class="stat-label">New This Month</div><div class="stat-val text-green">'+thisMonthNew+'</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Active (valid filter)</div><div class="stat-val" style="color:var(--teal)">'+totalActive+'</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">😢</div><div class="stat-label">Inactive 6+ months</div><div class="stat-val text-red">'+lostCusts+'</div></div>';
+
+  var ctxGrowth = document.getElementById('chart-growth');
+  if (ctxGrowth) {
+    reportCharts.growth = new Chart(ctxGrowth.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: growthLabels,
+        datasets: [{
+          label: 'New Customers',
+          data: growthData,
+          borderColor: 'rgba(26,155,191,1)',
+          backgroundColor: 'rgba(26,155,191,0.12)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: 'rgba(26,155,191,1)',
+          fill: true,
+          tension: 0.35
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { family: 'Outfit', size: 11 } } },
+          y: { beginAtZero: true, ticks: { font: { family: 'Outfit', size: 11 }, stepSize: 1 } }
+        }
+      }
+    });
+  }
 }
 
 // ════════════════════════════════════════
@@ -2997,6 +3390,717 @@ async function submitFilterModel(e) {
   closeModal('modal-filter-model');
   document.getElementById('fm-form').reset();
   await renderFilterModels();
+}
+
+// ════════════════════════════════════════
+//  FEATURE 1: INVOICES
+// ════════════════════════════════════════
+var invEditId2 = null;
+var phCustomerId = null, phCustomerName = null;
+var cashPeriod = 'today';
+var poEditId = null;
+var cashCharts = {};
+
+async function renderInvoices() {
+  var tbody = document.getElementById('invoice-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--dim)">Loading…</td></tr>';
+  var invs;
+  try { invs = await db.from('invoices').select(); }
+  catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--red)">Error: '+(e.message||e)+'</td></tr>'; return; }
+
+  var paid = invs.filter(function(i){ return i.payment_status==='Paid'; });
+  var pending = invs.filter(function(i){ return i.payment_status==='Pending'; });
+  var partial = invs.filter(function(i){ return i.payment_status==='Partial'; });
+  var totalRev = invs.reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0); }, 0);
+  var totalPaid = invs.reduce(function(s,i){ return s+(parseFloat(i.amount_paid)||0); }, 0);
+  var dues = totalRev - totalPaid;
+
+  var sub = document.getElementById('inv-hdr-sub');
+  if (sub) sub.textContent = invs.length + ' invoices · Rs ' + totalRev.toLocaleString() + ' total';
+
+  var sr = document.getElementById('invoice-stat-row');
+  if (sr) sr.innerHTML =
+    '<div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-label">Total Invoices</div><div class="stat-val" style="color:var(--teal)">'+invs.length+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Paid</div><div class="stat-val text-green">'+paid.length+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-val text-red">'+pending.length+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Pending Dues</div><div class="stat-val text-red">Rs '+dues.toLocaleString()+'</div></div>';
+
+  var sorted = invs.slice().sort(function(a,b){ return (b.created_at||'').localeCompare(a.created_at||''); });
+  tbody.innerHTML = sorted.map(function(inv) {
+    var stCls = 'inv-status-' + (inv.payment_status||'pending').toLowerCase();
+    var paid2 = parseFloat(inv.amount_paid)||0;
+    var grand = parseFloat(inv.grand_total)||0;
+    var bal = grand - paid2;
+    return '<tr>' +
+      '<td><strong>'+esc(inv.invoice_number||'—')+'</strong></td>'+
+      '<td>'+esc(inv.customer_name||'—')+'<br><span style="font-size:11px;color:var(--dim)">'+esc(inv.customer_phone||'')+'</span></td>'+
+      '<td>'+fmtDate(inv.invoice_date||inv.created_at)+'</td>'+
+      '<td><strong>Rs '+grand.toLocaleString()+'</strong></td>'+
+      '<td style="color:'+(bal>0?'var(--red)':'var(--green)')+'">Rs '+paid2.toLocaleString()+'</td>'+
+      '<td><span class="badge '+stCls+'">'+esc(inv.payment_status||'Pending')+'</span></td>'+
+      '<td><div class="td-actions">'+
+        '<button class="btn btn-ghost btn-sm" onclick="viewInvoicePDF(\''+inv.id+'\')" title="View PDF">📄</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="whatsappInvoiceById(\''+inv.id+'\')" title="WhatsApp">💬</button>'+
+        (inv.payment_status!=='Paid'?'<button class="btn btn-green btn-sm" onclick="markInvoicePaid(\''+inv.id+'\')">✓ Paid</button>':'')+
+        '<button class="btn btn-danger btn-sm" onclick="deleteInvoice(\''+inv.id+'\')">🗑</button>'+
+      '</div></td>'+
+    '</tr>';
+  }).join('') || '<tr><td colspan="7" class="no-data">No invoices yet</td></tr>';
+}
+
+var _allInvoicesCache = [];
+async function openInvoiceModal(prefill) {
+  prefill = prefill || {};
+  invEditId2 = null;
+  document.getElementById('inv-modal-title2').textContent = 'Create Invoice';
+  document.getElementById('inv-f-customer').value = prefill.customer_name || '';
+  document.getElementById('inv-f-phone').value = prefill.customer_phone || '';
+  document.getElementById('inv-f-address').value = prefill.customer_address || '';
+  document.getElementById('inv-f-date').value = todayStr();
+  document.getElementById('inv-f-status').value = 'Pending';
+  document.getElementById('inv-f-method').value = 'Cash';
+  document.getElementById('inv-f-paid').value = '';
+  document.getElementById('inv-f-disc').value = '0';
+  document.getElementById('inv-f-tax').value = '0';
+  document.getElementById('inv-f-install').value = prefill.install_date || '';
+  document.getElementById('inv-f-expiry').value = prefill.expiry_date || '';
+  document.getElementById('inv-f-notes').value = '';
+
+  // Populate customer datalist
+  try {
+    var custs = await db.from('customers').select();
+    _allInvoicesCache = custs;
+    var dl = document.getElementById('inv-cust-list');
+    if (dl) dl.innerHTML = custs.map(function(c){ return '<option value="'+esc(c.name)+'" data-phone="'+esc(c.phone||'')+'" data-address="'+esc(c.address||'')+'">'; }).join('');
+  } catch(e2) { _allInvoicesCache = []; }
+
+  // Reset items
+  document.getElementById('inv-items-body').innerHTML = '';
+  if (prefill.items && prefill.items.length) {
+    prefill.items.forEach(function(it){ addInvItemRow(it); });
+  } else {
+    addInvItemRow();
+  }
+  updateInvTotals();
+  openModal('modal-invoice');
+}
+
+function autoFillCustomer() {
+  var name = document.getElementById('inv-f-customer').value;
+  var c = _allInvoicesCache.find(function(x){ return x.name === name; });
+  if (c) {
+    document.getElementById('inv-f-phone').value = c.phone || '';
+    document.getElementById('inv-f-address').value = c.address || '';
+    if (c.install_date) document.getElementById('inv-f-install').value = c.install_date;
+    if (c.due_date) document.getElementById('inv-f-expiry').value = c.due_date;
+  }
+}
+
+function addInvItemRow(item) {
+  item = item || {};
+  var tbody = document.getElementById('inv-items-body');
+  var idx = tbody.children.length;
+  var tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td><input class="item-input" placeholder="Description" value="'+esc(item.description||item.name||'')+'" oninput="updateInvTotals()"></td>'+
+    '<td><input class="item-input" type="number" min="1" value="'+(item.qty||1)+'" style="text-align:center" oninput="updateInvTotals()"></td>'+
+    '<td><input class="item-input" type="number" min="0" placeholder="0" value="'+(item.unit_price||'')+'" oninput="updateInvTotals()"></td>'+
+    '<td style="text-align:right;font-weight:600;font-size:12px;color:var(--navy)" class="row-total">Rs 0</td>'+
+    '<td><button type="button" class="btn-rm-row" onclick="this.closest(\'tr\').remove();updateInvTotals()">×</button></td>';
+  tbody.appendChild(tr);
+}
+
+function updateInvTotals() {
+  var rows = document.querySelectorAll('#inv-items-body tr');
+  var subtotal = 0;
+  rows.forEach(function(tr) {
+    var inputs = tr.querySelectorAll('input');
+    var qty = parseFloat(inputs[1] && inputs[1].value) || 0;
+    var up  = parseFloat(inputs[2] && inputs[2].value) || 0;
+    var rt  = qty * up;
+    subtotal += rt;
+    var rtEl = tr.querySelector('.row-total');
+    if (rtEl) rtEl.textContent = 'Rs ' + rt.toLocaleString();
+  });
+  var discPct = parseFloat(document.getElementById('inv-f-disc').value) || 0;
+  var taxPct  = parseFloat(document.getElementById('inv-f-tax').value) || 0;
+  var discAmt = subtotal * discPct / 100;
+  var afterDisc = subtotal - discAmt;
+  var taxAmt = afterDisc * taxPct / 100;
+  var grand  = afterDisc + taxAmt;
+  var paid   = parseFloat(document.getElementById('inv-f-paid').value) || 0;
+  var bal    = grand - paid;
+
+  document.getElementById('inv-t-sub').textContent   = 'Rs ' + subtotal.toLocaleString();
+  document.getElementById('inv-t-grand').textContent = 'Rs ' + grand.toLocaleString();
+  var discRow = document.getElementById('inv-t-disc-row');
+  var taxRow  = document.getElementById('inv-t-tax-row');
+  var balRow  = document.getElementById('inv-t-bal-row');
+  if (discRow) { discRow.style.display = discPct > 0 ? '' : 'none'; document.getElementById('inv-t-disc').textContent = '- Rs ' + discAmt.toFixed(0); }
+  if (taxRow)  { taxRow.style.display  = taxPct  > 0 ? '' : 'none'; document.getElementById('inv-t-tax').textContent  = '+ Rs ' + taxAmt.toFixed(0); }
+  if (balRow)  { balRow.style.display  = paid > 0 ? '' : 'none';    document.getElementById('inv-t-bal').textContent  = 'Rs ' + Math.max(0,bal).toLocaleString(); }
+}
+
+async function submitInvoice() {
+  var custName = document.getElementById('inv-f-customer').value.trim();
+  if (!custName) { alert('Customer name is required.'); return; }
+  var rows = document.querySelectorAll('#inv-items-body tr');
+  var items = [];
+  rows.forEach(function(tr) {
+    var inputs = tr.querySelectorAll('input');
+    var desc = inputs[0] && inputs[0].value.trim();
+    var qty  = parseFloat(inputs[1] && inputs[1].value) || 1;
+    var up   = parseFloat(inputs[2] && inputs[2].value) || 0;
+    if (desc) items.push({ description: desc, qty: qty, unit_price: up });
+  });
+  if (!items.length) { alert('Add at least one item.'); return; }
+
+  var discPct = parseFloat(document.getElementById('inv-f-disc').value) || 0;
+  var taxPct  = parseFloat(document.getElementById('inv-f-tax').value) || 0;
+  var subtotal = items.reduce(function(s,i){ return s+(i.qty*i.unit_price); }, 0);
+  var discAmt  = subtotal * discPct / 100;
+  var afterDisc = subtotal - discAmt;
+  var taxAmt   = afterDisc * taxPct / 100;
+  var grand    = afterDisc + taxAmt;
+  var paid     = parseFloat(document.getElementById('inv-f-paid').value) || 0;
+
+  var existInvs;
+  try { existInvs = await db.from('invoices').select(); } catch(e2) { existInvs = []; }
+
+  var invData = {
+    invoice_number:   nextInvoiceNumber(existInvs),
+    invoice_date:     document.getElementById('inv-f-date').value || todayStr(),
+    customer_name:    custName,
+    customer_phone:   document.getElementById('inv-f-phone').value.trim(),
+    customer_address: document.getElementById('inv-f-address').value.trim(),
+    items:            JSON.stringify(items),
+    subtotal:         subtotal,
+    discount_pct:     discPct,
+    tax_pct:          taxPct,
+    grand_total:      grand,
+    payment_status:   document.getElementById('inv-f-status').value,
+    payment_method:   document.getElementById('inv-f-method').value,
+    amount_paid:      paid,
+    install_date:     document.getElementById('inv-f-install').value || null,
+    expiry_date:      document.getElementById('inv-f-expiry').value || null,
+    notes:            document.getElementById('inv-f-notes').value.trim()
+  };
+
+  try {
+    var saved = await db.from('invoices').insert(invData);
+    closeModal('modal-invoice');
+    await renderInvoices();
+    // Offer PDF + WhatsApp
+    if (confirm('Invoice saved! Download PDF?')) {
+      downloadInvoicePDF(Object.assign({}, invData, { id: saved[0] && saved[0].id }));
+    }
+    var phone = invData.customer_phone;
+    if (phone && confirm('Send WhatsApp to customer?')) {
+      openWaThankYou({ customer_name: invData.customer_name, phone: phone, items: items, total: grand, expiry_date: invData.expiry_date, date: invData.invoice_date });
+    }
+  } catch(e) {
+    alert('Error saving invoice: ' + (e.message || e));
+  }
+}
+
+async function viewInvoicePDF(id) {
+  try {
+    var invs = await db.from('invoices').select();
+    var inv = invs.find(function(x){ return x.id == id; });
+    if (!inv) { alert('Invoice not found.'); return; }
+    inv.items = typeof inv.items === 'string' ? JSON.parse(inv.items) : (inv.items || []);
+    downloadInvoicePDF(inv);
+  } catch(e) { alert('Error: ' + (e.message||e)); }
+}
+
+async function whatsappInvoiceById(id) {
+  try {
+    var invs = await db.from('invoices').select();
+    var inv = invs.find(function(x){ return x.id == id; });
+    if (!inv) return;
+    inv.items = typeof inv.items === 'string' ? JSON.parse(inv.items) : (inv.items || []);
+    whatsappInvoice(inv);
+  } catch(e) { alert('Error: ' + (e.message||e)); }
+}
+
+async function markInvoicePaid(id) {
+  if (!confirm('Mark this invoice as Paid?')) return;
+  try {
+    var invs = await db.from('invoices').select();
+    var inv = invs.find(function(x){ return x.id == id; });
+    await db.from('invoices').update({ payment_status:'Paid', amount_paid: inv ? parseFloat(inv.grand_total)||0 : 0 }, 'id', id);
+    await renderInvoices();
+  } catch(e) { alert('Error: ' + (e.message||e)); }
+}
+
+async function deleteInvoice(id) {
+  if (!confirm('Delete this invoice?')) return;
+  try { await db.from('invoices').delete('id', id); await renderInvoices(); }
+  catch(e) { alert('Error: ' + (e.message||e)); }
+}
+
+// ════════════════════════════════════════
+//  FEATURE 5: PAYMENT HISTORY
+// ════════════════════════════════════════
+async function openPaymentHistory(custId, custName) {
+  phCustomerId = custId;
+  phCustomerName = custName;
+  document.getElementById('ph-modal-title').textContent = 'Payment History — ' + custName;
+  document.getElementById('ph-amount').value = '';
+  document.getElementById('ph-notes').value = '';
+  await refreshPaymentHistory();
+  openModal('modal-payment-history');
+}
+
+async function refreshPaymentHistory() {
+  var invoices, payments;
+  try { invoices = await db.from('invoices').select(); } catch(e2) { invoices = []; }
+  try { payments = await db.from('payments').select(); } catch(e2) { payments = []; }
+  var custInvs = invoices.filter(function(i){ return i.customer_name === phCustomerName; });
+  var custPayments = payments.filter(function(p){ return p.customer_name === phCustomerName; });
+  var totalBilled = custInvs.reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0); }, 0);
+  var totalPaid   = custInvs.reduce(function(s,i){ return s+(parseFloat(i.amount_paid)||0); }, 0);
+  var balance = totalBilled - totalPaid;
+
+  var sr = document.getElementById('ph-stat-row');
+  if (sr) sr.innerHTML =
+    '<div class="stat-card"><div class="stat-label">Total Billed</div><div class="stat-val" style="color:var(--teal);font-size:20px">Rs '+totalBilled.toLocaleString()+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Total Paid</div><div class="stat-val text-green;font-size:20px" style="font-size:20px;color:var(--green)">Rs '+totalPaid.toLocaleString()+'</div></div>'+
+    '<div class="stat-card" style="'+(balance>0?'border:1px solid var(--red)':'')+'"><div class="stat-label">Balance Owed</div><div class="stat-val" style="font-size:20px;color:'+(balance>0?'var(--red)':'var(--green)')+'">Rs '+balance.toLocaleString()+'</div></div>';
+
+  var tbody = document.getElementById('ph-tbody');
+  var rows = custInvs.map(function(i) {
+    var stCls = 'inv-status-' + (i.payment_status||'pending').toLowerCase();
+    return '<tr>'+
+      '<td>'+fmtDate(i.invoice_date||i.created_at)+'</td>'+
+      '<td>'+esc(i.invoice_number||'—')+'</td>'+
+      '<td>Rs '+(parseFloat(i.grand_total)||0).toLocaleString()+'</td>'+
+      '<td>'+esc(i.payment_method||'—')+'</td>'+
+      '<td><span class="badge '+stCls+'">'+esc(i.payment_status||'Pending')+'</span></td>'+
+    '</tr>';
+  });
+  // Add individual payments
+  custPayments.forEach(function(p){
+    rows.push('<tr style="background:rgba(22,163,74,.04)">'+
+      '<td>'+fmtDate(p.payment_date||p.created_at)+'</td>'+
+      '<td>'+esc(p.invoice_id||'—')+'</td>'+
+      '<td style="color:var(--green)"><strong>+ Rs '+(parseFloat(p.amount)||0).toLocaleString()+'</strong></td>'+
+      '<td>'+esc(p.method||'—')+'</td>'+
+      '<td><span class="badge badge-active">Payment</span></td>'+
+    '</tr>');
+  });
+  tbody.innerHTML = rows.join('') || '<tr><td colspan="5" class="no-data">No payment history</td></tr>';
+}
+
+async function recordPayment() {
+  var amt = parseFloat(document.getElementById('ph-amount').value);
+  if (!amt || amt <= 0) { alert('Enter a valid amount.'); return; }
+  var method = document.getElementById('ph-method').value;
+  var notes  = document.getElementById('ph-notes').value.trim();
+  try {
+    await db.from('payments').insert({
+      customer_name: phCustomerName,
+      amount:        amt,
+      method:        method,
+      notes:         notes,
+      payment_date:  todayStr()
+    });
+    document.getElementById('ph-amount').value = '';
+    document.getElementById('ph-notes').value = '';
+    await refreshPaymentHistory();
+    alert('Payment recorded.');
+  } catch(e) { alert('Error recording payment: ' + (e.message||e)); }
+}
+
+// ════════════════════════════════════════
+//  FEATURE 4: CASH REPORT
+// ════════════════════════════════════════
+function setCashPeriod(el, period) {
+  cashPeriod = period;
+  document.querySelectorAll('.period-tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  var cr = document.getElementById('cr-custom-range');
+  if (cr) cr.style.display = period === 'custom' ? 'flex' : 'none';
+  renderCashReport();
+}
+
+function getCashDateRange() {
+  var today = todayStr();
+  var d = new Date();
+  if (cashPeriod === 'today') return { from: today, to: today };
+  if (cashPeriod === 'yesterday') {
+    var y = new Date(d); y.setDate(y.getDate()-1);
+    var ys = y.toISOString().split('T')[0];
+    return { from: ys, to: ys };
+  }
+  if (cashPeriod === 'week') {
+    var wk = new Date(d); wk.setDate(wk.getDate()-6);
+    return { from: wk.toISOString().split('T')[0], to: today };
+  }
+  if (cashPeriod === 'month') {
+    return { from: new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0], to: today };
+  }
+  if (cashPeriod === 'custom') {
+    return { from: document.getElementById('cr-from').value || today, to: document.getElementById('cr-to').value || today };
+  }
+  return { from: today, to: today };
+}
+
+function destroyCashCharts() {
+  ['main','type','method'].forEach(function(k){
+    if (cashCharts[k]) { cashCharts[k].destroy(); cashCharts[k] = null; }
+  });
+}
+
+async function renderCashReport() {
+  destroyCashCharts();
+  var range = getCashDateRange();
+  var jobs, sales, invoices;
+  try { jobs = await db.from('jobs').select(); } catch(e2) { jobs = []; }
+  try { sales = await db.from('daily_sales').select(); } catch(e2) { sales = []; }
+  try { invoices = await db.from('invoices').select(); } catch(e2) { invoices = []; }
+
+  // Filter by date range
+  function inRange(dateStr) {
+    if (!dateStr) return false;
+    var d = (dateStr||'').slice(0,10);
+    return d >= range.from && d <= range.to;
+  }
+
+  var filtJobs = jobs.filter(function(j){ return j.status==='Completed' && inRange(j.scheduled_date); });
+  var filtSales = sales.filter(function(s){ return inRange((s.sold_at||'').slice(0,10)); });
+  var filtInvs = invoices.filter(function(i){ return inRange((i.invoice_date||i.created_at||'').slice(0,10)); });
+
+  var jobRevenue = filtJobs.reduce(function(s,j){ return s+(parseFloat(j.labor)||0)+(parseFloat(j.parts_cost)||0); },0);
+  var salesRevenue = filtSales.reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
+  var invRevenue = filtInvs.reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0); },0);
+
+  var totalRevenue = jobRevenue + salesRevenue;
+  var cashAmt = filtSales.filter(function(s){ return s.payment_method==='Cash'; }).reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
+  var cardAmt = filtSales.filter(function(s){ return s.payment_method==='Card'; }).reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
+  var onlineAmt = filtSales.filter(function(s){ return s.payment_method==='Online Transfer'; }).reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
+  var pendingDues2 = filtInvs.filter(function(i){ return i.payment_status!=='Paid'; }).reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0)-(parseFloat(i.amount_paid)||0); },0);
+
+  var sr = document.getElementById('cr-stat-row');
+  if (sr) sr.innerHTML =
+    '<div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Total Revenue</div><div class="stat-val text-green">Rs '+totalRevenue.toLocaleString()+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">💵</div><div class="stat-label">Cash</div><div class="stat-val" style="color:var(--navy)">Rs '+cashAmt.toLocaleString()+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">💳</div><div class="stat-label">Card</div><div class="stat-val" style="color:var(--blue)">Rs '+cardAmt.toLocaleString()+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">📱</div><div class="stat-label">Online</div><div class="stat-val" style="color:var(--teal)">Rs '+onlineAmt.toLocaleString()+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Pending Dues</div><div class="stat-val text-red">Rs '+pendingDues2.toLocaleString()+'</div></div>';
+
+  // Main chart — hourly for single day, daily for range
+  var isSingleDay = range.from === range.to;
+  var mainLabels = [], mainData = [];
+  if (isSingleDay) {
+    document.getElementById('cr-chart-title').textContent = '📊 Hourly Revenue';
+    for (var h = 6; h <= 22; h++) {
+      var hLabel = (h % 12 || 12) + (h < 12 ? ' AM' : ' PM');
+      mainLabels.push(hLabel);
+      var hr = filtSales.filter(function(s){ var sh = new Date(s.sold_at||'').getHours(); return sh === h; })
+        .reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
+      mainData.push(hr);
+    }
+  } else {
+    document.getElementById('cr-chart-title').textContent = '📊 Daily Revenue';
+    var cur = new Date(range.from);
+    var end2 = new Date(range.to);
+    while (cur <= end2) {
+      var ds = cur.toISOString().split('T')[0];
+      mainLabels.push(ds.slice(5));
+      var dayRev = filtSales.filter(function(s){ return (s.sold_at||'').startsWith(ds); }).reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
+      mainData.push(dayRev);
+      cur.setDate(cur.getDate()+1);
+    }
+  }
+
+  var ctxMain = document.getElementById('chart-cash-main');
+  if (ctxMain) cashCharts.main = new Chart(ctxMain.getContext('2d'), {
+    type:'bar', data:{ labels:mainLabels, datasets:[{ label:'Revenue (Rs)', data:mainData, backgroundColor:'rgba(26,155,191,0.8)', borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{ grid:{display:false} }, y:{ beginAtZero:true, ticks:{ callback:function(v){ return 'Rs '+(v>=1000?(v/1000).toFixed(0)+'k':v); } } } } }
+  });
+
+  // By job type
+  var typeMap = {};
+  filtJobs.forEach(function(j){ var t=j.job_type||'Other'; typeMap[t]=(typeMap[t]||0)+(parseFloat(j.labor)||0)+(parseFloat(j.parts_cost)||0); });
+  var ctxType = document.getElementById('chart-cash-type');
+  if (ctxType) {
+    var typeKeys = Object.keys(typeMap);
+    cashCharts.type = new Chart(ctxType.getContext('2d'), {
+      type:'doughnut',
+      data:{ labels:typeKeys.length?typeKeys:['No jobs'], datasets:[{ data:typeKeys.length?typeKeys.map(function(k){return typeMap[k];}):[1], backgroundColor:['rgba(26,155,191,.85)','rgba(13,34,51,.8)','rgba(202,138,4,.85)','rgba(22,163,74,.85)'], borderWidth:2, borderColor:'#fff' }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'55%', plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Outfit',size:11} } } } }
+    });
+  }
+
+  // By payment method
+  var ctxMethod = document.getElementById('chart-cash-method');
+  if (ctxMethod) cashCharts.method = new Chart(ctxMethod.getContext('2d'), {
+    type:'pie',
+    data:{ labels:['Cash','Card','Online'], datasets:[{ data:[cashAmt,cardAmt,onlineAmt], backgroundColor:['rgba(22,163,74,.85)','rgba(37,99,235,.85)','rgba(26,155,191,.85)'], borderWidth:2, borderColor:'#fff' }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Outfit',size:11} } } } }
+  });
+
+  // Top customers by amount
+  var custMap = {};
+  filtInvs.forEach(function(i){ var n=i.customer_name||'—'; custMap[n]=(custMap[n]||0)+(parseFloat(i.grand_total)||0); });
+  var topCusts = Object.keys(custMap).sort(function(a,b){ return custMap[b]-custMap[a]; }).slice(0,5);
+  var tcEl = document.getElementById('cr-top-customers');
+  if (tcEl) tcEl.innerHTML = topCusts.map(function(n,i2){
+    return '<div class="urg-item"><div class="urg-days" style="background:rgba(26,155,191,.1);color:var(--teal);font-size:12px">#'+(i2+1)+'</div>'+
+      '<div class="urg-info"><div class="urg-name">'+esc(n)+'</div></div>'+
+      '<strong style="color:var(--navy);font-size:13px">Rs '+custMap[n].toLocaleString()+'</strong></div>';
+  }).join('') || '<div class="widget-empty">No data</div>';
+
+  // Top items sold
+  var itemMap = {};
+  filtSales.forEach(function(s){ var it=s.item||'—'; itemMap[it]=(itemMap[it]||0)+(parseFloat(s.total)||0); });
+  var topItems = Object.keys(itemMap).sort(function(a,b){ return itemMap[b]-itemMap[a]; }).slice(0,5);
+  var tiEl = document.getElementById('cr-top-items');
+  if (tiEl) tiEl.innerHTML = topItems.map(function(n,i2){
+    return '<div class="urg-item"><div class="urg-days" style="background:rgba(13,34,51,.08);color:var(--navy);font-size:12px">#'+(i2+1)+'</div>'+
+      '<div class="urg-info"><div class="urg-name">'+esc(n)+'</div></div>'+
+      '<strong style="color:var(--green);font-size:13px">Rs '+itemMap[n].toLocaleString()+'</strong></div>';
+  }).join('') || '<div class="widget-empty">No data</div>';
+}
+
+async function downloadCashReportPDF() {
+  var jsPDFc = window.jspdf && window.jspdf.jsPDF;
+  if (!jsPDFc) { alert('PDF library not loaded.'); return; }
+  var range = getCashDateRange();
+  var doc2 = new jsPDFc({ unit:'mm', format:'a4' });
+  var pw2 = doc2.internal.pageSize.getWidth();
+  doc2.setFillColor(13,34,51); doc2.rect(0,0,pw2,30,'F');
+  doc2.setTextColor(255,255,255); doc2.setFont('helvetica','bold'); doc2.setFontSize(16);
+  doc2.text('ABBOTT WATER FILTERS — CASH REPORT', pw2/2, 14, {align:'center'});
+  doc2.setFontSize(10); doc2.setFont('helvetica','normal');
+  doc2.text('Period: '+range.from+' to '+range.to, pw2/2, 22, {align:'center'});
+  doc2.setTextColor(13,34,51); doc2.setFontSize(12);
+  var statEl = document.getElementById('cr-stat-row');
+  var statText = statEl ? statEl.innerText.replace(/\n+/g,' | ') : '';
+  doc2.text(statText, 14, 42);
+  doc2.setFontSize(9); doc2.setTextColor(90,112,128);
+  doc2.text('Generated: '+new Date().toLocaleString('en-GB'), 14, doc2.internal.pageSize.getHeight()-8);
+  doc2.save('CashReport-'+range.from+'-to-'+range.to+'.pdf');
+}
+
+async function waCashReport() {
+  var range = getCashDateRange();
+  var statEl = document.getElementById('cr-stat-row');
+  var stats = statEl ? statEl.innerText : '—';
+  var msg = '*Abbott Water Filters — Cash Report*\nPeriod: '+range.from+' to '+range.to+'\n\n'+stats+'\n\n— Manager Dashboard';
+  window.open('https://wa.me/923488115410?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ════════════════════════════════════════
+//  FEATURE 6: PURCHASE ORDERS
+// ════════════════════════════════════════
+async function renderPurchaseOrders() {
+  var tbody = document.getElementById('po-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--dim)">Loading…</td></tr>';
+  var pos;
+  try { pos = await db.from('purchase_orders').select(); } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--red)">Error: '+(e.message||e)+'</td></tr>'; return; }
+
+  var byStatus = { Draft:0, Sent:0, Received:0, Cancelled:0 };
+  pos.forEach(function(p){ if(byStatus[p.status]!==undefined) byStatus[p.status]++; });
+  var total = pos.reduce(function(s,p){ return s+(parseFloat(p.total_cost)||0); },0);
+
+  var sr = document.getElementById('po-stat-row');
+  if (sr) sr.innerHTML =
+    '<div class="stat-card"><div class="stat-icon">📋</div><div class="stat-label">Total POs</div><div class="stat-val" style="color:var(--teal)">'+pos.length+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">📝</div><div class="stat-label">Draft</div><div class="stat-val" style="color:var(--yellow)">'+byStatus.Draft+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">📤</div><div class="stat-label">Sent</div><div class="stat-val" style="color:var(--blue)">'+byStatus.Sent+'</div></div>'+
+    '<div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Received</div><div class="stat-val text-green">'+byStatus.Received+'</div></div>';
+
+  var sorted = pos.slice().sort(function(a,b){ return (b.created_at||'').localeCompare(a.created_at||''); });
+  tbody.innerHTML = sorted.map(function(po) {
+    var stCls = 'po-status-' + (po.status||'draft').toLowerCase();
+    var itemCount = 0;
+    try { var pit = JSON.parse(po.items||'[]'); itemCount = pit.length; } catch(e2){}
+    return '<tr>'+
+      '<td><strong>'+esc(po.po_number||'—')+'</strong></td>'+
+      '<td>'+esc(po.supplier||'—')+'</td>'+
+      '<td>'+itemCount+' item'+( itemCount!==1?'s':'')+'</td>'+
+      '<td>Rs '+(parseFloat(po.total_cost)||0).toLocaleString()+'</td>'+
+      '<td><span class="badge '+stCls+'">'+esc(po.status||'Draft')+'</span></td>'+
+      '<td>'+fmtDate(po.created_at)+'</td>'+
+      '<td><div class="td-actions">'+
+        '<button class="btn btn-ghost btn-sm" onclick="waPO(\''+po.id+'\')" title="WhatsApp Supplier">💬</button>'+
+        (po.status!=='Received'&&po.status!=='Cancelled'?'<button class="btn btn-green btn-sm" onclick="markPOReceived(\''+po.id+'\')">✓ Received</button>':'')+
+        '<button class="btn btn-danger btn-sm" onclick="deletePO(\''+po.id+'\')">🗑</button>'+
+      '</div></td>'+
+    '</tr>';
+  }).join('') || '<tr><td colspan="7" class="no-data">No purchase orders yet</td></tr>';
+}
+
+async function openPOModal(prefillItems) {
+  poEditId = null;
+  document.getElementById('po-modal-title').textContent = 'Create Purchase Order';
+  document.getElementById('po-modal-btn').textContent = 'Create PO';
+  document.getElementById('po-f-supplier').value = '';
+  document.getElementById('po-f-status').value = 'Draft';
+  document.getElementById('po-f-notes').value = '';
+  document.getElementById('po-items-body').innerHTML = '';
+  if (prefillItems && prefillItems.length) {
+    prefillItems.forEach(function(it){ addPOItemRow(it); });
+  } else {
+    addPOItemRow();
+  }
+  updatePOTotal();
+  openModal('modal-po');
+}
+
+function addPOItemRow(item) {
+  item = item || {};
+  var tbody = document.getElementById('po-items-body');
+  var tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td><input class="item-input" placeholder="Item name" value="'+esc(item.name||item.description||'')+'" oninput="updatePOTotal()"></td>'+
+    '<td><input class="item-input" type="number" min="1" value="'+(item.qty||1)+'" style="text-align:center" oninput="updatePOTotal()"></td>'+
+    '<td><input class="item-input" type="number" min="0" placeholder="0" value="'+(item.cost_per_unit||'')+'" oninput="updatePOTotal()"></td>'+
+    '<td style="text-align:right;font-weight:600;font-size:12px;color:var(--navy)" class="row-total">Rs 0</td>'+
+    '<td><button type="button" class="btn-rm-row" onclick="this.closest(\'tr\').remove();updatePOTotal()">×</button></td>';
+  tbody.appendChild(tr);
+}
+
+function updatePOTotal() {
+  var rows = document.querySelectorAll('#po-items-body tr');
+  var total = 0;
+  rows.forEach(function(tr) {
+    var inputs = tr.querySelectorAll('input');
+    var qty = parseFloat(inputs[1]&&inputs[1].value)||0;
+    var cpu = parseFloat(inputs[2]&&inputs[2].value)||0;
+    var rt  = qty * cpu;
+    total += rt;
+    var rtEl = tr.querySelector('.row-total');
+    if (rtEl) rtEl.textContent = 'Rs ' + rt.toLocaleString();
+  });
+  var el = document.getElementById('po-total');
+  if (el) el.textContent = 'Rs ' + total.toLocaleString();
+}
+
+async function submitPO() {
+  var supplier = document.getElementById('po-f-supplier').value.trim();
+  if (!supplier) { alert('Supplier is required.'); return; }
+  var rows = document.querySelectorAll('#po-items-body tr');
+  var items = [];
+  var total = 0;
+  rows.forEach(function(tr) {
+    var inputs = tr.querySelectorAll('input');
+    var name = inputs[0]&&inputs[0].value.trim();
+    var qty  = parseFloat(inputs[1]&&inputs[1].value)||1;
+    var cpu  = parseFloat(inputs[2]&&inputs[2].value)||0;
+    if (name) { items.push({ name:name, qty:qty, cost_per_unit:cpu }); total += qty*cpu; }
+  });
+  if (!items.length) { alert('Add at least one item.'); return; }
+
+  var existPos;
+  try { existPos = await db.from('purchase_orders').select(); } catch(e2) { existPos = []; }
+  var poData = {
+    po_number:  nextPONumber(existPos),
+    supplier:   supplier,
+    items:      JSON.stringify(items),
+    total_cost: total,
+    status:     document.getElementById('po-f-status').value,
+    notes:      document.getElementById('po-f-notes').value.trim()
+  };
+  try {
+    await db.from('purchase_orders').insert(poData);
+    closeModal('modal-po');
+    await renderPurchaseOrders();
+  } catch(e) { alert('Error saving PO: '+(e.message||e)); }
+}
+
+async function markPOReceived(id) {
+  if (!confirm('Mark as Received? This will update inventory stock.')) return;
+  try {
+    var pos = await db.from('purchase_orders').select();
+    var po = pos.find(function(x){ return x.id == id; });
+    if (!po) return;
+    await db.from('purchase_orders').update({ status:'Received' }, 'id', id);
+    // Update inventory for each item
+    var items = [];
+    try { items = JSON.parse(po.items||'[]'); } catch(e2){}
+    var inv = await db.from('inventory').select();
+    for (var ii = 0; ii < items.length; ii++) {
+      var pit = items[ii];
+      var invItem = inv.find(function(x){ return x.name.toLowerCase() === (pit.name||'').toLowerCase(); });
+      if (invItem) {
+        var newStock = (invItem.stock||0) + (parseFloat(pit.qty)||0);
+        await db.from('inventory').update({ stock: newStock }, 'id', invItem.id);
+        await db.from('inventory_transactions').insert({
+          item_id: invItem.id, item_name: invItem.name,
+          change_type: 'PURCHASE', quantity_change: parseFloat(pit.qty)||0,
+          stock_after: newStock, reason: 'PO Received: ' + (po.po_number||id)
+        });
+      }
+    }
+    await renderPurchaseOrders();
+    alert('PO marked as Received. Inventory updated.');
+  } catch(e) { alert('Error: '+(e.message||e)); }
+}
+
+async function waPO(id) {
+  try {
+    var pos = await db.from('purchase_orders').select();
+    var po = pos.find(function(x){ return x.id == id; });
+    if (!po) return;
+    var items = [];
+    try { items = JSON.parse(po.items||'[]'); } catch(e2){}
+    var itemsList = items.map(function(i){ return '  - '+i.name+' x'+i.qty+' @ Rs '+i.cost_per_unit+' each'; }).join('\n');
+    var msg = '*Purchase Order: '+po.po_number+'*\nTo: '+po.supplier+'\n\n*Items Required:*\n'+itemsList+'\n\n*Total: Rs '+parseFloat(po.total_cost).toLocaleString()+'*\n\n'+(po.notes?'Notes: '+po.notes+'\n\n':'')+'— Abbott Water Filters\n0348-8115410 / 0335-6590095';
+    // Use a general supplier number prompt since we don't have supplier phone
+    var phone = prompt('Enter supplier WhatsApp number (with country code, e.g. 923001234567):');
+    if (phone) window.open('https://wa.me/'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  } catch(e) { alert('Error: '+(e.message||e)); }
+}
+
+async function deletePO(id) {
+  if (!confirm('Delete this purchase order?')) return;
+  try { await db.from('purchase_orders').delete('id', id); await renderPurchaseOrders(); }
+  catch(e) { alert('Error: '+(e.message||e)); }
+}
+
+async function autoCreatePOForLowStock() {
+  var inv;
+  try { inv = await db.from('inventory').select(); } catch(e2) { return; }
+  var lowItems = inv.filter(function(i){ return (i.stock||0) <= (i.reorder_level||0); });
+  if (!lowItems.length) return;
+
+  // Group by supplier
+  var bySupplier = {};
+  lowItems.forEach(function(i) {
+    var sup = i.supplier || 'Unknown Supplier';
+    if (!bySupplier[sup]) bySupplier[sup] = [];
+    bySupplier[sup].push({
+      name: i.name,
+      qty: Math.max(1, (i.reorder_level||1)*3 - (i.stock||0)),
+      cost_per_unit: i.unit_price || 0
+    });
+  });
+
+  var existPos;
+  try { existPos = await db.from('purchase_orders').select(); } catch(e2) { existPos = []; }
+  var created = 0;
+  for (var sup in bySupplier) {
+    var items = bySupplier[sup];
+    var total = items.reduce(function(s,it){ return s+(it.qty*it.cost_per_unit); },0);
+    try {
+      await db.from('purchase_orders').insert({
+        po_number:  nextPONumber(existPos),
+        supplier:   sup,
+        items:      JSON.stringify(items),
+        total_cost: total,
+        status:     'Draft',
+        notes:      'Auto-created from low stock alert'
+      });
+      existPos.push({ po_number: nextPONumber(existPos) });
+      created++;
+    } catch(e2) { console.error('Auto PO error:', e2); }
+  }
+  if (created > 0) alert(created + ' Draft Purchase Order(s) created for low stock items. Check Purchase Orders.');
 }
 
 // ── Sidebar toggle (mobile) ──

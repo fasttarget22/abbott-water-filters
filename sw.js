@@ -1,4 +1,4 @@
-var CACHE_NAME = 'awf-v3';
+var CACHE_NAME = 'awf-v4';
 var FILES_TO_CACHE = [
   '/index.html',
   '/shop.html',
@@ -8,6 +8,7 @@ var FILES_TO_CACHE = [
   '/step3-technician-dashboard.html',
   '/step4-sales-dashboard.html',
   '/supabase-config.js',
+  '/invoice.js',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png'

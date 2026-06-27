@@ -480,6 +480,7 @@ tbody tr:hover{background:#f8fafc;}
 </div>
 
 <script src="supabase-config.js"></script>
+<script src="invoice.js"></script>
 <script>
 var currentUser = null;
 var currentLogCustomer = null;
@@ -918,6 +919,50 @@ async function submitSale() {
     }
   }
 
+  // 2b. Auto-deduct inventory + log transaction
+  try {
+    var invItems = await db.from('inventory').select();
+    var match = null;
+    for (var iv = 0; iv < invItems.length; iv++) {
+      if (invItems[iv].name && invItems[iv].name.toLowerCase().indexOf(item.toLowerCase()) >= 0) {
+        match = invItems[iv]; break;
+      }
+    }
+    if (match) {
+      var newStock = Math.max(0, (match.stock||0) - quantity);
+      await db.from('inventory').update({ stock: newStock }, 'id', match.id);
+      await db.from('inventory_transactions').insert({
+        item_id: match.id, item_name: match.name,
+        change_type: 'SALE', quantity_change: -quantity,
+        stock_after: newStock,
+        reason: 'Sale to ' + (custName||'Walk-in') + ' by ' + currentUser.name
+      });
+      created.push('Inventory updated (' + match.name + ': ' + (match.stock||0) + ' → ' + newStock + ')');
+      if (newStock <= (match.reorder_level||0)) {
+        var alertMsg = '⚠️ LOW STOCK: ' + match.name + ' is now at ' + newStock + ' units (reorder level: ' + match.reorder_level + ')';
+        errors.push(alertMsg);
+      }
+    }
+  } catch(einv) {
+    console.error('Inventory deduct error:', einv);
+  }
+
+  // 2c. Log WhatsApp thank you button
+  if (phone || custName) {
+    var thankData = {
+      customer_name: custName || 'Walk-in Customer',
+      phone: phone,
+      item: item, quantity: quantity,
+      total: total,
+      date: todayStr()
+    };
+    var waMsg2 = buildWaThankYou ? buildWaThankYou(thankData) : '';
+    if (waMsg2 && phone) {
+      var waPhone2 = normalizePhone(phone);
+      errors.push('💬 <a href="https://wa.me/'+waPhone2+'?text='+encodeURIComponent(waMsg2)+'" target="_blank" style="color:var(--teal);font-weight:600">Send WhatsApp Thank You →</a>');
+    }
+  }
+
   // 3. Schedule installation job if toggle is on
   if (needsInstall && installDate) {
     try {
@@ -948,9 +993,20 @@ async function submitSale() {
   closeSaleModal();
   renderSales().catch(function(e){ console.error(e); });
 
+  // Show result toast/modal
+  var plainErrors = errors.filter(function(e2){ return !e2.includes('<a '); });
+  var waLinks = errors.filter(function(e2){ return e2.includes('<a '); });
   var msg = created.map(function(s){ return s + ' ✓'; }).join('\n');
-  if (errors.length) msg += '\n\nWarnings:\n' + errors.join('\n');
-  alert(msg);
+  if (plainErrors.length) msg += '\n\n' + plainErrors.join('\n');
+  if (msg) alert(msg);
+  if (waLinks.length) {
+    var div = document.createElement('div');
+    div.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:9999;font-family:Outfit,sans-serif;max-width:320px';
+    div.innerHTML = '<div style="font-weight:700;color:var(--navy);margin-bottom:8px">Sale Saved!</div>' + waLinks.join('<br>') +
+      '<button onclick="this.parentNode.remove()" style="margin-top:10px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:12px">✕ Close</button>';
+    document.body.appendChild(div);
+    setTimeout(function(){ if(div.parentNode) div.remove(); }, 15000);
+  }
 }
 async function deleteSale(id) {
   if (!confirm('Delete this sale entry?')) return;
