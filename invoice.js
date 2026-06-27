@@ -107,12 +107,10 @@ function generateInvoicePDF(inv) {
   y += 8;
 
   // ── Totals ────────────────────────────────────────────
-  var discPct = parseFloat(inv.discount_pct) || 0;
-  var taxPct  = parseFloat(inv.tax_pct) || 0;
-  var discAmt = subtotal * discPct / 100;
-  var afterDisc = subtotal - discAmt;
-  var taxAmt = afterDisc * taxPct / 100;
-  var grand  = parseFloat(inv.grand_total) || (afterDisc + taxAmt);
+  // Accept pre-calculated amounts (new schema) or fall back to pct fields (legacy)
+  var discAmt  = parseFloat(inv.discount) || (subtotal * (parseFloat(inv.discount_pct)||0) / 100);
+  var taxAmt   = parseFloat(inv.tax)      || ((subtotal - discAmt) * (parseFloat(inv.tax_pct)||0) / 100);
+  var grand    = parseFloat(inv.total || inv.grand_total) || (subtotal - discAmt + taxAmt);
   var tx = pw - 85;
 
   function trow(label, val, isBold, rgb) {
@@ -125,8 +123,8 @@ function generateInvoicePDF(inv) {
   }
 
   trow('Subtotal:', 'Rs ' + subtotal.toLocaleString());
-  if (discPct > 0) trow('Discount (' + discPct + '%):', '- Rs ' + discAmt.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-  if (taxPct > 0) trow('Tax (' + taxPct + '%):', '+ Rs ' + taxAmt.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+  if (discAmt > 0) trow('Discount:', '- Rs ' + discAmt.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+  if (taxAmt  > 0) trow('Tax:', '+ Rs ' + taxAmt.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
 
   doc.setFillColor(26, 155, 191);
   doc.roundedRect(tx - 4, y - 3, pw - 14 - tx + 18, 12, 2, 2, 'F');
@@ -153,7 +151,9 @@ function generateInvoicePDF(inv) {
   }
 
   // ── Filter dates ─────────────────────────────────────
-  if (inv.install_date || inv.expiry_date) {
+  var installDate = inv.filter_install_date || inv.install_date;
+  var expiryDate  = inv.filter_expiry_date  || inv.expiry_date;
+  if (installDate || expiryDate) {
     y += 3;
     doc.setFillColor(240, 244, 248);
     doc.roundedRect(14, y, pw - 28, 14, 2, 2, 'F');
@@ -164,8 +164,8 @@ function generateInvoicePDF(inv) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(90, 112, 128);
     var fline = '';
-    if (inv.install_date) fline += 'Install Date: ' + inv.install_date;
-    if (inv.expiry_date) fline += (fline ? '    |    ' : '') + 'Next Change Due: ' + inv.expiry_date;
+    if (installDate) fline += 'Install Date: ' + installDate;
+    if (expiryDate)  fline += (fline ? '    |    ' : '') + 'Next Change Due: ' + expiryDate;
     doc.text(fline, 18, y + 11);
     y += 18;
   }
@@ -209,15 +209,17 @@ function whatsappInvoice(inv) {
     var t = (parseFloat(i.qty || 1) * parseFloat(i.unit_price || 0)).toLocaleString();
     return '  - ' + (i.description || i.name) + ' x' + (i.qty || 1) + ' = Rs ' + t;
   }).join('\n');
-  var grand = parseFloat(inv.grand_total || 0);
+  var grand = parseFloat(inv.total || inv.grand_total || 0);
+  var invDate = (inv.invoice_date || inv.created_at || '').slice(0, 10);
+  var expiryWa = inv.filter_expiry_date || inv.expiry_date;
   var msg =
     'Assalam u Alaikum *' + (inv.customer_name || 'Customer') + '*\n\n' +
     '*Abbott Water Filters — Invoice ' + (inv.invoice_number || '') + '*\n' +
-    'Date: ' + (inv.invoice_date || '').slice(0, 10) + '\n\n' +
+    'Date: ' + invDate + '\n\n' +
     '*Items:*\n' + (itemsList || '—') + '\n\n' +
     '*Grand Total: Rs ' + grand.toLocaleString() + '*\n' +
     'Status: ' + (inv.payment_status || 'Pending') + '\n' +
-    (inv.expiry_date ? '\nNext Filter Change: ' + inv.expiry_date + '\nWe will remind you before expiry.\n' : '') +
+    (expiryWa ? '\nNext Filter Change: ' + expiryWa + '\nWe will remind you before expiry.\n' : '') +
     '\n📞 0348-8115410 / 0335-6590095\n' +
     'Kamran Plaza, College Road Mandian, Abbottabad\n' +
     '\n— *Abbott Water Filters*';

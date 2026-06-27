@@ -1516,7 +1516,7 @@ async function renderDashboard(){
   try { invoices = await db.from('invoices').select(); } catch(e2) { invoices = []; }
   var pendingDues = invoices
     .filter(function(inv){ return inv.payment_status !== 'Paid'; })
-    .reduce(function(s, inv){ return s + (parseFloat(inv.grand_total)||0) - (parseFloat(inv.amount_paid)||0); }, 0);
+    .reduce(function(s, inv){ return s + (parseFloat(inv.balance_due) || Math.max(0, (parseFloat(inv.total)||0) - (parseFloat(inv.amount_paid)||0))); }, 0);
 
   document.getElementById('stat-row').innerHTML = `
     <div class="stat-card">
@@ -3413,7 +3413,7 @@ async function renderInvoices() {
   var paid = invs.filter(function(i){ return i.payment_status==='Paid'; });
   var pending = invs.filter(function(i){ return i.payment_status==='Pending'; });
   var partial = invs.filter(function(i){ return i.payment_status==='Partial'; });
-  var totalRev = invs.reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0); }, 0);
+  var totalRev = invs.reduce(function(s,i){ return s+(parseFloat(i.total)||0); }, 0);
   var totalPaid = invs.reduce(function(s,i){ return s+(parseFloat(i.amount_paid)||0); }, 0);
   var dues = totalRev - totalPaid;
 
@@ -3431,8 +3431,8 @@ async function renderInvoices() {
   tbody.innerHTML = sorted.map(function(inv) {
     var stCls = 'inv-status-' + (inv.payment_status||'pending').toLowerCase();
     var paid2 = parseFloat(inv.amount_paid)||0;
-    var grand = parseFloat(inv.grand_total)||0;
-    var bal = grand - paid2;
+    var grand = parseFloat(inv.total)||0;
+    var bal = parseFloat(inv.balance_due) || Math.max(0, grand - paid2);
     return '<tr>' +
       '<td><strong>'+esc(inv.invoice_number||'—')+'</strong></td>'+
       '<td>'+esc(inv.customer_name||'—')+'<br><span style="font-size:11px;color:var(--dim)">'+esc(inv.customer_phone||'')+'</span></td>'+
@@ -3569,36 +3569,44 @@ async function submitInvoice() {
   var existInvs;
   try { existInvs = await db.from('invoices').select(); } catch(e2) { existInvs = []; }
 
+  var invDate = document.getElementById('inv-f-date').value || todayStr();
   var invData = {
-    invoice_number:   nextInvoiceNumber(existInvs),
-    invoice_date:     document.getElementById('inv-f-date').value || todayStr(),
-    customer_name:    custName,
-    customer_phone:   document.getElementById('inv-f-phone').value.trim(),
-    customer_address: document.getElementById('inv-f-address').value.trim(),
-    items:            JSON.stringify(items),
-    subtotal:         subtotal,
-    discount_pct:     discPct,
-    tax_pct:          taxPct,
-    grand_total:      grand,
-    payment_status:   document.getElementById('inv-f-status').value,
-    payment_method:   document.getElementById('inv-f-method').value,
-    amount_paid:      paid,
-    install_date:     document.getElementById('inv-f-install').value || null,
-    expiry_date:      document.getElementById('inv-f-expiry').value || null,
-    notes:            document.getElementById('inv-f-notes').value.trim()
+    invoice_number:      nextInvoiceNumber(existInvs),
+    customer_name:       custName,
+    customer_phone:      document.getElementById('inv-f-phone').value.trim(),
+    customer_address:    document.getElementById('inv-f-address').value.trim(),
+    items:               JSON.stringify(items),
+    subtotal:            subtotal,
+    discount:            parseFloat(discAmt.toFixed(2)),
+    tax:                 parseFloat(taxAmt.toFixed(2)),
+    total:               parseFloat(grand.toFixed(2)),
+    payment_status:      document.getElementById('inv-f-status').value,
+    payment_method:      document.getElementById('inv-f-method').value,
+    amount_paid:         paid,
+    balance_due:         parseFloat(Math.max(0, grand - paid).toFixed(2)),
+    filter_install_date: document.getElementById('inv-f-install').value || null,
+    filter_expiry_date:  document.getElementById('inv-f-expiry').value || null,
+    notes:               document.getElementById('inv-f-notes').value.trim()
   };
 
   try {
     var saved = await db.from('invoices').insert(invData);
     closeModal('modal-invoice');
     await renderInvoices();
-    // Offer PDF + WhatsApp
+    // Offer PDF + WhatsApp — pass normalised keys the PDF generator understands
+    var pdfData = Object.assign({}, invData, {
+      grand_total:  grand,
+      install_date: invData.filter_install_date,
+      expiry_date:  invData.filter_expiry_date,
+      invoice_date: invDate,
+      id:           saved[0] && saved[0].id
+    });
     if (confirm('Invoice saved! Download PDF?')) {
-      downloadInvoicePDF(Object.assign({}, invData, { id: saved[0] && saved[0].id }));
+      downloadInvoicePDF(pdfData);
     }
     var phone = invData.customer_phone;
     if (phone && confirm('Send WhatsApp to customer?')) {
-      openWaThankYou({ customer_name: invData.customer_name, phone: phone, items: items, total: grand, expiry_date: invData.expiry_date, date: invData.invoice_date });
+      openWaThankYou({ customer_name: invData.customer_name, phone: phone, items: items, total: grand, expiry_date: invData.filter_expiry_date, date: invDate });
     }
   } catch(e) {
     alert('Error saving invoice: ' + (e.message || e));
@@ -3630,7 +3638,8 @@ async function markInvoicePaid(id) {
   try {
     var invs = await db.from('invoices').select();
     var inv = invs.find(function(x){ return x.id == id; });
-    await db.from('invoices').update({ payment_status:'Paid', amount_paid: inv ? parseFloat(inv.grand_total)||0 : 0 }, 'id', id);
+    var grandTotal = inv ? parseFloat(inv.total)||0 : 0;
+    await db.from('invoices').update({ payment_status:'Paid', amount_paid: grandTotal, balance_due: 0 }, 'id', id);
     await renderInvoices();
   } catch(e) { alert('Error: ' + (e.message||e)); }
 }
@@ -3660,7 +3669,7 @@ async function refreshPaymentHistory() {
   try { payments = await db.from('payments').select(); } catch(e2) { payments = []; }
   var custInvs = invoices.filter(function(i){ return i.customer_name === phCustomerName; });
   var custPayments = payments.filter(function(p){ return p.customer_name === phCustomerName; });
-  var totalBilled = custInvs.reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0); }, 0);
+  var totalBilled = custInvs.reduce(function(s,i){ return s+(parseFloat(i.total)||0); }, 0);
   var totalPaid   = custInvs.reduce(function(s,i){ return s+(parseFloat(i.amount_paid)||0); }, 0);
   var balance = totalBilled - totalPaid;
 
@@ -3676,7 +3685,7 @@ async function refreshPaymentHistory() {
     return '<tr>'+
       '<td>'+fmtDate(i.invoice_date||i.created_at)+'</td>'+
       '<td>'+esc(i.invoice_number||'—')+'</td>'+
-      '<td>Rs '+(parseFloat(i.grand_total)||0).toLocaleString()+'</td>'+
+      '<td>Rs '+(parseFloat(i.total)||0).toLocaleString()+'</td>'+
       '<td>'+esc(i.payment_method||'—')+'</td>'+
       '<td><span class="badge '+stCls+'">'+esc(i.payment_status||'Pending')+'</span></td>'+
     '</tr>';
@@ -3775,13 +3784,13 @@ async function renderCashReport() {
 
   var jobRevenue = filtJobs.reduce(function(s,j){ return s+(parseFloat(j.labor)||0)+(parseFloat(j.parts_cost)||0); },0);
   var salesRevenue = filtSales.reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
-  var invRevenue = filtInvs.reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0); },0);
+  var invRevenue = filtInvs.reduce(function(s,i){ return s+(parseFloat(i.total)||0); },0);
 
   var totalRevenue = jobRevenue + salesRevenue;
   var cashAmt = filtSales.filter(function(s){ return s.payment_method==='Cash'; }).reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
   var cardAmt = filtSales.filter(function(s){ return s.payment_method==='Card'; }).reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
   var onlineAmt = filtSales.filter(function(s){ return s.payment_method==='Online Transfer'; }).reduce(function(s,x){ return s+(parseFloat(x.total)||0); },0);
-  var pendingDues2 = filtInvs.filter(function(i){ return i.payment_status!=='Paid'; }).reduce(function(s,i){ return s+(parseFloat(i.grand_total)||0)-(parseFloat(i.amount_paid)||0); },0);
+  var pendingDues2 = filtInvs.filter(function(i){ return i.payment_status!=='Paid'; }).reduce(function(s,i){ return s+(parseFloat(i.balance_due) || Math.max(0,(parseFloat(i.total)||0)-(parseFloat(i.amount_paid)||0))); },0);
 
   var sr = document.getElementById('cr-stat-row');
   if (sr) sr.innerHTML =
@@ -3845,7 +3854,7 @@ async function renderCashReport() {
 
   // Top customers by amount
   var custMap = {};
-  filtInvs.forEach(function(i){ var n=i.customer_name||'—'; custMap[n]=(custMap[n]||0)+(parseFloat(i.grand_total)||0); });
+  filtInvs.forEach(function(i){ var n=i.customer_name||'—'; custMap[n]=(custMap[n]||0)+(parseFloat(i.total)||0); });
   var topCusts = Object.keys(custMap).sort(function(a,b){ return custMap[b]-custMap[a]; }).slice(0,5);
   var tcEl = document.getElementById('cr-top-customers');
   if (tcEl) tcEl.innerHTML = topCusts.map(function(n,i2){
