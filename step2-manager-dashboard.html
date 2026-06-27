@@ -1437,6 +1437,7 @@ function fmtDate(d){
   return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
 }
 function stars(n){ return '★'.repeat(n) + '☆'.repeat(5-n); }
+function esc(str){ if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function nextId(arr, prefix){
   var nums = arr.map(x => parseInt(x.id.replace(/\D/g,''))).filter(n=>!isNaN(n));
   var next = nums.length ? Math.max(...nums)+1 : 1;
