@@ -1293,7 +1293,7 @@ tbody tr:hover{background:#f8fafb}
 
 <!-- ══ Modal: Payment History ══ -->
 <div class="modal-overlay" id="modal-payment-history" onclick="closeModalOuter(event,'modal-payment-history')">
-  <div class="modal" style="max-width:680px">
+  <div class="modal" style="max-width:780px">
     <div class="modal-head">
       <div class="modal-title" id="ph-modal-title">Payment History</div>
       <button class="modal-close" onclick="closeModal('modal-payment-history')">&#x2715;</button>
@@ -1302,13 +1302,19 @@ tbody tr:hover{background:#f8fafb}
       <div class="stat-row" id="ph-stat-row" style="margin-bottom:14px"></div>
       <div class="tbl-wrap" style="margin-bottom:14px">
         <table>
-          <thead><tr><th>Date</th><th>Invoice #</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date</th><th>Invoice #</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody id="ph-tbody"></tbody>
         </table>
       </div>
-      <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="border-top:1px solid var(--border);padding-top:14px" id="ph-record-form">
         <div class="ph-modal-head">+ Record New Payment</div>
         <div class="form-grid">
+          <div class="form-field full">
+            <label class="form-label">Select Invoice *</label>
+            <select class="form-select" id="ph-invoice-select" onchange="phOnInvoiceSelect()">
+              <option value="">— choose invoice with balance —</option>
+            </select>
+          </div>
           <div class="form-field">
             <label class="form-label">Amount (Rs) *</label>
             <input class="form-input" id="ph-amount" type="number" min="1" placeholder="0">
@@ -1318,6 +1324,14 @@ tbody tr:hover{background:#f8fafb}
             <select class="form-select" id="ph-method">
               <option>Cash</option><option>Card</option><option>Online Transfer</option>
             </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Reference #</label>
+            <input class="form-input" id="ph-reference" placeholder="Cheque / TXN ref (optional)">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Payment Date</label>
+            <input class="form-input" id="ph-date" type="date">
           </div>
           <div class="form-field full">
             <label class="form-label">Notes</label>
@@ -3443,6 +3457,7 @@ async function renderInvoices() {
       '<td><div class="td-actions">'+
         '<button class="btn btn-ghost btn-sm" onclick="viewInvoicePDF(\''+inv.id+'\')" title="View PDF">📄</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="whatsappInvoiceById(\''+inv.id+'\')" title="WhatsApp">💬</button>'+
+        (inv.payment_status!=='Paid'?'<button class="btn btn-ghost btn-sm" onclick="openRecordPaymentForInvoice(\''+inv.id+'\')" title="Record Payment">💰 Pay</button>':'')+
         (inv.payment_status!=='Paid'?'<button class="btn btn-green btn-sm" onclick="markInvoicePaid(\''+inv.id+'\')">✓ Paid</button>':'')+
         '<button class="btn btn-danger btn-sm" onclick="deleteInvoice(\''+inv.id+'\')">🗑</button>'+
       '</div></td>'+
@@ -3653,73 +3668,211 @@ async function deleteInvoice(id) {
 // ════════════════════════════════════════
 //  FEATURE 5: PAYMENT HISTORY
 // ════════════════════════════════════════
+var phSelectedInvoiceId = null;
+
 async function openPaymentHistory(custId, custName) {
   phCustomerId = custId;
   phCustomerName = custName;
+  phSelectedInvoiceId = null;
   document.getElementById('ph-modal-title').textContent = 'Payment History — ' + custName;
   document.getElementById('ph-amount').value = '';
   document.getElementById('ph-notes').value = '';
+  document.getElementById('ph-reference').value = '';
+  document.getElementById('ph-date').value = todayStr();
   await refreshPaymentHistory();
   openModal('modal-payment-history');
 }
 
-async function refreshPaymentHistory() {
+async function openRecordPaymentForInvoice(invId) {
+  var invs;
+  try { invs = await db.from('invoices').select(); } catch(e) { invs = []; }
+  var inv = invs.find(function(i){ return String(i.id) === String(invId); });
+  if (!inv) { alert('Invoice not found.'); return; }
+  phCustomerId   = inv.customer_id || null;
+  phCustomerName = inv.customer_name;
+  phSelectedInvoiceId = invId;
+  document.getElementById('ph-modal-title').textContent = 'Payment History — ' + inv.customer_name;
+  document.getElementById('ph-amount').value = '';
+  document.getElementById('ph-notes').value = '';
+  document.getElementById('ph-reference').value = '';
+  document.getElementById('ph-date').value = todayStr();
+  await refreshPaymentHistory(invId);
+  openModal('modal-payment-history');
+}
+
+async function refreshPaymentHistory(preselectInvId) {
   var invoices, payments;
   try { invoices = await db.from('invoices').select(); } catch(e2) { invoices = []; }
   try { payments = await db.from('payments').select(); } catch(e2) { payments = []; }
-  var custInvs = invoices.filter(function(i){ return i.customer_name === phCustomerName; });
-  var custPayments = payments.filter(function(p){ return p.customer_name === phCustomerName; });
+
+  var custInvs = invoices.filter(function(i){
+    return i.customer_name === phCustomerName ||
+           (phCustomerId && String(i.customer_id) === String(phCustomerId));
+  });
+
+  var invIds = custInvs.map(function(i){ return String(i.id); });
+  var custPayments = payments.filter(function(p){
+    return invIds.indexOf(String(p.invoice_id)) !== -1 || p.customer_name === phCustomerName;
+  });
+
   var totalBilled = custInvs.reduce(function(s,i){ return s+(parseFloat(i.total)||0); }, 0);
   var totalPaid   = custInvs.reduce(function(s,i){ return s+(parseFloat(i.amount_paid)||0); }, 0);
-  var balance = totalBilled - totalPaid;
+  var balance     = totalBilled - totalPaid;
 
   var sr = document.getElementById('ph-stat-row');
   if (sr) sr.innerHTML =
     '<div class="stat-card"><div class="stat-label">Total Billed</div><div class="stat-val" style="color:var(--teal);font-size:20px">Rs '+totalBilled.toLocaleString()+'</div></div>'+
-    '<div class="stat-card"><div class="stat-label">Total Paid</div><div class="stat-val text-green;font-size:20px" style="font-size:20px;color:var(--green)">Rs '+totalPaid.toLocaleString()+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Total Paid</div><div class="stat-val" style="font-size:20px;color:var(--green)">Rs '+totalPaid.toLocaleString()+'</div></div>'+
     '<div class="stat-card" style="'+(balance>0?'border:1px solid var(--red)':'')+'"><div class="stat-label">Balance Owed</div><div class="stat-val" style="font-size:20px;color:'+(balance>0?'var(--red)':'var(--green)')+'">Rs '+balance.toLocaleString()+'</div></div>';
 
   var tbody = document.getElementById('ph-tbody');
-  var rows = custInvs.map(function(i) {
-    var stCls = 'inv-status-' + (i.payment_status||'pending').toLowerCase();
-    return '<tr>'+
-      '<td>'+fmtDate(i.invoice_date||i.created_at)+'</td>'+
-      '<td>'+esc(i.invoice_number||'—')+'</td>'+
-      '<td>Rs '+(parseFloat(i.total)||0).toLocaleString()+'</td>'+
-      '<td>'+esc(i.payment_method||'—')+'</td>'+
-      '<td><span class="badge '+stCls+'">'+esc(i.payment_status||'Pending')+'</span></td>'+
-    '</tr>';
+  if (custInvs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="no-data">No invoices yet — <a href="#" onclick="closeModal(\'modal-payment-history\');setTimeout(function(){openInvoiceModal({customer_name:phCustomerName});},200);return false;">Create Invoice for this Customer</a></td></tr>';
+  } else {
+    var sorted = custInvs.slice().sort(function(a,b){
+      return (b.invoice_date||b.created_at||'').localeCompare(a.invoice_date||a.created_at||'');
+    });
+    tbody.innerHTML = sorted.map(function(inv) {
+      var stCls  = 'inv-status-' + (inv.payment_status||'pending').toLowerCase();
+      var grand  = parseFloat(inv.total)||0;
+      var paid2  = parseFloat(inv.amount_paid)||0;
+      var bal    = parseFloat(inv.balance_due) != null && !isNaN(parseFloat(inv.balance_due))
+                     ? parseFloat(inv.balance_due)
+                     : Math.max(0, grand - paid2);
+      var invPmts = custPayments.filter(function(p){ return String(p.invoice_id) === String(inv.id); });
+      var subRows = invPmts.map(function(p){
+        return '<tr style="background:rgba(22,163,74,.05)">'+
+          '<td style="padding-left:28px;font-size:12px;color:var(--dim)">↳ '+fmtDate(p.payment_date||p.created_at)+'</td>'+
+          '<td colspan="2" style="font-size:12px;color:var(--dim)">'+esc(p.payment_method||p.method||'—')+(p.reference?' · '+esc(p.reference):'')+'</td>'+
+          '<td style="color:var(--green);font-size:12px"><strong>+Rs '+(parseFloat(p.amount)||0).toLocaleString()+'</strong></td>'+
+          '<td colspan="3" style="font-size:12px;color:var(--dim)">'+esc(p.notes||'')+'</td>'+
+        '</tr>';
+      }).join('');
+      return '<tr>'+
+        '<td>'+fmtDate(inv.invoice_date||inv.created_at)+'</td>'+
+        '<td><strong>'+esc(inv.invoice_number||'—')+'</strong></td>'+
+        '<td>Rs '+grand.toLocaleString()+'</td>'+
+        '<td style="color:var(--green)">Rs '+paid2.toLocaleString()+'</td>'+
+        '<td style="color:'+(bal>0?'var(--red)':'var(--green)')+'">Rs '+bal.toLocaleString()+'</td>'+
+        '<td><span class="badge '+stCls+'">'+esc(inv.payment_status||'Pending')+'</span></td>'+
+        '<td>'+(bal>0
+          ? '<button class="btn btn-ghost btn-sm" onclick="phPreselectInvoice(\''+inv.id+'\')">💰 Pay</button>'
+          : '<span style="color:var(--green);font-size:12px">✓ Settled</span>'
+        )+'</td>'+
+      '</tr>'+subRows;
+    }).join('');
+  }
+
+  var sel = document.getElementById('ph-invoice-select');
+  var unpaid = custInvs.filter(function(i){
+    var bal2 = parseFloat(i.balance_due) != null && !isNaN(parseFloat(i.balance_due))
+                 ? parseFloat(i.balance_due)
+                 : Math.max(0, (parseFloat(i.total)||0) - (parseFloat(i.amount_paid)||0));
+    return bal2 > 0.009;
   });
-  // Add individual payments
-  custPayments.forEach(function(p){
-    rows.push('<tr style="background:rgba(22,163,74,.04)">'+
-      '<td>'+fmtDate(p.payment_date||p.created_at)+'</td>'+
-      '<td>'+esc(p.invoice_id||'—')+'</td>'+
-      '<td style="color:var(--green)"><strong>+ Rs '+(parseFloat(p.amount)||0).toLocaleString()+'</strong></td>'+
-      '<td>'+esc(p.method||'—')+'</td>'+
-      '<td><span class="badge badge-active">Payment</span></td>'+
-    '</tr>');
-  });
-  tbody.innerHTML = rows.join('') || '<tr><td colspan="5" class="no-data">No payment history</td></tr>';
+  sel.innerHTML = '<option value="">— choose invoice with balance —</option>' +
+    unpaid.map(function(i){
+      var grand  = parseFloat(i.total)||0;
+      var paid2  = parseFloat(i.amount_paid)||0;
+      var bal2   = parseFloat(i.balance_due) != null && !isNaN(parseFloat(i.balance_due))
+                     ? parseFloat(i.balance_due)
+                     : Math.max(0, grand - paid2);
+      return '<option value="'+i.id+'">'+esc(i.invoice_number||i.id)+
+             ' | Total: Rs '+grand.toLocaleString()+
+             ' | Paid: Rs '+paid2.toLocaleString()+
+             ' | Balance: Rs '+bal2.toLocaleString()+'</option>';
+    }).join('');
+
+  var pid = preselectInvId || phSelectedInvoiceId;
+  if (pid) {
+    for (var j = 0; j < sel.options.length; j++) {
+      if (sel.options[j].value == pid) { sel.selectedIndex = j; break; }
+    }
+    phOnInvoiceSelect();
+  }
+}
+
+function phPreselectInvoice(invId) {
+  phSelectedInvoiceId = invId;
+  var sel = document.getElementById('ph-invoice-select');
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value == invId) { sel.selectedIndex = i; break; }
+  }
+  phOnInvoiceSelect();
+  var form = document.getElementById('ph-record-form');
+  if (form) form.scrollIntoView({ behavior: 'smooth' });
+}
+
+function phOnInvoiceSelect() {
+  var sel = document.getElementById('ph-invoice-select');
+  phSelectedInvoiceId = sel.value || null;
+  var amtInput = document.getElementById('ph-amount');
+  if (!phSelectedInvoiceId) { amtInput.removeAttribute('max'); amtInput.placeholder = '0'; return; }
+  var opt = sel.options[sel.selectedIndex];
+  var m = opt ? opt.text.match(/Balance: Rs ([\d,]+)/) : null;
+  if (m) {
+    var bal = parseFloat(m[1].replace(/,/g, ''));
+    amtInput.max = bal;
+    amtInput.placeholder = 'Max Rs ' + bal.toLocaleString();
+  }
 }
 
 async function recordPayment() {
+  var invId = document.getElementById('ph-invoice-select').value;
+  if (!invId) { alert('Please select an invoice.'); return; }
   var amt = parseFloat(document.getElementById('ph-amount').value);
   if (!amt || amt <= 0) { alert('Enter a valid amount.'); return; }
-  var method = document.getElementById('ph-method').value;
-  var notes  = document.getElementById('ph-notes').value.trim();
+  var method    = document.getElementById('ph-method').value;
+  var reference = document.getElementById('ph-reference').value.trim();
+  var notes     = document.getElementById('ph-notes').value.trim();
+  var pdate     = document.getElementById('ph-date').value || todayStr();
+
+  var invs;
+  try { invs = await db.from('invoices').select(); } catch(e) { invs = []; }
+  var inv = invs.find(function(i){ return String(i.id) === String(invId); });
+  if (!inv) { alert('Invoice not found.'); return; }
+
+  var grand = parseFloat(inv.total)||0;
+  var alreadyPaid = parseFloat(inv.amount_paid)||0;
+  var bal = parseFloat(inv.balance_due) != null && !isNaN(parseFloat(inv.balance_due))
+              ? parseFloat(inv.balance_due)
+              : Math.max(0, grand - alreadyPaid);
+  if (amt > bal + 0.01) {
+    alert('Amount (Rs ' + amt.toLocaleString() + ') exceeds balance due (Rs ' + bal.toLocaleString() + ').');
+    return;
+  }
+
+  var newPaid   = parseFloat((alreadyPaid + amt).toFixed(2));
+  var newBal    = parseFloat(Math.max(0, grand - newPaid).toFixed(2));
+  var newStatus = newPaid >= grand - 0.01 ? 'Paid' : (newPaid > 0 ? 'Partial' : 'Pending');
+  var receivedBy = (function(){ try{ return JSON.parse(localStorage.getItem('awf_session')||'{}').name||'Manager'; }catch(e){ return 'Manager'; } })();
+
   try {
     await db.from('payments').insert({
-      customer_name: phCustomerName,
-      amount:        amt,
-      method:        method,
-      notes:         notes,
-      payment_date:  todayStr()
+      invoice_id:     invId,
+      customer_id:    phCustomerId || inv.customer_id || null,
+      customer_name:  phCustomerName,
+      customer_phone: inv.customer_phone || null,
+      amount:         amt,
+      payment_method: method,
+      reference:      reference || null,
+      notes:          notes || null,
+      payment_date:   pdate,
+      received_by:    receivedBy
     });
-    document.getElementById('ph-amount').value = '';
-    document.getElementById('ph-notes').value = '';
+    await db.from('invoices').update({
+      amount_paid:    newPaid,
+      balance_due:    newBal,
+      payment_status: newStatus
+    }, 'id', invId);
+    document.getElementById('ph-amount').value    = '';
+    document.getElementById('ph-notes').value     = '';
+    document.getElementById('ph-reference').value = '';
+    document.getElementById('ph-invoice-select').value = '';
+    phSelectedInvoiceId = null;
     await refreshPaymentHistory();
-    alert('Payment recorded.');
+    if (typeof renderInvoices === 'function') renderInvoices();
+    alert('Payment of Rs ' + amt.toLocaleString() + ' recorded. Invoice status: ' + newStatus);
   } catch(e) { alert('Error recording payment: ' + (e.message||e)); }
 }
 
